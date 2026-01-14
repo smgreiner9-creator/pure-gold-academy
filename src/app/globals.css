@@ -1,26 +1,215 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core Colors - Updated Design System */
+  --background: #0A0A0A;
+  --foreground: #f1f5f9;
+  --gold: #EAB308;
+  --gold-light: #FACC15;
+  --gold-dark: #CA8A04;
+  --card-bg: #171717;
+  --card-border: #262626;
+  --success: #10b981;
+  --danger: #f43f5e;
+  --warning: #f59e0b;
+  --muted: #64748b;
+
+  /* Additional UI Colors */
+  --input-bg: rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-card: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-muted: var(--muted);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Monospace numbers */
+.mono-num {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom scrollbar - Minimal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Gold Gradient */
+.gold-gradient {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+}
+
+/* Gold Glow Effect */
+.gold-glow {
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.15);
+}
+
+/* Card Styles */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+}
+
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+/* Button Styles */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  color: #000;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  transition: all 0.2s;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.15);
+}
+
+.btn-gold:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Input Styles */
+.input-field {
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  color: var(--foreground);
+  width: 100%;
+  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.1);
+}
+
+.input-field::placeholder {
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Label Styles */
+.label-uppercase {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Navigation Link Active */
+.nav-active {
+  background: rgba(234, 179, 8, 0.1);
+  color: var(--gold);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+/* Sparkline placeholder */
+.sparkline {
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.3;
+  border-radius: 2px;
+}
+
+/* Sentiment badges */
+.badge-bullish {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.badge-bearish {
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--danger);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.badge-neutral {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
