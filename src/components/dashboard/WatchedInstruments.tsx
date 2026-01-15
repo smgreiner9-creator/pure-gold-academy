@@ -1,25 +1,25 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Skeleton } from '@/components/ui/Skeleton'
 
-interface Instrument {
+interface PriceData {
   symbol: string
-  name: string
   price: number
   change: number
   changePercent: number
+  lastUpdated: string
 }
 
-// Mock price data - in production, this would come from a market data API
-const mockPrices: Record<string, Instrument> = {
-  XAUUSD: { symbol: 'XAUUSD', name: 'Gold Spot', price: 2650.45, change: 12.30, changePercent: 0.47 },
-  EURUSD: { symbol: 'EURUSD', name: 'Euro / Dollar', price: 1.0924, change: -0.0023, changePercent: -0.21 },
-  BTCUSD: { symbol: 'BTCUSD', name: 'Bitcoin', price: 97500.00, change: 2150.00, changePercent: 2.26 },
-  GBPUSD: { symbol: 'GBPUSD', name: 'GBP / Dollar', price: 1.2543, change: 0.0012, changePercent: 0.10 },
-  USDJPY: { symbol: 'USDJPY', name: 'USD / Yen', price: 149.85, change: -0.45, changePercent: -0.30 },
+// Instrument metadata
+const instrumentInfo: Record<string, { name: string; decimals: number }> = {
+  XAUUSD: { name: 'Gold Spot', decimals: 2 },
+  EURUSD: { name: 'Euro / Dollar', decimals: 5 },
+  BTCUSD: { name: 'Bitcoin', decimals: 0 },
+  GBPUSD: { name: 'GBP / Dollar', decimals: 5 },
+  USDJPY: { name: 'USD / Yen', decimals: 3 },
 }
 
 const availableInstruments = [
@@ -35,7 +35,33 @@ export function WatchedInstruments() {
   const [watchedSymbols, setWatchedSymbols] = useState<string[]>(['XAUUSD', 'EURUSD', 'BTCUSD'])
   const [showAddModal, setShowAddModal] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
+  const [prices, setPrices] = useState<Record<string, PriceData>>({})
+  const [pricesLoading, setPricesLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
+
+  // Fetch live prices
+  const fetchPrices = useCallback(async () => {
+    try {
+      const res = await fetch('/api/prices')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.prices) {
+          setPrices(data.prices)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching prices:', error)
+    } finally {
+      setPricesLoading(false)
+    }
+  }, [])
+
+  // Fetch prices on mount and every 30 seconds
+  useEffect(() => {
+    fetchPrices()
+    const interval = setInterval(fetchPrices, 30000) // Update every 30 seconds
+    return () => clearInterval(interval)
+  }, [fetchPrices])
 
   useEffect(() => {
     const loadWatchedInstruments = async () => {
@@ -63,7 +89,7 @@ export function WatchedInstruments() {
   }, [profile?.id, authLoading, supabase])
 
   // Show loading only while auth is initializing
-  const isLoading = authLoading || isFetching
+  const isLoading = authLoading || isFetching || pricesLoading
 
   const addInstrument = async (symbol: string) => {
     if (!profile?.id || watchedSymbols.includes(symbol)) return
@@ -129,10 +155,14 @@ export function WatchedInstruments() {
       {/* Instruments List */}
       <div className="space-y-3">
         {watchedSymbols.map((symbol) => {
-          const data = mockPrices[symbol]
-          if (!data) return null
+          const priceData = prices[symbol]
+          const info = instrumentInfo[symbol]
+          if (!info) return null
 
-          const isPositive = data.change >= 0
+          const price = priceData?.price ?? 0
+          const changePercent = priceData?.changePercent ?? 0
+          const isPositive = changePercent >= 0
+          const decimals = info.decimals
 
           return (
             <div
@@ -148,17 +178,20 @@ export function WatchedInstruments() {
               </div>
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-sm font-bold">{data.symbol}</span>
+                  <span className="text-sm font-bold">{symbol}</span>
                   <span className="mono-num text-sm font-bold">
-                    {data.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {price > 0
+                      ? price.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+                      : '—'
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-[var(--muted)] uppercase tracking-tight">{data.name}</span>
+                  <span className="text-[10px] text-[var(--muted)] uppercase tracking-tight">{info.name}</span>
                   <span className={`mono-num text-[10px] font-bold ${
                     isPositive ? 'text-[var(--success)]' : 'text-[var(--danger)]'
                   }`}>
-                    {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
+                    {changePercent !== 0 ? `${isPositive ? '+' : ''}${changePercent.toFixed(2)}%` : '—'}
                   </span>
                 </div>
               </div>
