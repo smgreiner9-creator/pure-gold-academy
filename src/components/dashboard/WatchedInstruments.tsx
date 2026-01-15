@@ -60,7 +60,7 @@ export function WatchedInstruments() {
     } else {
       setIsLoading(false)
     }
-  }, [profile?.id])
+  }, [profile?.id, supabase])
 
   const addInstrument = async (symbol: string) => {
     if (!profile?.id || watchedSymbols.includes(symbol)) return
@@ -76,18 +76,6 @@ export function WatchedInstruments() {
 
     setWatchedSymbols([...watchedSymbols, symbol])
     setShowAddModal(false)
-  }
-
-  const removeInstrument = async (symbol: string) => {
-    if (!profile?.id) return
-
-    await supabase
-      .from('watched_instruments')
-      .delete()
-      .eq('user_id', profile.id)
-      .eq('symbol', symbol)
-
-    setWatchedSymbols(watchedSymbols.filter(s => s !== symbol))
   }
 
   if (isLoading) {

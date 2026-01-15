@@ -1,13 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import { Bell } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export function Header() {
   const { profile } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-40 bg-[var(--background)] border-b border-[var(--card-border)] md:hidden">

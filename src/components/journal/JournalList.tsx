@@ -1,11 +1,74 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonJournalEntry } from '@/components/ui/Skeleton'
 import type { JournalEntry, TradeOutcome } from '@/types/database'
+
+function exportToCSV(entries: JournalEntry[], filename: string) {
+  // Define CSV headers
+  const headers = [
+    'Date',
+    'Instrument',
+    'Direction',
+    'Outcome',
+    'Entry Price',
+    'Exit Price',
+    'Stop Loss',
+    'Take Profit',
+    'Position Size',
+    'P&L',
+    'R-Multiple',
+    'Emotion Before',
+    'Emotion During',
+    'Emotion After',
+    'Rules Followed',
+    'Notes',
+    'Entry Time',
+    'Exit Time',
+  ]
+
+  // Convert entries to CSV rows
+  const rows = entries.map(entry => [
+    entry.trade_date,
+    entry.instrument,
+    entry.direction,
+    entry.outcome || '',
+    entry.entry_price,
+    entry.exit_price || '',
+    entry.stop_loss || '',
+    entry.take_profit || '',
+    entry.position_size,
+    entry.pnl !== null ? entry.pnl.toFixed(2) : '',
+    entry.r_multiple !== null ? entry.r_multiple.toFixed(2) : '',
+    entry.emotion_before,
+    entry.emotion_during || '',
+    entry.emotion_after || '',
+    Array.isArray(entry.rules_followed) ? entry.rules_followed.join('; ') : '',
+    entry.notes ? entry.notes.replace(/"/g, '""').replace(/\n/g, ' ') : '',
+    entry.entry_time || '',
+    entry.exit_time || '',
+  ])
+
+  // Build CSV content
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+
+  // Create and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 
 export function JournalList() {
   const { profile } = useAuth()
@@ -76,6 +139,12 @@ export function JournalList() {
     }
   }
 
+  const handleExport = useCallback(() => {
+    if (entries.length === 0) return
+    const date = new Date().toISOString().split('T')[0]
+    exportToCSV(entries, `trading-journal-${date}.csv`)
+  }, [entries])
+
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'win':
@@ -121,27 +190,39 @@ export function JournalList() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] flex flex-wrap gap-4">
-        <select
-          value={filter.outcome}
-          onChange={(e) => setFilter(prev => ({ ...prev, outcome: e.target.value }))}
-          className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
+      <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={filter.outcome}
+            onChange={(e) => setFilter(prev => ({ ...prev, outcome: e.target.value }))}
+            className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
+          >
+            <option value="">All Outcomes</option>
+            <option value="win">Wins</option>
+            <option value="loss">Losses</option>
+            <option value="breakeven">Breakeven</option>
+          </select>
+          <select
+            value={filter.dateRange}
+            onChange={(e) => setFilter(prev => ({ ...prev, dateRange: e.target.value }))}
+            className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
+          >
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
+
+        {/* Export Button */}
+        <button
+          onClick={handleExport}
+          disabled={entries.length === 0}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-black/40 text-sm font-medium hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">All Outcomes</option>
-          <option value="win">Wins</option>
-          <option value="loss">Losses</option>
-          <option value="breakeven">Breakeven</option>
-        </select>
-        <select
-          value={filter.dateRange}
-          onChange={(e) => setFilter(prev => ({ ...prev, dateRange: e.target.value }))}
-          className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
-        >
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="all">All time</option>
-        </select>
+          <span className="material-symbols-outlined text-lg">download</span>
+          Export CSV
+        </button>
       </div>
 
       {/* Entries List */}

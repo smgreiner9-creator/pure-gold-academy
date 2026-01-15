@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonStats } from '@/components/ui/Skeleton'
-import type { JournalEntry, EmotionType } from '@/types/database'
+import type { EmotionType } from '@/types/database'
 
 interface Stats {
   totalTrades: number

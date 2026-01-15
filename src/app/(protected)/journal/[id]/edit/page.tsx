@@ -7,7 +7,7 @@ import { Save, ArrowLeft, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { ScreenshotUpload } from '@/components/journal/ScreenshotUpload'
-import type { JournalEntry, TradeDirection, EmotionType, TradeOutcome } from '@/types/database'
+import type { TradeDirection, EmotionType, TradeOutcome } from '@/types/database'
 
 const instruments = [
   { value: 'XAUUSD', label: 'Gold (XAUUSD)' },

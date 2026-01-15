@@ -10,7 +10,7 @@ import type { JournalEntry, JournalFeedback, Profile } from '@/types/database'
 export default function JournalEntryDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { profile: _profile } = useAuth()
+  useAuth()
   const [entry, setEntry] = useState<JournalEntry | null>(null)
   const [feedback, setFeedback] = useState<(JournalFeedback & { teacher?: Partial<Profile> })[]>([])
   const [isLoading, setIsLoading] = useState(true)

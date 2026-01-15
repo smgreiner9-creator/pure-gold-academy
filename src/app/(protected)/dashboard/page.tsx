@@ -1,13 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { PositionCalculator } from '@/components/dashboard/PositionCalculator'
 import { WatchedInstruments } from '@/components/dashboard/WatchedInstruments'
 import { MarketNews } from '@/components/dashboard/MarketNews'
 import { ForexFactoryNews } from '@/components/dashboard/ForexFactoryNews'
 import { RecentTrades } from '@/components/dashboard/RecentTrades'
 import { SessionIndicator } from '@/components/dashboard/SessionIndicator'
+import { NextNewsCountdown } from '@/components/dashboard/NextNewsCountdown'
+import { DailyRuleReminder } from '@/components/dashboard/DailyRuleReminder'
+import { QuickTradeEntry } from '@/components/dashboard/QuickTradeEntry'
+import { KeyboardShortcutsHelp } from '@/components/dashboard/KeyboardShortcutsHelp'
 
 type TabType = 'pulse' | 'news' | 'trades'
 
@@ -23,8 +28,19 @@ const quotes = [
 export default function DashboardPage() {
   const { profile } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('pulse')
+  const [isQuickTradeOpen, setIsQuickTradeOpen] = useState(false)
   // Select quote once on initial render using useState initializer
   const [randomQuote] = useState(() => quotes[Math.floor(Math.random() * quotes.length)])
+
+  // Quick trade callback for keyboard shortcut
+  const handleQuickTrade = useCallback(() => {
+    setIsQuickTradeOpen(true)
+  }, [])
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onQuickTrade: handleQuickTrade,
+  })
 
   const tabs: { key: TabType; label: string; icon: string }[] = [
     { key: 'pulse', label: 'Pulse', icon: 'monitoring' },
@@ -56,7 +72,7 @@ export default function DashboardPage() {
       <section className="w-full lg:w-3/5 p-6 lg:p-8 overflow-y-auto custom-scrollbar">
         <div className="max-w-2xl mx-auto">
           {/* Welcome Section */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold mb-2">
                 Welcome back{profile?.display_name ? `, ${profile.display_name}` : ''}
@@ -64,14 +80,30 @@ export default function DashboardPage() {
               <p className="text-[var(--muted)] text-xs italic opacity-80">{randomQuote}</p>
             </div>
             <div className="flex gap-2">
-              <button className="w-10 h-10 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-white hover:bg-white/5 transition-colors">
-                <span className="material-symbols-outlined">restart_alt</span>
+              <button
+                onClick={handleQuickTrade}
+                className="w-10 h-10 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--gold)] hover:bg-white/5 transition-colors"
+                title="Quick Trade (Q)"
+              >
+                <span className="material-symbols-outlined">bolt</span>
               </button>
             </div>
           </div>
 
+          {/* Daily Rule Reminder */}
+          <div className="mb-6">
+            <DailyRuleReminder />
+          </div>
+
+          {/* Next News Countdown */}
+          <div className="mb-6">
+            <NextNewsCountdown />
+          </div>
+
           {/* Position Calculator */}
-          <PositionCalculator />
+          <div data-calculator>
+            <PositionCalculator />
+          </div>
 
           {/* Mobile Panel - Only visible on mobile/tablet */}
           <div className="lg:hidden mt-8 space-y-6">
@@ -125,6 +157,13 @@ export default function DashboardPage() {
           {renderTabContent()}
         </div>
       </section>
+
+      {/* Modals */}
+      <QuickTradeEntry
+        isOpen={isQuickTradeOpen}
+        onClose={() => setIsQuickTradeOpen(false)}
+      />
+      <KeyboardShortcutsHelp />
     </div>
   )
 }

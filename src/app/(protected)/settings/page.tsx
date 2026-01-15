@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { PushNotificationSettings } from '@/components/settings/PushNotificationSettings'
 
 export default function SettingsPage() {
   const { profile, signOut, isPremium } = useAuth()
@@ -214,6 +215,17 @@ export default function SettingsPage() {
             </Link>
           )}
         </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-xl text-[var(--gold)]">notifications</span>
+          </div>
+          <h3 className="font-bold text-lg">Notifications</h3>
+        </div>
+        <PushNotificationSettings />
       </div>
 
       {/* Classroom Section (Students only) */}

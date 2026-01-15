@@ -47,7 +47,6 @@ export function QuickStats() {
 
         // Calculate streak
         let streak = 0
-        const today = new Date().toISOString().split('T')[0]
         const sortedDates = [...new Set(entries.map(e => e.trade_date))].sort().reverse()
 
         for (let i = 0; i < sortedDates.length; i++) {

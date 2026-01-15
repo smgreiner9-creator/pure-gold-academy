@@ -1,13 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Input, Card, Select } from '@/components/ui'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function SignUpPage() {
-  const router = useRouter()
   const { signUp } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

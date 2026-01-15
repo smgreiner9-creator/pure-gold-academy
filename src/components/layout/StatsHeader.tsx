@@ -5,6 +5,24 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
+const getSessionInfo = () => {
+  const hour = new Date().getUTCHours()
+  // Trading sessions (approximate UTC times)
+  if (hour >= 22 || hour < 7) {
+    return { name: 'SYD/TOK', active: true }
+  } else if (hour >= 7 && hour < 8) {
+    return { name: 'TOK/LON', active: true }
+  } else if (hour >= 8 && hour < 12) {
+    return { name: 'LONDON', active: true }
+  } else if (hour >= 12 && hour < 17) {
+    return { name: 'LON/NY', active: true }
+  } else if (hour >= 17 && hour < 22) {
+    return { name: 'NEW YORK', active: true }
+  } else {
+    return { name: 'OFF', active: false }
+  }
+}
+
 export function StatsHeader() {
   const { profile } = useAuth()
   const supabase = useMemo(() => createClient(), [])
@@ -15,34 +33,17 @@ export function StatsHeader() {
     journalStreak: 0,
   })
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [session, setSession] = useState({ name: 'Loading...', active: false })
-
-  const updateSession = useCallback(() => {
-    const hour = new Date().getUTCHours()
-    // Trading sessions (approximate UTC times)
-    if (hour >= 22 || hour < 7) {
-      setSession({ name: 'SYD/TOK', active: true })
-    } else if (hour >= 7 && hour < 8) {
-      setSession({ name: 'TOK/LON', active: true })
-    } else if (hour >= 8 && hour < 12) {
-      setSession({ name: 'LONDON', active: true })
-    } else if (hour >= 12 && hour < 17) {
-      setSession({ name: 'LON/NY', active: true })
-    } else if (hour >= 17 && hour < 22) {
-      setSession({ name: 'NEW YORK', active: true })
-    } else {
-      setSession({ name: 'OFF', active: false })
-    }
-  }, [])
+  const [session, setSession] = useState(getSessionInfo)
 
   const loadStats = useCallback(async () => {
-    if (!profile?.id) return
+    const userId = profile?.id
+    if (!userId) return
 
     try {
       const { data: entries } = await supabase
         .from('journal_entries')
         .select('outcome, r_multiple, trade_date')
-        .eq('user_id', profile.id)
+        .eq('user_id', userId)
         .order('trade_date', { ascending: false })
 
       if (entries && entries.length > 0) {
@@ -76,22 +77,25 @@ export function StatsHeader() {
     } catch (error) {
       console.error('Error loading stats:', error)
     }
-  }, [profile?.id, supabase])
+  }, [profile, supabase])
 
   useEffect(() => {
-    if (profile?.id) {
-      loadStats()
+    const fetchStats = async () => {
+      if (profile?.id) {
+        await loadStats()
+      }
     }
+    fetchStats()
   }, [profile?.id, loadStats])
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date())
-      updateSession()
+      setSession(getSessionInfo())
     }, 1000)
-    updateSession()
+
     return () => clearInterval(timer)
-  }, [updateSession])
+  }, [])
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
