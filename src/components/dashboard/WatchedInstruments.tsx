@@ -31,16 +31,17 @@ const availableInstruments = [
 ]
 
 export function WatchedInstruments() {
-  const { profile } = useAuth()
+  const { profile, isLoading: authLoading } = useAuth()
   const [watchedSymbols, setWatchedSymbols] = useState<string[]>(['XAUUSD', 'EURUSD', 'BTCUSD'])
   const [showAddModal, setShowAddModal] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const loadWatchedInstruments = async () => {
       if (!profile?.id) return
 
+      setIsFetching(true)
       try {
         const { data } = await supabase
           .from('watched_instruments')
@@ -51,16 +52,18 @@ export function WatchedInstruments() {
           setWatchedSymbols(data.map(d => d.symbol))
         }
       } finally {
-        setIsLoading(false)
+        setIsFetching(false)
       }
     }
 
-    if (profile?.id) {
+    // Only fetch when auth is done loading and we have a profile
+    if (!authLoading && profile?.id) {
       loadWatchedInstruments()
-    } else {
-      setIsLoading(false)
     }
-  }, [profile?.id, supabase])
+  }, [profile?.id, authLoading, supabase])
+
+  // Show loading only while auth is initializing
+  const isLoading = authLoading || isFetching
 
   const addInstrument = async (symbol: string) => {
     if (!profile?.id || watchedSymbols.includes(symbol)) return
