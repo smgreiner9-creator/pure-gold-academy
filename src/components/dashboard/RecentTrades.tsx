@@ -17,36 +17,40 @@ interface RecentTrade {
 }
 
 export function RecentTrades() {
-  const { profile } = useAuth()
+  const { profile, isLoading: authLoading } = useAuth()
   const [trades, setTrades] = useState<RecentTrade[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    if (profile?.id) {
+    const loadTrades = async () => {
+      if (!profile?.id) return
+
+      setIsFetching(true)
+      try {
+        const { data, error } = await supabase
+          .from('journal_entries')
+          .select('id, instrument, direction, outcome, trade_date, r_multiple')
+          .eq('user_id', profile.id)
+          .order('trade_date', { ascending: false })
+          .limit(10)
+
+        if (error) throw error
+        setTrades(data || [])
+      } catch (error) {
+        console.error('Error loading trades:', error)
+      } finally {
+        setIsFetching(false)
+      }
+    }
+
+    // Only fetch when auth is done and we have a profile
+    if (!authLoading && profile?.id) {
       loadTrades()
     }
-  }, [profile?.id])
+  }, [profile?.id, authLoading, supabase])
 
-  const loadTrades = async () => {
-    if (!profile?.id) return
-
-    try {
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .select('id, instrument, direction, outcome, trade_date, r_multiple')
-        .eq('user_id', profile.id)
-        .order('trade_date', { ascending: false })
-        .limit(10)
-
-      if (error) throw error
-      setTrades(data || [])
-    } catch (error) {
-      console.error('Error loading trades:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const isLoading = authLoading || isFetching
 
   const getOutcomeIcon = (outcome: string | null) => {
     switch (outcome) {

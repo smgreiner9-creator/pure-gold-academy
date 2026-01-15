@@ -16,9 +16,9 @@ async function fetchForexPrices(): Promise<Record<string, PriceData>> {
   const prices: Record<string, PriceData> = {}
 
   try {
-    // Fetch forex rates from exchangerate.host (free, no API key needed)
+    // Fetch forex rates from Frankfurter API (free, no API key needed)
     const forexRes = await fetch(
-      'https://api.exchangerate.host/latest?base=USD&symbols=EUR,GBP,JPY',
+      'https://api.frankfurter.app/latest?from=USD&to=EUR,GBP,JPY',
       { next: { revalidate: 30 } }
     )
 
