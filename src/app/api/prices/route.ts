@@ -8,64 +8,156 @@ interface PriceData {
   lastUpdated: string
 }
 
-// Cache prices for 30 seconds to avoid rate limits
+// Cache prices for 15 minutes to conserve API calls (apilayer limit: 100/month)
 let priceCache: { data: Record<string, PriceData>; timestamp: number } | null = null
-const CACHE_TTL = 30 * 1000 // 30 seconds
+const CACHE_TTL = 15 * 60 * 1000 // 15 minutes
 
-async function fetchForexPrices(): Promise<Record<string, PriceData>> {
-  const prices: Record<string, PriceData> = {}
+// Store previous prices to calculate change
+let previousPrices: Record<string, number> = {}
 
+// Check if forex market is open (rough approximation: Sunday 5pm - Friday 5pm ET)
+function isForexMarketOpen(): boolean {
+  const now = new Date()
+  const utcDay = now.getUTCDay()
+  const utcHour = now.getUTCHours()
+
+  // Saturday (6) - market closed
+  if (utcDay === 6) return false
+
+  // Sunday before 22:00 UTC (5pm ET) - market closed
+  if (utcDay === 0 && utcHour < 22) return false
+
+  // Friday after 22:00 UTC (5pm ET) - market closed
+  if (utcDay === 5 && utcHour >= 22) return false
+
+  return true
+}
+
+// Primary: Frankfurter API (free, unlimited)
+async function fetchFromFrankfurter(): Promise<Record<string, PriceData> | null> {
   try {
-    // Fetch forex rates from Frankfurter API (free, no API key needed)
     const forexRes = await fetch(
-      'https://api.frankfurter.app/latest?from=USD&to=EUR,GBP,JPY',
-      { next: { revalidate: 30 } }
+      'https://api.frankfurter.app/latest?from=USD&to=EUR,GBP,JPY,CAD,CHF,AUD,NZD',
+      { cache: 'no-store' }
     )
 
-    if (forexRes.ok) {
-      const forexData = await forexRes.json()
-      const rates = forexData.rates || {}
+    if (!forexRes.ok) return null
 
-      // EUR/USD (inverted since we got USD base)
-      if (rates.EUR) {
-        const eurUsd = 1 / rates.EUR
-        prices['EURUSD'] = {
-          symbol: 'EURUSD',
-          price: parseFloat(eurUsd.toFixed(5)),
-          change: 0,
-          changePercent: 0,
-          lastUpdated: new Date().toISOString(),
-        }
-      }
+    const forexData = await forexRes.json()
+    const rates = forexData.rates || {}
+    const prices: Record<string, PriceData> = {}
+    const now = new Date().toISOString()
 
-      // GBP/USD
-      if (rates.GBP) {
-        const gbpUsd = 1 / rates.GBP
-        prices['GBPUSD'] = {
-          symbol: 'GBPUSD',
-          price: parseFloat(gbpUsd.toFixed(5)),
-          change: 0,
-          changePercent: 0,
-          lastUpdated: new Date().toISOString(),
-        }
-      }
+    // Helper to create price entry with change calculation
+    const createPriceEntry = (symbol: string, price: number, decimals: number): PriceData => {
+      const prevPrice = previousPrices[symbol]
+      const change = prevPrice ? price - prevPrice : 0
+      const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0
 
-      // USD/JPY
-      if (rates.JPY) {
-        prices['USDJPY'] = {
-          symbol: 'USDJPY',
-          price: parseFloat(rates.JPY.toFixed(3)),
-          change: 0,
-          changePercent: 0,
-          lastUpdated: new Date().toISOString(),
-        }
+      return {
+        symbol,
+        price: parseFloat(price.toFixed(decimals)),
+        change: parseFloat(change.toFixed(decimals)),
+        changePercent: parseFloat(changePercent.toFixed(2)),
+        lastUpdated: now,
       }
     }
+
+    // XXX/USD pairs (inverted)
+    if (rates.EUR) prices['EURUSD'] = createPriceEntry('EURUSD', 1 / rates.EUR, 5)
+    if (rates.GBP) prices['GBPUSD'] = createPriceEntry('GBPUSD', 1 / rates.GBP, 5)
+    if (rates.AUD) prices['AUDUSD'] = createPriceEntry('AUDUSD', 1 / rates.AUD, 5)
+    if (rates.NZD) prices['NZDUSD'] = createPriceEntry('NZDUSD', 1 / rates.NZD, 5)
+
+    // USD/XXX pairs (direct)
+    if (rates.JPY) prices['USDJPY'] = createPriceEntry('USDJPY', rates.JPY, 3)
+    if (rates.CAD) prices['USDCAD'] = createPriceEntry('USDCAD', rates.CAD, 5)
+    if (rates.CHF) prices['USDCHF'] = createPriceEntry('USDCHF', rates.CHF, 5)
+
+    // Update previous prices for next calculation
+    Object.entries(prices).forEach(([symbol, data]) => {
+      previousPrices[symbol] = data.price
+    })
+
+    return prices
   } catch (error) {
-    console.error('Error fetching forex prices:', error)
+    console.error('Frankfurter API error:', error)
+    return null
+  }
+}
+
+// Fallback: APILayer (limited to 100 calls/month)
+async function fetchFromApiLayer(): Promise<Record<string, PriceData> | null> {
+  const apiKey = process.env.APILAYER_FOREX_KEY
+  if (!apiKey) {
+    console.warn('APILAYER_FOREX_KEY not configured')
+    return null
   }
 
-  return prices
+  try {
+    const res = await fetch(
+      `http://apilayer.net/api/live?access_key=${apiKey}&currencies=EUR,GBP,JPY,CAD,CHF,AUD,NZD&source=USD&format=1`,
+      { cache: 'no-store' }
+    )
+
+    if (!res.ok) return null
+
+    const data = await res.json()
+    if (!data.success || !data.quotes) {
+      console.error('APILayer error:', data.error)
+      return null
+    }
+
+    const quotes = data.quotes
+    const prices: Record<string, PriceData> = {}
+    const now = new Date().toISOString()
+
+    const createPriceEntry = (symbol: string, price: number, decimals: number): PriceData => {
+      const prevPrice = previousPrices[symbol]
+      const change = prevPrice ? price - prevPrice : 0
+      const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0
+
+      return {
+        symbol,
+        price: parseFloat(price.toFixed(decimals)),
+        change: parseFloat(change.toFixed(decimals)),
+        changePercent: parseFloat(changePercent.toFixed(2)),
+        lastUpdated: now,
+      }
+    }
+
+    // APILayer returns USDEUR, USDGBP etc. - need to invert for EURUSD, GBPUSD
+    if (quotes.USDEUR) prices['EURUSD'] = createPriceEntry('EURUSD', 1 / quotes.USDEUR, 5)
+    if (quotes.USDGBP) prices['GBPUSD'] = createPriceEntry('GBPUSD', 1 / quotes.USDGBP, 5)
+    if (quotes.USDAUD) prices['AUDUSD'] = createPriceEntry('AUDUSD', 1 / quotes.USDAUD, 5)
+    if (quotes.USDNZD) prices['NZDUSD'] = createPriceEntry('NZDUSD', 1 / quotes.USDNZD, 5)
+    if (quotes.USDJPY) prices['USDJPY'] = createPriceEntry('USDJPY', quotes.USDJPY, 3)
+    if (quotes.USDCAD) prices['USDCAD'] = createPriceEntry('USDCAD', quotes.USDCAD, 5)
+    if (quotes.USDCHF) prices['USDCHF'] = createPriceEntry('USDCHF', quotes.USDCHF, 5)
+
+    // Update previous prices
+    Object.entries(prices).forEach(([symbol, data]) => {
+      previousPrices[symbol] = data.price
+    })
+
+    console.log('Used APILayer fallback for forex prices')
+    return prices
+  } catch (error) {
+    console.error('APILayer error:', error)
+    return null
+  }
+}
+
+async function fetchForexPrices(): Promise<Record<string, PriceData>> {
+  // Try Frankfurter first (free, unlimited)
+  let prices = await fetchFromFrankfurter()
+
+  // If failed and we have API key, try APILayer as fallback
+  if (!prices || Object.keys(prices).length === 0) {
+    prices = await fetchFromApiLayer()
+  }
+
+  return prices || {}
 }
 
 async function fetchCryptoPrices(): Promise<Record<string, PriceData>> {

@@ -17,17 +17,25 @@ interface PriceData {
 const instrumentInfo: Record<string, { name: string; decimals: number }> = {
   XAUUSD: { name: 'Gold Spot', decimals: 2 },
   EURUSD: { name: 'Euro / Dollar', decimals: 5 },
-  BTCUSD: { name: 'Bitcoin', decimals: 0 },
   GBPUSD: { name: 'GBP / Dollar', decimals: 5 },
   USDJPY: { name: 'USD / Yen', decimals: 3 },
+  USDCAD: { name: 'USD / CAD', decimals: 5 },
+  USDCHF: { name: 'USD / CHF', decimals: 5 },
+  AUDUSD: { name: 'AUD / Dollar', decimals: 5 },
+  NZDUSD: { name: 'NZD / Dollar', decimals: 5 },
+  BTCUSD: { name: 'Bitcoin', decimals: 0 },
 }
 
 const availableInstruments = [
-  { value: 'XAUUSD', label: 'Gold (XAUUSD)' },
+  { value: 'XAUUSD', label: 'Gold (XAU/USD)' },
   { value: 'EURUSD', label: 'EUR/USD' },
   { value: 'GBPUSD', label: 'GBP/USD' },
   { value: 'USDJPY', label: 'USD/JPY' },
-  { value: 'BTCUSD', label: 'Bitcoin' },
+  { value: 'USDCAD', label: 'USD/CAD' },
+  { value: 'USDCHF', label: 'USD/CHF' },
+  { value: 'AUDUSD', label: 'AUD/USD' },
+  { value: 'NZDUSD', label: 'NZD/USD' },
+  { value: 'BTCUSD', label: 'Bitcoin (BTC/USD)' },
 ]
 
 export function WatchedInstruments() {
@@ -56,10 +64,10 @@ export function WatchedInstruments() {
     }
   }, [])
 
-  // Fetch prices on mount and every 30 seconds
+  // Fetch prices on mount and every 5 minutes (server caches for 15 min)
   useEffect(() => {
     fetchPrices()
-    const interval = setInterval(fetchPrices, 30000) // Update every 30 seconds
+    const interval = setInterval(fetchPrices, 5 * 60 * 1000) // Update every 5 minutes
     return () => clearInterval(interval)
   }, [fetchPrices])
 
