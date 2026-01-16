@@ -12,6 +12,9 @@ export type EmotionType = 'calm' | 'confident' | 'anxious' | 'fearful' | 'greedy
 export type TradeDirection = 'long' | 'short'
 export type TradeOutcome = 'win' | 'loss' | 'breakeven'
 export type ContentType = 'video' | 'pdf' | 'image' | 'text'
+export type PricingType = 'free' | 'paid'
+export type ClassroomSubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'past_due'
+export type PurchaseStatus = 'pending' | 'completed' | 'refunded' | 'failed'
 
 export interface Database {
   public: {
@@ -63,6 +66,7 @@ export interface Database {
           description: string | null
           invite_code: string
           journaling_rules: Json
+          is_paid: boolean
           created_at: string
           updated_at: string
         }
@@ -73,6 +77,7 @@ export interface Database {
           description?: string | null
           invite_code?: string
           journaling_rules?: Json
+          is_paid?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -83,6 +88,7 @@ export interface Database {
           description?: string | null
           invite_code?: string
           journaling_rules?: Json
+          is_paid?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -205,6 +211,8 @@ export interface Database {
           content_text: string | null
           order_index: number
           is_premium: boolean
+          is_individually_priced: boolean
+          price: number
           created_at: string
           updated_at: string
         }
@@ -219,6 +227,8 @@ export interface Database {
           content_text?: string | null
           order_index?: number
           is_premium?: boolean
+          is_individually_priced?: boolean
+          price?: number
           created_at?: string
           updated_at?: string
         }
@@ -233,6 +243,8 @@ export interface Database {
           content_text?: string | null
           order_index?: number
           is_premium?: boolean
+          is_individually_priced?: boolean
+          price?: number
           created_at?: string
           updated_at?: string
         }
@@ -418,6 +430,156 @@ export interface Database {
         }
         Relationships: []
       }
+      teacher_stripe_accounts: {
+        Row: {
+          id: string
+          teacher_id: string
+          stripe_account_id: string | null
+          charges_enabled: boolean
+          payouts_enabled: boolean
+          onboarding_complete: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          teacher_id: string
+          stripe_account_id?: string | null
+          charges_enabled?: boolean
+          payouts_enabled?: boolean
+          onboarding_complete?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          teacher_id?: string
+          stripe_account_id?: string | null
+          charges_enabled?: boolean
+          payouts_enabled?: boolean
+          onboarding_complete?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      classroom_pricing: {
+        Row: {
+          id: string
+          classroom_id: string
+          pricing_type: PricingType
+          monthly_price: number
+          currency: string
+          stripe_price_id: string | null
+          trial_days: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          pricing_type?: PricingType
+          monthly_price?: number
+          currency?: string
+          stripe_price_id?: string | null
+          trial_days?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          pricing_type?: PricingType
+          monthly_price?: number
+          currency?: string
+          stripe_price_id?: string | null
+          trial_days?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      classroom_subscriptions: {
+        Row: {
+          id: string
+          student_id: string
+          classroom_id: string
+          stripe_subscription_id: string | null
+          stripe_customer_id: string | null
+          status: ClassroomSubscriptionStatus
+          current_period_start: string | null
+          current_period_end: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          classroom_id: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          status?: ClassroomSubscriptionStatus
+          current_period_start?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          classroom_id?: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          status?: ClassroomSubscriptionStatus
+          current_period_start?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_purchases: {
+        Row: {
+          id: string
+          student_id: string
+          content_id: string
+          stripe_payment_intent_id: string | null
+          amount: number
+          currency: string
+          platform_fee: number
+          teacher_payout: number
+          status: PurchaseStatus
+          purchased_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          content_id: string
+          stripe_payment_intent_id?: string | null
+          amount: number
+          currency?: string
+          platform_fee: number
+          teacher_payout: number
+          status?: PurchaseStatus
+          purchased_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          content_id?: string
+          stripe_payment_intent_id?: string | null
+          amount?: number
+          currency?: string
+          platform_fee?: number
+          teacher_payout?: number
+          status?: PurchaseStatus
+          purchased_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -432,6 +594,9 @@ export interface Database {
       trade_direction: TradeDirection
       trade_outcome: TradeOutcome
       content_type: ContentType
+      pricing_type: PricingType
+      classroom_subscription_status: ClassroomSubscriptionStatus
+      purchase_status: PurchaseStatus
     }
     CompositeTypes: {
       [_ in never]: never
@@ -451,3 +616,9 @@ export type CommunityComment = Database['public']['Tables']['community_comments'
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type Subscription = Database['public']['Tables']['subscriptions']['Row']
 export type WatchedInstrument = Database['public']['Tables']['watched_instruments']['Row']
+
+// Teacher pricing types
+export type TeacherStripeAccount = Database['public']['Tables']['teacher_stripe_accounts']['Row']
+export type ClassroomPricing = Database['public']['Tables']['classroom_pricing']['Row']
+export type ClassroomSubscription = Database['public']['Tables']['classroom_subscriptions']['Row']
+export type ContentPurchase = Database['public']['Tables']['content_purchases']['Row']
