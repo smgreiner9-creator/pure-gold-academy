@@ -25,25 +25,38 @@ export default function ClassroomsPage() {
     if (!profile?.id) return
 
     try {
-      const { data } = await supabase
-        .from('classrooms')
-        .select('*')
-        .eq('teacher_id', profile.id)
-        .order('created_at', { ascending: false })
+      // Load classrooms and student counts in parallel (2 queries instead of N+1)
+      const [classroomsRes, studentsRes] = await Promise.all([
+        supabase
+          .from('classrooms')
+          .select('*')
+          .eq('teacher_id', profile.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('profiles')
+          .select('classroom_id')
+          .eq('role', 'student')
+          .not('classroom_id', 'is', null)
+      ])
 
-      if (data) {
-        // Get student counts for each classroom
-        const classroomsWithCounts = await Promise.all(
-          data.map(async (classroom) => {
-            const { count } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true })
-              .eq('classroom_id', classroom.id)
-            return { ...classroom, student_count: count || 0 }
-          })
-        )
-        setClassrooms(classroomsWithCounts)
-      }
+      const classroomsData = classroomsRes.data || []
+      const studentsData = studentsRes.data || []
+
+      // Count students per classroom
+      const studentCounts = new Map<string, number>()
+      studentsData.forEach(s => {
+        if (s.classroom_id) {
+          studentCounts.set(s.classroom_id, (studentCounts.get(s.classroom_id) || 0) + 1)
+        }
+      })
+
+      // Add student counts to classrooms
+      const classroomsWithCounts = classroomsData.map(classroom => ({
+        ...classroom,
+        student_count: studentCounts.get(classroom.id) || 0
+      }))
+
+      setClassrooms(classroomsWithCounts)
     } catch (error) {
       console.error('Error loading classrooms:', error)
     } finally {

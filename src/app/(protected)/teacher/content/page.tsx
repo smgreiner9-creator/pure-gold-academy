@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { LearnContent, Classroom, ContentType } from '@/types/database'
@@ -8,17 +8,29 @@ import type { LearnContent, Classroom, ContentType } from '@/types/database'
 export default function ContentManagementPage() {
   const { profile } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
   const [content, setContent] = useState<LearnContent[]>([])
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [selectedClassroom, setSelectedClassroom] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingContent, setEditingContent] = useState<LearnContent | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [newContent, setNewContent] = useState({
     title: '',
     description: '',
     content_type: 'video' as ContentType,
+    content_url: '',
+    content_text: '',
+    is_premium: false,
+  })
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
     content_url: '',
     content_text: '',
     is_premium: false,
@@ -140,6 +152,115 @@ export default function ContentManagementPage() {
     }
   }
 
+  const openEditModal = (item: LearnContent) => {
+    setEditingContent(item)
+    setEditForm({
+      title: item.title,
+      description: item.description || '',
+      content_url: item.content_url || '',
+      content_text: item.content_text || '',
+      is_premium: item.is_premium,
+    })
+    setShowEditModal(true)
+  }
+
+  const handleEditFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !profile?.id) return
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${profile.id}/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('learn-content')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('learn-content')
+        .getPublicUrl(fileName)
+
+      setEditForm(prev => ({ ...prev, content_url: publicUrl }))
+    } catch (error) {
+      console.error('Upload error:', error)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const saveEditChanges = async () => {
+    if (!editingContent || !editForm.title.trim()) return
+
+    setIsSaving(true)
+    try {
+      const { error } = await supabase
+        .from('learn_content')
+        .update({
+          title: editForm.title.trim(),
+          description: editForm.description.trim() || null,
+          content_url: editForm.content_url || null,
+          content_text: editForm.content_text || null,
+          is_premium: editForm.is_premium,
+        })
+        .eq('id', editingContent.id)
+
+      if (error) throw error
+
+      setContent(content.map(c =>
+        c.id === editingContent.id
+          ? { ...c, ...editForm, description: editForm.description || null }
+          : c
+      ))
+      setShowEditModal(false)
+      setEditingContent(null)
+    } catch (error) {
+      console.error('Error saving content:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+
+    const newContent = [...content]
+    const draggedItem = newContent[draggedIndex]
+    newContent.splice(draggedIndex, 1)
+    newContent.splice(index, 0, draggedItem)
+    setContent(newContent)
+    setDraggedIndex(index)
+  }
+
+  const handleDragEnd = async () => {
+    if (draggedIndex === null) return
+
+    // Save new order to database
+    try {
+      await Promise.all(
+        content.map((item, index) =>
+          supabase
+            .from('learn_content')
+            .update({ order_index: index })
+            .eq('id', item.id)
+        )
+      )
+    } catch (error) {
+      console.error('Error saving order:', error)
+      // Reload content on error to restore original order
+      loadContent()
+    }
+
+    setDraggedIndex(null)
+  }
+
   const getIcon = (type: ContentType) => {
     switch (type) {
       case 'video': return 'play_circle'
@@ -226,13 +347,21 @@ export default function ContentManagementPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {content.map((item) => (
+          {content.map((item, index) => (
             <div
               key={item.id}
-              className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]"
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`p-4 rounded-2xl border bg-[var(--card-bg)] transition-all ${
+                draggedIndex === index
+                  ? 'border-[var(--gold)] opacity-50'
+                  : 'border-[var(--card-border)]'
+              }`}
             >
               <div className="flex items-center gap-4">
-                <div className="text-[var(--muted)] cursor-move">
+                <div className="text-[var(--muted)] cursor-grab active:cursor-grabbing">
                   <span className="material-symbols-outlined">drag_indicator</span>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center shrink-0">
@@ -251,6 +380,12 @@ export default function ContentManagementPage() {
                     <p className="text-sm text-[var(--muted)] truncate">{item.description}</p>
                   )}
                 </div>
+                <button
+                  onClick={() => openEditModal(item)}
+                  className="p-2 rounded-lg hover:bg-white/5 text-[var(--muted)] hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined">edit</span>
+                </button>
                 <button
                   onClick={() => deleteContent(item.id)}
                   className="p-2 rounded-lg hover:bg-[var(--danger)]/10 text-[var(--muted)] hover:text-[var(--danger)] transition-colors"
@@ -389,6 +524,123 @@ export default function ContentManagementPage() {
                     <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                   ) : null}
                   Add Content
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingContent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="w-full max-w-lg my-8 p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+            <h3 className="text-xl font-bold mb-6">Edit Content</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={2}
+                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                />
+              </div>
+
+              {editingContent.content_type === 'text' ? (
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                    Content
+                  </label>
+                  <textarea
+                    value={editForm.content_text}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, content_text: e.target.value }))}
+                    rows={8}
+                    className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                    Content URL
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editForm.content_url}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, content_url: e.target.value }))}
+                      className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                    />
+                    <input
+                      ref={editFileInputRef}
+                      type="file"
+                      accept={
+                        editingContent.content_type === 'video' ? 'video/*' :
+                        editingContent.content_type === 'pdf' ? 'application/pdf' :
+                        editingContent.content_type === 'image' ? 'image/*' : '*/*'
+                      }
+                      onChange={handleEditFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editFileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="w-full h-11 px-6 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isUploading ? (
+                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-lg">upload</span>
+                      )}
+                      Upload New File
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <label className="flex items-center gap-3 p-3 rounded-xl bg-black/20 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.is_premium}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, is_premium: e.target.checked }))}
+                  className="w-4 h-4 accent-[var(--gold)]"
+                />
+                <span className="text-sm">Premium content only</span>
+              </label>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingContent(null)
+                  }}
+                  className="flex-1 h-11 px-6 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEditChanges}
+                  disabled={isSaving || !editForm.title.trim()}
+                  className="flex-1 gold-gradient text-black font-bold h-11 px-6 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-sm disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                  ) : null}
+                  Save Changes
                 </button>
               </div>
             </div>

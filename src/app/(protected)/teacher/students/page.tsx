@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { Profile, Classroom } from '@/types/database'
+
+const PAGE_SIZE = 20
 
 interface StudentWithStats extends Profile {
   total_trades: number
@@ -18,6 +21,8 @@ export default function StudentsPage() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [selectedClassroom, setSelectedClassroom] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -47,69 +52,96 @@ export default function StudentsPage() {
     }
   }
 
-  const loadStudents = async () => {
+  const loadStudents = async (append = false) => {
     if (!profile?.id) return
 
-    setIsLoading(true)
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
+
     try {
       const classroomIds = selectedClassroom === 'all'
         ? classrooms.map(c => c.id)
         : [selectedClassroom]
 
-      const { data: studentData } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('classroom_id', classroomIds)
-        .eq('role', 'student')
+      const offset = append ? students.length : 0
 
-      if (studentData) {
-        // Get stats for each student
-        const studentsWithStats = await Promise.all(
-          studentData.map(async (student) => {
-            const { data: journals } = await supabase
-              .from('journal_entries')
-              .select('outcome, trade_date')
-              .eq('user_id', student.id)
-              .order('trade_date', { ascending: false })
+      // Load students and all their journals in parallel (2 queries instead of N+1)
+      const [studentsRes, journalsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .in('classroom_id', classroomIds)
+          .eq('role', 'student')
+          .order('display_name', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1),
+        supabase
+          .from('journal_entries')
+          .select('user_id, outcome, trade_date')
+          .in('classroom_id', classroomIds)
+          .order('trade_date', { ascending: false })
+      ])
 
-            const totalTrades = journals?.length || 0
-            const wins = journals?.filter(j => j.outcome === 'win').length || 0
-            const withOutcome = journals?.filter(j => j.outcome).length || 0
-            const winRate = withOutcome > 0 ? (wins / withOutcome) * 100 : 0
-            const lastJournal = journals?.[0]?.trade_date || null
+      const studentData = studentsRes.data || []
+      const allJournals = journalsRes.data || []
 
-            // Calculate streak
-            let streak = 0
-            if (journals && journals.length > 0) {
-              const sortedDates = [...new Set(journals.map(j => j.trade_date))].sort().reverse()
-              for (let i = 0; i < sortedDates.length; i++) {
-                const expectedDate = new Date()
-                expectedDate.setDate(expectedDate.getDate() - i)
-                const expected = expectedDate.toISOString().split('T')[0]
-                if (sortedDates[i] === expected) {
-                  streak++
-                } else {
-                  break
-                }
-              }
+      // Check if there are more students
+      setHasMore(studentData.length === PAGE_SIZE)
+
+      // Group journals by student
+      const journalsByStudent = new Map<string, typeof allJournals>()
+      allJournals.forEach(journal => {
+        const existing = journalsByStudent.get(journal.user_id) || []
+        existing.push(journal)
+        journalsByStudent.set(journal.user_id, existing)
+      })
+
+      // Calculate stats for each student from grouped data
+      const studentsWithStats = studentData.map((student) => {
+        const journals = journalsByStudent.get(student.id) || []
+        const totalTrades = journals.length
+        const wins = journals.filter(j => j.outcome === 'win').length
+        const withOutcome = journals.filter(j => j.outcome).length
+        const winRate = withOutcome > 0 ? (wins / withOutcome) * 100 : 0
+        const lastJournal = journals[0]?.trade_date || null
+
+        // Calculate streak
+        let streak = 0
+        if (journals.length > 0) {
+          const sortedDates = [...new Set(journals.map(j => j.trade_date))].sort().reverse()
+          for (let i = 0; i < sortedDates.length; i++) {
+            const expectedDate = new Date()
+            expectedDate.setDate(expectedDate.getDate() - i)
+            const expected = expectedDate.toISOString().split('T')[0]
+            if (sortedDates[i] === expected) {
+              streak++
+            } else {
+              break
             }
+          }
+        }
 
-            return {
-              ...student,
-              total_trades: totalTrades,
-              win_rate: winRate,
-              last_journal_date: lastJournal,
-              streak,
-            } as StudentWithStats
-          })
-        )
+        return {
+          ...student,
+          total_trades: totalTrades,
+          win_rate: winRate,
+          last_journal_date: lastJournal,
+          streak,
+        } as StudentWithStats
+      })
 
+      if (append) {
+        setStudents(prev => [...prev, ...studentsWithStats])
+      } else {
         setStudents(studentsWithStats)
       }
     } catch (error) {
       console.error('Error loading students:', error)
     } finally {
       setIsLoading(false)
+      setLoadingMore(false)
     }
   }
 
@@ -156,9 +188,10 @@ export default function StudentsPage() {
       ) : (
         <div className="space-y-3">
           {students.map(student => (
-            <div
+            <Link
               key={student.id}
-              className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+              href={`/teacher/students/${student.id}`}
+              className="block p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors group"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -166,7 +199,7 @@ export default function StudentsPage() {
                     {student.display_name?.[0] || student.email[0].toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="font-bold">{student.display_name || student.email}</h3>
+                    <h3 className="font-bold group-hover:text-[var(--gold)] transition-colors">{student.display_name || student.email}</h3>
                     <p className="text-sm text-[var(--muted)]">{student.email}</p>
                   </div>
                 </div>
@@ -196,10 +229,34 @@ export default function StudentsPage() {
                         : 'Never'}
                     </p>
                   </div>
+                  <span className="material-symbols-outlined text-[var(--muted)] group-hover:text-[var(--gold)] transition-colors">
+                    chevron_right
+                  </span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
+
+          {/* Load More Button */}
+          {hasMore && (
+            <button
+              onClick={() => loadStudents(true)}
+              disabled={loadingMore}
+              className="w-full py-3 rounded-xl border border-[var(--card-border)] text-[var(--muted)] hover:text-white hover:border-[var(--gold)]/30 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                  Load More Students
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>

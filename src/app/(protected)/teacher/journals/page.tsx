@@ -6,12 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { JournalEntry, Profile, Classroom } from '@/types/database'
 
+const PAGE_SIZE = 20
+
 export default function TeacherJournalsPage() {
   const { profile } = useAuth()
   const [journals, setJournals] = useState<(JournalEntry & { student?: Profile; feedback_count?: number })[]>([])
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [selectedClassroom, setSelectedClassroom] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [selectedJournal, setSelectedJournal] = useState<string | null>(null)
   const [feedbackText, setFeedbackText] = useState('')
   const [isSendingFeedback, setIsSendingFeedback] = useState(false)
@@ -40,38 +44,78 @@ export default function TeacherJournalsPage() {
     setClassrooms(data || [])
   }
 
-  const loadJournals = async () => {
+  const loadJournals = async (append = false) => {
     if (!profile?.id) return
 
-    setIsLoading(true)
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
+
     try {
       const classroomIds = selectedClassroom === 'all'
         ? classrooms.map(c => c.id)
         : [selectedClassroom]
 
-      const { data } = await supabase
+      const offset = append ? journals.length : 0
+
+      // Load journals
+      const journalsRes = await supabase
         .from('journal_entries')
         .select('*')
         .in('classroom_id', classroomIds)
         .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-      if (data) {
-        // Get feedback counts
-        const journalsWithFeedback = await Promise.all(
-          data.map(async (journal) => {
-            const { count } = await supabase
-              .from('journal_feedback')
-              .select('*', { count: 'exact', head: true })
-              .eq('journal_entry_id', journal.id)
-            return { ...journal, feedback_count: count || 0 }
-          })
-        )
+      const journalsData = journalsRes.data || []
+
+      // Load student profiles
+      const studentIds = [...new Set(journalsData.map(j => j.user_id))]
+      const { data: studentProfiles } = studentIds.length > 0
+        ? await supabase
+            .from('profiles')
+            .select('id, email, display_name, avatar_url')
+            .in('id', studentIds)
+        : { data: [] }
+
+      const studentMap = new Map((studentProfiles || []).map(s => [s.id, s]))
+
+      // Check if there are more
+      setHasMore(journalsData.length === PAGE_SIZE)
+
+      // Get all journal IDs and fetch feedback counts in one query
+      const journalIds = journalsData.map(j => j.id)
+      const { data: feedbackData } = journalIds.length > 0
+        ? await supabase
+            .from('journal_feedback')
+            .select('journal_entry_id')
+            .in('journal_entry_id', journalIds)
+        : { data: [] }
+
+      // Count feedback per journal
+      const feedbackCounts = new Map<string, number>()
+      feedbackData?.forEach(f => {
+        feedbackCounts.set(f.journal_entry_id, (feedbackCounts.get(f.journal_entry_id) || 0) + 1)
+      })
+
+      // Add feedback counts and student to journals
+      const journalsWithFeedback = journalsData.map(journal => ({
+        ...journal,
+        student: studentMap.get(journal.user_id),
+        feedback_count: feedbackCounts.get(journal.id) || 0
+      }))
+
+      if (append) {
+        setJournals(prev => [...prev, ...journalsWithFeedback] as (JournalEntry & { student?: Profile; feedback_count?: number })[])
+      } else {
         setJournals(journalsWithFeedback as (JournalEntry & { student?: Profile; feedback_count?: number })[])
       }
     } catch (error) {
       console.error('Error loading journals:', error)
     } finally {
       setIsLoading(false)
+      setLoadingMore(false)
     }
   }
 
@@ -273,6 +317,27 @@ export default function TeacherJournalsPage() {
               </div>
             </div>
           ))}
+
+          {/* Load More Button */}
+          {hasMore && (
+            <button
+              onClick={() => loadJournals(true)}
+              disabled={loadingMore}
+              className="w-full py-3 rounded-xl border border-[var(--card-border)] text-[var(--muted)] hover:text-white hover:border-[var(--gold)]/30 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                  Load More Journals
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -14,6 +14,14 @@ interface DashboardStats {
   contentCount: number
 }
 
+interface StudentAlert {
+  id: string
+  name: string
+  email: string
+  type: 'inactive' | 'losing_streak' | 'low_activity'
+  detail: string
+}
+
 export default function TeacherDashboardPage() {
   const { profile } = useAuth()
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
@@ -25,6 +33,7 @@ export default function TeacherDashboardPage() {
     contentCount: 0,
   })
   const [recentJournals, setRecentJournals] = useState<(JournalEntry & { student?: Profile })[]>([])
+  const [studentAlerts, setStudentAlerts] = useState<StudentAlert[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
@@ -49,39 +58,65 @@ export default function TeacherDashboardPage() {
       if (classroomData && classroomData.length > 0) {
         const classroomIds = classroomData.map(c => c.id)
 
-        // Load students
-        const { data: students } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('classroom_id', classroomIds)
+        // Parallel queries for better performance
+        const [studentsRes, journalsRes, contentCountRes, allJournalsRes] = await Promise.all([
+          // Load student count
+          supabase
+            .from('profiles')
+            .select('id, classroom_id')
+            .in('classroom_id', classroomIds)
+            .eq('role', 'student'),
+          // Load recent journals
+          supabase
+            .from('journal_entries')
+            .select('*')
+            .in('classroom_id', classroomIds)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          // Load content count
+          supabase
+            .from('learn_content')
+            .select('id', { count: 'exact', head: true })
+            .in('classroom_id', classroomIds),
+          // Load all journals for stats (just outcome and user_id for counting)
+          supabase
+            .from('journal_entries')
+            .select('id, user_id, outcome, created_at')
+            .in('classroom_id', classroomIds)
+        ])
 
-        // Load journals
-        const { data: journals } = await supabase
-          .from('journal_entries')
-          .select('*')
-          .in('classroom_id', classroomIds)
-          .order('created_at', { ascending: false })
-          .limit(10)
+        const students = studentsRes.data || []
+        const journals = journalsRes.data || []
+        const allJournals = allJournalsRes.data || []
 
-        setRecentJournals((journals || []) as (JournalEntry & { student?: Profile })[])
+        // Get student profiles for recent journals
+        const studentIds = [...new Set(journals.map(j => j.user_id))]
+        const { data: studentProfiles } = studentIds.length > 0
+          ? await supabase
+              .from('profiles')
+              .select('id, email, display_name, avatar_url')
+              .in('id', studentIds)
+          : { data: [] }
 
-        // Load content count
-        const { count: contentCount } = await supabase
-          .from('learn_content')
-          .select('id', { count: 'exact' })
-          .in('classroom_id', classroomIds)
+        const studentMap = new Map((studentProfiles || []).map(s => [s.id, s]))
+        const journalsWithStudents = journals.map(j => ({
+          ...j,
+          student: studentMap.get(j.user_id)
+        }))
 
-        // Calculate stats
-        const totalStudents = students?.length || 0
-        const totalJournals = journals?.length || 0
-        const wins = journals?.filter(j => j.outcome === 'win').length || 0
-        const totalWithOutcome = journals?.filter(j => j.outcome).length || 0
+        setRecentJournals(journalsWithStudents as (JournalEntry & { student?: Profile })[])
+
+        // Calculate stats from all journals
+        const totalStudents = students.length
+        const totalJournals = allJournals.length
+        const wins = allJournals.filter(j => j.outcome === 'win').length
+        const totalWithOutcome = allJournals.filter(j => j.outcome).length
 
         // Active students = students who journaled in last 7 days
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
         const activeStudentIds = new Set(
-          journals?.filter(j => new Date(j.created_at) >= weekAgo).map(j => j.user_id)
+          allJournals.filter(j => new Date(j.created_at) >= weekAgo).map(j => j.user_id)
         )
 
         setStats({
@@ -89,8 +124,73 @@ export default function TeacherDashboardPage() {
           activeStudents: activeStudentIds.size,
           totalJournals,
           avgWinRate: totalWithOutcome > 0 ? (wins / totalWithOutcome) * 100 : 0,
-          contentCount: contentCount || 0,
+          contentCount: contentCountRes.count || 0,
         })
+
+        // Calculate student alerts
+        const alerts: StudentAlert[] = []
+        const twoWeeksAgo = new Date()
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+
+        // Group journals by student for analysis
+        const journalsByStudent = new Map<string, typeof allJournals>()
+        allJournals.forEach(journal => {
+          const existing = journalsByStudent.get(journal.user_id) || []
+          existing.push(journal)
+          journalsByStudent.set(journal.user_id, existing)
+        })
+
+        students.forEach(student => {
+          const studentProfile = student as Profile
+          const studentJournals = journalsByStudent.get(student.id) || []
+          const recentJournals = studentJournals.filter(j => new Date(j.created_at) >= twoWeeksAgo)
+          const studentName = studentProfile.display_name || studentProfile.email
+
+          // Check for inactive students (no journals in 2 weeks)
+          if (recentJournals.length === 0 && studentJournals.length > 0) {
+            const lastJournal = studentJournals[0]
+            const daysSince = Math.floor((Date.now() - new Date(lastJournal.created_at).getTime()) / (1000 * 60 * 60 * 24))
+            alerts.push({
+              id: student.id,
+              name: studentName,
+              email: studentProfile.email,
+              type: 'inactive',
+              detail: `No activity for ${daysSince} days`
+            })
+          }
+
+          // Check for losing streaks (3+ consecutive losses)
+          if (recentJournals.length >= 3) {
+            const sortedRecent = recentJournals.slice().sort((a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+            let losingStreak = 0
+            for (const j of sortedRecent) {
+              if (j.outcome === 'loss') {
+                losingStreak++
+              } else if (j.outcome === 'win') {
+                break
+              }
+            }
+            if (losingStreak >= 3) {
+              alerts.push({
+                id: student.id,
+                name: studentName,
+                email: studentProfile.email,
+                type: 'losing_streak',
+                detail: `${losingStreak} consecutive losses`
+              })
+            }
+          }
+        })
+
+        // Sort by type priority and limit
+        const sortedAlerts = alerts.sort((a, b) => {
+          const priority = { losing_streak: 0, inactive: 1, low_activity: 2 }
+          return priority[a.type] - priority[b.type]
+        }).slice(0, 5)
+
+        setStudentAlerts(sortedAlerts)
       }
     } catch (error) {
       console.error('Error loading dashboard:', error)
@@ -195,6 +295,44 @@ export default function TeacherDashboardPage() {
           </div>
         </Link>
       </div>
+
+      {/* Students Needing Attention */}
+      {studentAlerts.length > 0 && (
+        <div className="p-6 rounded-2xl border border-[var(--warning)]/30 bg-[var(--warning)]/5">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-lg text-[var(--warning)]">warning</span>
+            <h3 className="font-bold text-lg">Students Needing Attention</h3>
+          </div>
+          <div className="space-y-2">
+            {studentAlerts.map(alert => (
+              <Link
+                key={alert.id}
+                href={`/teacher/students/${alert.id}`}
+                className="flex items-center justify-between p-3 rounded-xl bg-black/20 hover:bg-black/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    alert.type === 'losing_streak' ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--warning)]/10 text-[var(--warning)]'
+                  }`}>
+                    <span className="material-symbols-outlined text-lg">
+                      {alert.type === 'losing_streak' ? 'trending_down' : 'schedule'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{alert.name}</p>
+                    <p className="text-xs text-[var(--muted)]">{alert.email}</p>
+                  </div>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${
+                  alert.type === 'losing_streak' ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-[var(--warning)]/10 text-[var(--warning)]'
+                }`}>
+                  {alert.detail}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Journals */}
       <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
