@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useCallback, useMemo } from 'react'
+import { useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/store/auth'
 
 // Singleton supabase client for auth operations
 let supabaseClient: ReturnType<typeof createClient> | null = null
-let authInitialized = false
-let authInitializing = false
+
+// Use sessionStorage to track initialization across page loads
+// This ensures fresh auth check on hard refresh while avoiding duplicate calls
+const AUTH_INIT_KEY = 'auth_init_timestamp'
+const AUTH_STALE_MS = 5000 // Consider stale after 5 seconds
 
 function getSupabaseClient() {
   if (!supabaseClient) {
@@ -17,21 +20,52 @@ function getSupabaseClient() {
   return supabaseClient
 }
 
+function shouldReinitialize(): boolean {
+  if (typeof window === 'undefined') return true
+
+  const lastInit = sessionStorage.getItem(AUTH_INIT_KEY)
+  if (!lastInit) return true
+
+  const elapsed = Date.now() - parseInt(lastInit, 10)
+  // If page was loaded fresh (elapsed would be large or NaN), reinitialize
+  return isNaN(elapsed) || elapsed > AUTH_STALE_MS
+}
+
+function markInitialized() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(AUTH_INIT_KEY, Date.now().toString())
+  }
+}
+
+function clearInitialized() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(AUTH_INIT_KEY)
+  }
+}
+
 export function useAuth() {
   const router = useRouter()
   const { user, profile, isLoading, setUser, setProfile, setIsLoading, reset } = useAuthStore()
   const supabase = useMemo(() => getSupabaseClient(), [])
+  const initializingRef = useRef(false)
 
   useEffect(() => {
-    // Skip if already initialized or currently initializing
-    if (authInitialized || authInitializing) {
+    // Skip if currently initializing (prevent duplicate calls in same render)
+    if (initializingRef.current) {
       return
     }
 
-    authInitializing = true
+    // Check if we need to reinitialize
+    if (!shouldReinitialize() && !isLoading) {
+      return
+    }
+
+    initializingRef.current = true
 
     const initAuth = async () => {
       try {
+        setIsLoading(true)
+
         // First check if there's a session (doesn't throw if missing)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
@@ -74,8 +108,8 @@ export function useAuth() {
         setProfile(null)
       } finally {
         setIsLoading(false)
-        authInitialized = true
-        authInitializing = false
+        markInitialized()
+        initializingRef.current = false
       }
     }
 
@@ -83,6 +117,8 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event)
+
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           setUser(session?.user ?? null)
           if (session?.user) {
@@ -93,19 +129,31 @@ export function useAuth() {
               .single()
             setProfile(profileData)
           }
+          markInitialized()
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           setProfile(null)
-          authInitialized = false
+          clearInitialized()
           router.push('/auth/login')
         }
       }
     )
 
+    // Handle tab visibility change - recheck auth when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Clear the timestamp so next render will recheck
+        clearInitialized()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [supabase, setUser, setProfile, setIsLoading, router])
+  }, [supabase, setUser, setProfile, setIsLoading, router, isLoading])
 
   const signUp = useCallback(async (email: string, password: string, role: 'student' | 'teacher' = 'student') => {
     const { data, error } = await supabase.auth.signUp({
@@ -130,8 +178,8 @@ export function useAuth() {
   }, [supabase])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    // Reset initialization state for fresh login
-    authInitialized = false
+    // Clear initialization state for fresh login
+    clearInitialized()
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -143,7 +191,7 @@ export function useAuth() {
   }, [supabase])
 
   const signOut = useCallback(async () => {
-    authInitialized = false
+    clearInitialized()
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     reset()

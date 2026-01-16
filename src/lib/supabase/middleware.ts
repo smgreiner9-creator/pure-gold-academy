@@ -1,6 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Helper to add cache-busting headers
+function addNoCacheHeaders(response: NextResponse): NextResponse {
+  response.headers.set(
+    'Cache-Control',
+    'no-store, no-cache, must-revalidate, proxy-revalidate'
+  )
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  return response
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -11,7 +22,7 @@ export async function updateSession(request: NextRequest) {
 
   // If no Supabase credentials, skip auth checks
   if (!supabaseUrl || !supabaseKey) {
-    return supabaseResponse
+    return addNoCacheHeaders(supabaseResponse)
   }
 
   const supabase = createServerClient(
@@ -50,15 +61,17 @@ export async function updateSession(request: NextRequest) {
   if (isProtectedRoute && !session) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
+    const redirectResponse = NextResponse.redirect(url)
+    return addNoCacheHeaders(redirectResponse)
   }
 
   // Redirect authenticated users away from auth pages
   if (session && request.nextUrl.pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    const redirectResponse = NextResponse.redirect(url)
+    return addNoCacheHeaders(redirectResponse)
   }
 
-  return supabaseResponse
+  return addNoCacheHeaders(supabaseResponse)
 }
