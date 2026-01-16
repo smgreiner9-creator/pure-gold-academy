@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useTeacherStripe } from '@/hooks/useTeacherStripe'
-import type { ClassroomSubscription, ContentPurchase, Classroom } from '@/types/database'
+import type { Classroom } from '@/types/database'
 
 interface EarningsData {
   totalEarnings: number
@@ -75,30 +75,50 @@ export default function EarningsPage() {
       }
 
       // Get subscriptions and purchases in parallel
-      const [subscriptionsRes, purchasesRes, studentsRes, pricingRes] = await Promise.all([
+      const [subscriptionsRes, purchasesRes, studentsRes, pricingRes, contentRes] = await Promise.all([
         supabase
           .from('classroom_subscriptions')
-          .select('*, profiles!classroom_subscriptions_student_id_fkey(email, display_name)')
+          .select('*')
           .in('classroom_id', classroomIds),
         supabase
           .from('content_purchases')
-          .select('*, profiles!content_purchases_student_id_fkey(email, display_name), learn_content!content_purchases_content_id_fkey(title, classroom_id)')
+          .select('*')
           .eq('status', 'completed'),
         supabase
           .from('profiles')
-          .select('id, classroom_id')
-          .in('classroom_id', classroomIds)
+          .select('id, email, display_name, classroom_id')
           .eq('role', 'student'),
         supabase
           .from('classroom_pricing')
           .select('*')
+          .in('classroom_id', classroomIds),
+        supabase
+          .from('learn_content')
+          .select('id, title, classroom_id')
           .in('classroom_id', classroomIds)
       ])
 
-      const subscriptions = subscriptionsRes.data || []
-      const purchases = (purchasesRes.data || []).filter((p: { learn_content?: { classroom_id: string } }) =>
-        classroomIds.includes(p.learn_content?.classroom_id || '')
-      )
+      const rawSubscriptions = subscriptionsRes.data || []
+      const allContent = contentRes.data || []
+      const allProfiles = studentsRes.data || []
+      const contentMap = new Map(allContent.map(c => [c.id, c]))
+      const profileMap = new Map(allProfiles.map(p => [p.id, p]))
+
+      // Add profile info to subscriptions
+      const subscriptions = rawSubscriptions.map(sub => ({
+        ...sub,
+        profile: profileMap.get(sub.student_id)
+      }))
+
+      // Filter purchases to only include content from teacher's classrooms
+      const purchases = (purchasesRes.data || []).filter(p => {
+        const content = contentMap.get(p.content_id)
+        return content && classroomIds.includes(content.classroom_id)
+      }).map(p => ({
+        ...p,
+        learn_content: contentMap.get(p.content_id),
+        profile: profileMap.get(p.student_id)
+      }))
       const students = studentsRes.data || []
       const pricing = pricingRes.data || []
 
@@ -117,7 +137,7 @@ export default function EarningsPage() {
       })
 
       // Calculate purchase earnings
-      const purchaseEarnings = purchases.reduce((sum: number, p: { teacher_payout?: number }) =>
+      const purchaseEarnings = purchases.reduce((sum, p) =>
         sum + (p.teacher_payout || 0), 0)
 
       // This month's earnings (simplified - just show current active subscriptions)
@@ -128,7 +148,7 @@ export default function EarningsPage() {
         s.status === 'active' &&
         new Date(s.current_period_start || s.created_at) <= now
       )
-      const thisMonthPurchases = purchases.filter((p: { purchased_at: string }) =>
+      const thisMonthPurchases = purchases.filter(p =>
         new Date(p.purchased_at) >= startOfMonth
       )
 
@@ -136,14 +156,14 @@ export default function EarningsPage() {
         const price = pricingMap.get(s.classroom_id) || 0
         return sum + price * (1 - platformFeePercent)
       }, 0)
-      const thisMonthPurchaseEarnings = thisMonthPurchases.reduce((sum: number, p: { teacher_payout?: number }) =>
+      const thisMonthPurchaseEarnings = thisMonthPurchases.reduce((sum, p) =>
         sum + (p.teacher_payout || 0), 0)
 
       // Build transactions list
       const transactions: Transaction[] = []
 
       // Add subscription transactions (using current period as date)
-      subscriptions.forEach((sub: ClassroomSubscription & { profiles?: { email: string; display_name?: string } }) => {
+      subscriptions.forEach(sub => {
         const classroom = classrooms?.find(c => c.id === sub.classroom_id)
         const price = pricingMap.get(sub.classroom_id) || 0
         const platformFee = price * platformFeePercent
@@ -153,17 +173,14 @@ export default function EarningsPage() {
           amount: price,
           platformFee,
           netEarnings: price - platformFee,
-          studentEmail: sub.profiles?.email || 'Unknown',
+          studentEmail: sub.profile?.email || 'Unknown',
           classroomName: classroom?.name || 'Unknown',
           date: sub.current_period_start || sub.created_at,
         })
       })
 
       // Add purchase transactions
-      purchases.forEach((p: ContentPurchase & {
-        profiles?: { email: string; display_name?: string };
-        learn_content?: { title: string; classroom_id: string }
-      }) => {
+      purchases.forEach(p => {
         const classroom = classrooms?.find(c => c.id === p.learn_content?.classroom_id)
         transactions.push({
           id: p.id,
@@ -171,7 +188,7 @@ export default function EarningsPage() {
           amount: p.amount,
           platformFee: p.platform_fee,
           netEarnings: p.teacher_payout,
-          studentEmail: p.profiles?.email || 'Unknown',
+          studentEmail: p.profile?.email || 'Unknown',
           classroomName: classroom?.name || 'Unknown',
           contentTitle: p.learn_content?.title,
           date: p.purchased_at,
@@ -184,13 +201,13 @@ export default function EarningsPage() {
       // Calculate earnings by classroom
       const earningsByClassroom: ClassroomEarnings[] = (classrooms || []).map(classroom => {
         const classroomSubs = subscriptions.filter(s => s.classroom_id === classroom.id && s.status === 'active')
-        const classroomPurchases = purchases.filter((p: { learn_content?: { classroom_id: string } }) =>
+        const classroomPurchases = purchases.filter(p =>
           p.learn_content?.classroom_id === classroom.id
         )
         const price = pricingMap.get(classroom.id) || 0
 
         const subEarnings = classroomSubs.length * price * (1 - platformFeePercent)
-        const purchaseEarnings = classroomPurchases.reduce((sum: number, p: { teacher_payout?: number }) =>
+        const purchaseEarnings = classroomPurchases.reduce((sum, p) =>
           sum + (p.teacher_payout || 0), 0)
 
         return {

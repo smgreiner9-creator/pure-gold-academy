@@ -84,11 +84,13 @@ export async function POST(request: NextRequest) {
           // This is a platform subscription update
           const updateData: Record<string, unknown> = { status: subscription.status }
 
-          if (subscription.current_period_start) {
-            updateData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString()
+          // Access period dates via subscription items for newer Stripe API
+          const subAny = subscription as unknown as { current_period_start?: number; current_period_end?: number }
+          if (subAny.current_period_start) {
+            updateData.current_period_start = new Date(subAny.current_period_start * 1000).toISOString()
           }
-          if (subscription.current_period_end) {
-            updateData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString()
+          if (subAny.current_period_end) {
+            updateData.current_period_end = new Date(subAny.current_period_end * 1000).toISOString()
           }
 
           await supabaseAdmin
@@ -224,11 +226,13 @@ async function handleClassroomSubscriptionUpdated(
     status,
   }
 
-  if (subscription.current_period_start) {
-    updateData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString()
+  // Access period dates with type assertion for Stripe API compatibility
+  const subAny = subscription as unknown as { current_period_start?: number; current_period_end?: number }
+  if (subAny.current_period_start) {
+    updateData.current_period_start = new Date(subAny.current_period_start * 1000).toISOString()
   }
-  if (subscription.current_period_end) {
-    updateData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString()
+  if (subAny.current_period_end) {
+    updateData.current_period_end = new Date(subAny.current_period_end * 1000).toISOString()
   }
 
   await supabaseAdmin
