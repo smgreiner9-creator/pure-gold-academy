@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { Classroom } from '@/types/database'
 
 export default function ClassroomsPage() {
   const { profile } = useAuth()
-  const [classrooms, setClassrooms] = useState<(Classroom & { student_count?: number })[]>([])
+  const [classrooms, setClassrooms] = useState<(Classroom & { student_count?: number; pricing?: { pricing_type: string; monthly_price: number } })[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
@@ -25,8 +26,8 @@ export default function ClassroomsPage() {
     if (!profile?.id) return
 
     try {
-      // Load classrooms and student counts in parallel (2 queries instead of N+1)
-      const [classroomsRes, studentsRes] = await Promise.all([
+      // Load classrooms, student counts, and pricing in parallel
+      const [classroomsRes, studentsRes, pricingRes] = await Promise.all([
         supabase
           .from('classrooms')
           .select('*')
@@ -36,11 +37,15 @@ export default function ClassroomsPage() {
           .from('profiles')
           .select('classroom_id')
           .eq('role', 'student')
-          .not('classroom_id', 'is', null)
+          .not('classroom_id', 'is', null),
+        supabase
+          .from('classroom_pricing')
+          .select('classroom_id, pricing_type, monthly_price')
       ])
 
       const classroomsData = classroomsRes.data || []
       const studentsData = studentsRes.data || []
+      const pricingData = pricingRes.data || []
 
       // Count students per classroom
       const studentCounts = new Map<string, number>()
@@ -50,13 +55,20 @@ export default function ClassroomsPage() {
         }
       })
 
-      // Add student counts to classrooms
-      const classroomsWithCounts = classroomsData.map(classroom => ({
+      // Map pricing by classroom
+      const pricingByClassroom = new Map<string, { pricing_type: string; monthly_price: number }>()
+      pricingData.forEach(p => {
+        pricingByClassroom.set(p.classroom_id, { pricing_type: p.pricing_type, monthly_price: p.monthly_price })
+      })
+
+      // Add student counts and pricing to classrooms
+      const classroomsWithData = classroomsData.map(classroom => ({
         ...classroom,
-        student_count: studentCounts.get(classroom.id) || 0
+        student_count: studentCounts.get(classroom.id) || 0,
+        pricing: pricingByClassroom.get(classroom.id)
       }))
 
-      setClassrooms(classroomsWithCounts)
+      setClassrooms(classroomsWithData)
     } catch (error) {
       console.error('Error loading classrooms:', error)
     } finally {
@@ -165,11 +177,24 @@ export default function ClassroomsPage() {
                     <span className="material-symbols-outlined text-2xl text-[var(--gold)]">school</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{classroom.name}</h3>
+                    <Link href={`/teacher/classrooms/${classroom.id}`} className="font-bold text-lg hover:text-[var(--gold)] transition-colors">
+                      {classroom.name}
+                    </Link>
                     {classroom.description && (
                       <p className="text-sm text-[var(--muted)] mt-1">{classroom.description}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-4 mt-3">
+                      {classroom.pricing?.pricing_type === 'paid' ? (
+                        <span className="flex items-center gap-1.5 text-sm text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded-lg">
+                          <span className="material-symbols-outlined text-sm">paid</span>
+                          ${classroom.pricing.monthly_price}/mo
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-sm text-[var(--muted)] bg-white/5 px-2 py-0.5 rounded-lg">
+                          <span className="material-symbols-outlined text-sm">lock_open</span>
+                          Free
+                        </span>
+                      )}
                       <span className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
                         <span className="material-symbols-outlined text-sm">group</span>
                         {classroom.student_count} students
@@ -195,6 +220,13 @@ export default function ClassroomsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <Link
+                    href={`/teacher/classrooms/${classroom.id}`}
+                    className="h-9 px-4 rounded-lg border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">visibility</span>
+                    View
+                  </Link>
                   <button
                     onClick={() => deleteClassroom(classroom.id)}
                     className="p-2 rounded-lg hover:bg-[var(--danger)]/10 text-[var(--muted)] hover:text-[var(--danger)] transition-colors"

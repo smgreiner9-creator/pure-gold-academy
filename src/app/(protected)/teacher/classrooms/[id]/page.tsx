@@ -287,6 +287,13 @@ export default function ClassroomDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                href={`/teacher/classrooms/${classroomId}/pricing`}
+                className="h-10 px-4 rounded-lg border border-[var(--gold)]/30 text-[var(--gold)] font-semibold hover:bg-[var(--gold)]/10 transition-colors text-sm flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">payments</span>
+                Pricing
+              </Link>
               <button
                 onClick={() => setIsEditing(true)}
                 className="h-10 px-4 rounded-lg border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm flex items-center gap-2"

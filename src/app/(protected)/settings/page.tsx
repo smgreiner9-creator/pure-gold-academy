@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { PushNotificationSettings } from '@/components/settings/PushNotificationSettings'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { profile, signOut, isPremium } = useAuth()
   const [displayName, setDisplayName] = useState(profile?.display_name || '')
   const [classroomCode, setClassroomCode] = useState('')
@@ -48,33 +50,24 @@ export default function SettingsPage() {
     setIsJoining(true)
     setMessage(null)
     try {
-      // Find classroom by invite code
+      // Validate the invite code exists
       const { data: classroom, error: findError } = await supabase
         .from('classrooms')
-        .select('id, name')
+        .select('id, invite_code')
         .eq('invite_code', classroomCode.trim().toLowerCase())
         .single()
 
       if (findError || !classroom) {
         setMessage({ type: 'error', text: 'Invalid invite code' })
+        setIsJoining(false)
         return
       }
 
-      // Update user's classroom
-      const { error } = await supabase
-        .from('profiles')
-        .update({ classroom_id: classroom.id })
-        .eq('id', profile.id)
-
-      if (error) throw error
-
-      setMessage({ type: 'success', text: `Successfully joined ${classroom.name}!` })
-      setClassroomCode('')
-      setTimeout(() => window.location.reload(), 1500)
+      // Redirect to the join page to handle free/paid flow
+      router.push(`/classroom/join/${classroom.invite_code}`)
     } catch (error) {
-      console.error('Error joining classroom:', error)
-      setMessage({ type: 'error', text: 'Failed to join classroom' })
-    } finally {
+      console.error('Error finding classroom:', error)
+      setMessage({ type: 'error', text: 'Failed to find classroom' })
       setIsJoining(false)
     }
   }

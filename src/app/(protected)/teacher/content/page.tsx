@@ -20,6 +20,7 @@ export default function ContentManagementPage() {
   const [isAdding, setIsAdding] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [stripeConnected, setStripeConnected] = useState(false)
   const [newContent, setNewContent] = useState({
     title: '',
     description: '',
@@ -27,6 +28,8 @@ export default function ContentManagementPage() {
     content_url: '',
     content_text: '',
     is_premium: false,
+    is_individually_priced: false,
+    price: '',
   })
   const [editForm, setEditForm] = useState({
     title: '',
@@ -34,6 +37,8 @@ export default function ContentManagementPage() {
     content_url: '',
     content_text: '',
     is_premium: false,
+    is_individually_priced: false,
+    price: '',
   })
   const supabase = useMemo(() => createClient(), [])
 
@@ -52,15 +57,23 @@ export default function ContentManagementPage() {
   const loadClassrooms = async () => {
     if (!profile?.id) return
 
-    const { data } = await supabase
-      .from('classrooms')
-      .select('*')
-      .eq('teacher_id', profile.id)
+    const [classroomsRes, stripeRes] = await Promise.all([
+      supabase
+        .from('classrooms')
+        .select('*')
+        .eq('teacher_id', profile.id),
+      supabase
+        .from('teacher_stripe_accounts')
+        .select('charges_enabled')
+        .eq('teacher_id', profile.id)
+        .single()
+    ])
 
-    if (data && data.length > 0) {
-      setClassrooms(data)
-      setSelectedClassroom(data[0].id)
+    if (classroomsRes.data && classroomsRes.data.length > 0) {
+      setClassrooms(classroomsRes.data)
+      setSelectedClassroom(classroomsRes.data[0].id)
     }
+    setStripeConnected(stripeRes.data?.charges_enabled === true)
     setIsLoading(false)
   }
 
@@ -106,6 +119,7 @@ export default function ContentManagementPage() {
 
     setIsAdding(true)
     try {
+      const price = newContent.is_individually_priced ? parseFloat(newContent.price) || 0 : 0
       const { data, error } = await supabase
         .from('learn_content')
         .insert({
@@ -117,6 +131,8 @@ export default function ContentManagementPage() {
           content_url: newContent.content_url || null,
           content_text: newContent.content_text || null,
           is_premium: newContent.is_premium,
+          is_individually_priced: newContent.is_individually_priced && price > 0,
+          price: price,
           order_index: content.length,
         })
         .select()
@@ -132,6 +148,8 @@ export default function ContentManagementPage() {
         content_url: '',
         content_text: '',
         is_premium: false,
+        is_individually_priced: false,
+        price: '',
       })
       setShowAddModal(false)
     } catch (error) {
@@ -160,6 +178,8 @@ export default function ContentManagementPage() {
       content_url: item.content_url || '',
       content_text: item.content_text || '',
       is_premium: item.is_premium,
+      is_individually_priced: item.is_individually_priced,
+      price: item.price?.toString() || '',
     })
     setShowEditModal(true)
   }
@@ -196,6 +216,7 @@ export default function ContentManagementPage() {
 
     setIsSaving(true)
     try {
+      const price = editForm.is_individually_priced ? parseFloat(editForm.price) || 0 : 0
       const { error } = await supabase
         .from('learn_content')
         .update({
@@ -204,6 +225,8 @@ export default function ContentManagementPage() {
           content_url: editForm.content_url || null,
           content_text: editForm.content_text || null,
           is_premium: editForm.is_premium,
+          is_individually_priced: editForm.is_individually_priced && price > 0,
+          price: price,
         })
         .eq('id', editingContent.id)
 
@@ -211,7 +234,13 @@ export default function ContentManagementPage() {
 
       setContent(content.map(c =>
         c.id === editingContent.id
-          ? { ...c, ...editForm, description: editForm.description || null }
+          ? {
+              ...c,
+              ...editForm,
+              description: editForm.description || null,
+              is_individually_priced: editForm.is_individually_priced && price > 0,
+              price: price,
+            }
           : c
       ))
       setShowEditModal(false)
@@ -368,11 +397,16 @@ export default function ContentManagementPage() {
                   <span className="material-symbols-outlined text-xl text-[var(--gold)]">{getIcon(item.content_type)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold">{item.title}</h3>
                     {item.is_premium && (
                       <span className="text-[9px] px-2 py-0.5 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] font-bold uppercase">
                         Premium
+                      </span>
+                    )}
+                    {item.is_individually_priced && item.price > 0 && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-lg bg-[var(--success)]/10 text-[var(--success)] font-bold">
+                        ${item.price}
                       </span>
                     )}
                   </div>
@@ -508,6 +542,47 @@ export default function ContentManagementPage() {
                 <span className="text-sm">Premium content only</span>
               </label>
 
+              {/* Individual Pricing */}
+              <div className="space-y-3 p-4 rounded-xl bg-black/20">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newContent.is_individually_priced}
+                    onChange={(e) => setNewContent(prev => ({ ...prev, is_individually_priced: e.target.checked }))}
+                    disabled={!stripeConnected}
+                    className="w-4 h-4 accent-[var(--gold)]"
+                  />
+                  <span className="text-sm">Sell this content individually</span>
+                </label>
+                {!stripeConnected && (
+                  <p className="text-xs text-[var(--warning)]">
+                    Connect Stripe in Settings to enable individual content sales
+                  </p>
+                )}
+                {newContent.is_individually_priced && stripeConnected && (
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                      Price (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]">$</span>
+                      <input
+                        type="number"
+                        value={newContent.price}
+                        onChange={(e) => setNewContent(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="0.00"
+                        min="1"
+                        step="0.01"
+                        className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                      />
+                    </div>
+                    <p className="text-xs text-[var(--muted)] mt-2">
+                      One-time purchase. 15% platform fee applies.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowAddModal(false)}
@@ -621,6 +696,47 @@ export default function ContentManagementPage() {
                 />
                 <span className="text-sm">Premium content only</span>
               </label>
+
+              {/* Individual Pricing */}
+              <div className="space-y-3 p-4 rounded-xl bg-black/20">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.is_individually_priced}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, is_individually_priced: e.target.checked }))}
+                    disabled={!stripeConnected}
+                    className="w-4 h-4 accent-[var(--gold)]"
+                  />
+                  <span className="text-sm">Sell this content individually</span>
+                </label>
+                {!stripeConnected && (
+                  <p className="text-xs text-[var(--warning)]">
+                    Connect Stripe in Settings to enable individual content sales
+                  </p>
+                )}
+                {editForm.is_individually_priced && stripeConnected && (
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                      Price (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]">$</span>
+                      <input
+                        type="number"
+                        value={editForm.price}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="0.00"
+                        min="1"
+                        step="0.01"
+                        className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                      />
+                    </div>
+                    <p className="text-xs text-[var(--muted)] mt-2">
+                      One-time purchase. 15% platform fee applies.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <div className="flex gap-3 pt-2">
                 <button

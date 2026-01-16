@@ -294,6 +294,36 @@ export default function TeacherDashboardPage() {
             </div>
           </div>
         </Link>
+
+        <Link
+          href="/teacher/earnings"
+          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--success)]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-[var(--success)]">payments</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Earnings</h3>
+              <p className="text-sm text-[var(--muted)]">View revenue & transactions</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/teacher/settings"
+          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-[var(--muted)]">settings</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Settings</h3>
+              <p className="text-sm text-[var(--muted)]">Stripe Connect & preferences</p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Students Needing Attention */}
