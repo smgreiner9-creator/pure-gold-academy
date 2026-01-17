@@ -21,10 +21,13 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
+      // Refresh to ensure middleware picks up the new session cookie
+      router.refresh()
+      // Small delay to ensure cookies are propagated before navigation
+      await new Promise(resolve => setTimeout(resolve, 100))
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in')
-    } finally {
       setIsLoading(false)
     }
   }
