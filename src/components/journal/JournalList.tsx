@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonJournalEntry } from '@/components/ui/Skeleton'
+import { QuickCloseModal } from '@/components/dashboard/QuickCloseModal'
 import type { JournalEntry, TradeOutcome } from '@/types/database'
 
 function exportToCSV(entries: JournalEntry[], filename: string) {
@@ -74,6 +75,7 @@ export function JournalList() {
   const { profile } = useAuth()
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [closingTrade, setClosingTrade] = useState<JournalEntry | null>(null)
   const [filter, setFilter] = useState({
     outcome: '',
     instrument: '',
@@ -158,25 +160,6 @@ export function JournalList() {
     }
   }
 
-  const getEmotionEmoji = (emotion: string | null) => {
-    switch (emotion) {
-      case 'calm':
-        return '😌'
-      case 'confident':
-        return '💪'
-      case 'anxious':
-        return '😰'
-      case 'fearful':
-        return '😨'
-      case 'greedy':
-        return '🤑'
-      case 'frustrated':
-        return '😤'
-      default:
-        return '😐'
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -241,84 +224,101 @@ export function JournalList() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {entries.map((entry) => (
-            <div
+            <Link
               key={entry.id}
-              className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/50 transition-all group"
+              href={`/journal/${entry.id}`}
+              className="block p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/50 transition-all"
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${getOutcomeColor(entry.outcome)}`}>
-                      {entry.outcome ? entry.outcome : 'Open'}
-                    </span>
-                    <span className="font-bold">{entry.instrument}</span>
-                    <span className={`flex items-center gap-1 text-xs font-semibold ${
-                      entry.direction === 'long' ? 'text-[var(--success)]' : 'text-[var(--danger)]'
-                    }`}>
-                      <span className="material-symbols-outlined text-sm">
-                        {entry.direction === 'long' ? 'trending_up' : 'trending_down'}
-                      </span>
-                      {entry.direction.toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--muted)]">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">calendar_today</span>
-                      {new Date(entry.trade_date).toLocaleDateString()}
-                    </span>
-                    <span className="mono-num">Entry: {entry.entry_price}</span>
-                    {entry.exit_price && <span className="mono-num">Exit: {entry.exit_price}</span>}
-                    {entry.r_multiple !== null && (
-                      <span className={`mono-num font-bold ${entry.r_multiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                        {entry.r_multiple >= 0 ? '+' : ''}{entry.r_multiple}R
-                      </span>
-                    )}
-                    {entry.pnl !== null && (
-                      <span className={`mono-num font-bold ${entry.pnl >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                        ${entry.pnl.toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-2 text-sm">
-                    <span>{getEmotionEmoji(entry.emotion_before)}</span>
-                    {entry.emotion_during && <span>→ {getEmotionEmoji(entry.emotion_during)}</span>}
-                    {entry.emotion_after && <span>→ {getEmotionEmoji(entry.emotion_after)}</span>}
-                    {Array.isArray(entry.rules_followed) && entry.rules_followed.length > 0 && (
-                      <span className="ml-2 text-[var(--success)] text-xs">
-                        {entry.rules_followed.length} rules followed
-                      </span>
-                    )}
-                  </div>
+              {/* Line 1: Outcome, Instrument, Direction, Date, R-Multiple or Close button */}
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getOutcomeColor(entry.outcome)}`}>
+                    {entry.outcome ? entry.outcome : 'Open'}
+                  </span>
+                  <span className="font-bold text-sm">{entry.instrument}</span>
+                  <span className={`text-xs font-semibold ${
+                    entry.direction === 'long' ? 'text-[var(--success)]' : 'text-[var(--danger)]'
+                  }`}>
+                    {entry.direction.toUpperCase()}
+                  </span>
+                  <span className="text-xs text-[var(--muted)]">
+                    {new Date(entry.trade_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {entry.screenshot_urls && entry.screenshot_urls.length > 0 && (
-                    <span className="text-sm text-[var(--muted)] flex items-center gap-1">
-                      <img src={entry.screenshot_urls[0]} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                      {entry.screenshot_urls.length > 1 && `+${entry.screenshot_urls.length - 1}`}
+                  {entry.r_multiple !== null && (
+                    <span className={`mono-num text-sm font-bold ${entry.r_multiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                      {entry.r_multiple >= 0 ? '+' : ''}{entry.r_multiple.toFixed(1)}R
                     </span>
                   )}
-                  <Link
-                    href={`/journal/${entry.id}`}
-                    className="w-9 h-9 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-lg">visibility</span>
-                  </Link>
+                  {!entry.outcome && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setClosingTrade(entry)
+                      }}
+                      className="h-7 px-2.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">check</span>
+                      Close
+                    </button>
+                  )}
                   <button
-                    onClick={() => deleteEntry(entry.id)}
-                    className="w-9 h-9 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      deleteEntry(entry.id)
+                    }}
+                    className="w-7 h-7 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-lg">delete</span>
+                    <span className="material-symbols-outlined text-sm">delete</span>
                   </button>
                 </div>
               </div>
-            </div>
+
+              {/* Line 2: Entry → Exit, P&L, Emotion */}
+              <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+                <span className="mono-num">{entry.entry_price}</span>
+                {entry.exit_price && (
+                  <>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    <span className="mono-num">{entry.exit_price}</span>
+                  </>
+                )}
+                {entry.pnl !== null && (
+                  <span className={`mono-num font-bold ${entry.pnl >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                    ${entry.pnl.toFixed(2)}
+                  </span>
+                )}
+                {entry.emotion_before && (
+                  <span className="capitalize">{entry.emotion_before}</span>
+                )}
+                {entry.screenshot_urls && entry.screenshot_urls.length > 0 && (
+                  <span className="flex items-center gap-1 ml-auto">
+                    <span className="material-symbols-outlined text-sm">image</span>
+                    {entry.screenshot_urls.length}
+                  </span>
+                )}
+              </div>
+            </Link>
           ))}
         </div>
+      )}
+
+      {/* Quick Close Modal */}
+      {closingTrade && (
+        <QuickCloseModal
+          isOpen={true}
+          trade={closingTrade}
+          onClose={() => {
+            setClosingTrade(null)
+            loadEntries()
+          }}
+        />
       )}
     </div>
   )

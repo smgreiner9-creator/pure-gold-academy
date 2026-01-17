@@ -31,7 +31,7 @@ export function Sidebar() {
   })
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-20 lg:w-64 bg-[var(--card-bg)] border-r border-[var(--card-border)] flex flex-col z-50">
+    <aside className="sidebar-3d fixed left-0 top-0 h-full w-20 lg:w-64 flex flex-col z-50">
       {/* Logo */}
       <div className="p-4 lg:p-6 flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-3">

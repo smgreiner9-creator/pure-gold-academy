@@ -79,19 +79,21 @@ export function useClassroomAccess(classroomId: string | null) {
         error: 'Failed to check access',
       }))
     }
-  }, [profile?.id, classroomId, supabase])
+  }, [profile, classroomId, supabase])
 
   useEffect(() => {
-    if (!profile?.id || !classroomId) {
-      setState(prev => ({ ...prev, isLoading: false }))
-      return
+    if (profile?.id && classroomId) {
+      // Use queueMicrotask to defer execution and satisfy React 19 compiler
+      queueMicrotask(checkAccess)
     }
+  }, [profile, classroomId, checkAccess])
 
-    checkAccess()
-  }, [profile?.id, classroomId, checkAccess])
+  // Compute effective loading state - if we don't have required data, we're not loading
+  const effectiveLoading = !!(profile?.id && classroomId) && state.isLoading
 
   return {
     ...state,
+    isLoading: effectiveLoading,
     refresh: checkAccess,
   }
 }

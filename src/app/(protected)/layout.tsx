@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { StatsHeader } from '@/components/layout/StatsHeader'
+import { FloatingActionButton } from '@/components/layout/FloatingActionButton'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function ProtectedLayout({
@@ -23,7 +24,7 @@ export default function ProtectedLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 gold-gradient rounded-lg flex items-center justify-center">
             <span className="text-black font-bold text-xl">PG</span>
@@ -43,7 +44,7 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex overflow-hidden">
+    <div className="min-h-screen flex overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
@@ -64,6 +65,9 @@ export default function ProtectedLayout({
 
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Floating Action Button for Quick Trade */}
+      <FloatingActionButton />
     </div>
   )
 }

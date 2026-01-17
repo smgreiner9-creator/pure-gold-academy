@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonTradeItem } from '@/components/ui/Skeleton'
+import { QuickCloseModal } from './QuickCloseModal'
 import type { TradeDirection, TradeOutcome } from '@/types/database'
 
 interface RecentTrade {
@@ -14,12 +15,16 @@ interface RecentTrade {
   outcome: TradeOutcome | null
   trade_date: string
   r_multiple: number | null
+  entry_price: number
+  stop_loss: number | null
+  position_size: number
 }
 
 export function RecentTrades() {
   const { profile, isLoading: authLoading } = useAuth()
   const [trades, setTrades] = useState<RecentTrade[]>([])
   const [isFetching, setIsFetching] = useState(false)
+  const [closingTrade, setClosingTrade] = useState<RecentTrade | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -30,7 +35,7 @@ export function RecentTrades() {
       try {
         const { data, error } = await supabase
           .from('journal_entries')
-          .select('id, instrument, direction, outcome, trade_date, r_multiple')
+          .select('id, instrument, direction, outcome, trade_date, r_multiple, entry_price, stop_loss, position_size')
           .eq('user_id', profile.id)
           .order('trade_date', { ascending: false })
           .limit(10)
@@ -153,8 +158,22 @@ export function RecentTrades() {
                   </span>
                 </div>
 
-                {/* R Multiple or Outcome */}
-                <div className="text-right">
+                {/* R Multiple or Outcome with Close Button */}
+                <div className="text-right flex items-center gap-2">
+                  {/* Close button for open trades */}
+                  {trade.outcome === null && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setClosingTrade(trade)
+                      }}
+                      className="w-8 h-8 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center hover:bg-[var(--gold)]/20 transition-colors"
+                      title="Close trade"
+                    >
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                    </button>
+                  )}
                   {trade.r_multiple !== null ? (
                     <span className={`mono-num text-sm font-bold ${
                       trade.r_multiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
@@ -188,6 +207,22 @@ export function RecentTrades() {
           </div>
           <span className="text-[10px] text-[var(--muted)]">Last {trades.length} trades</span>
         </div>
+      )}
+
+      {/* Quick Close Modal */}
+      {closingTrade && (
+        <QuickCloseModal
+          isOpen={!!closingTrade}
+          onClose={() => setClosingTrade(null)}
+          trade={{
+            id: closingTrade.id,
+            instrument: closingTrade.instrument,
+            direction: closingTrade.direction,
+            entry_price: closingTrade.entry_price,
+            stop_loss: closingTrade.stop_loss,
+            position_size: closingTrade.position_size,
+          }}
+        />
       )}
     </div>
   )

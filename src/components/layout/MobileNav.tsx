@@ -29,7 +29,7 @@ export function MobileNav() {
   }).slice(0, 5) // Max 5 items for mobile nav
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[var(--card-bg)] border-t border-[var(--card-border)] md:hidden z-50">
+    <nav className="mobile-nav-3d fixed bottom-0 left-0 right-0 md:hidden z-50">
       <div className="flex justify-around items-center h-16 px-2 pb-safe">
         {filteredNavItems.map((item) => {
           const isActive = pathname.startsWith(item.href)

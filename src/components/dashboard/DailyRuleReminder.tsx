@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore, useCallback } from 'react'
 
 const tradingRules = [
   { rule: 'Always use a stop loss', icon: 'shield' },
@@ -29,32 +29,35 @@ function getDailyRule() {
   return tradingRules[dayOfYear % tradingRules.length]
 }
 
-function checkIfDismissedToday(): boolean {
-  if (typeof window === 'undefined') return false
-  const dismissedDate = localStorage.getItem('rule_dismissed_date')
-  const today = new Date().toISOString().split('T')[0]
-  return dismissedDate === today
+// No-op subscribe for useSyncExternalStore
+const emptySubscribe = () => () => {}
+
+// Hook to check localStorage using React 19 pattern
+function useIsDismissedToday() {
+  const getSnapshot = useCallback(() => {
+    const dismissedDate = localStorage.getItem('rule_dismissed_date')
+    const today = new Date().toISOString().split('T')[0]
+    return dismissedDate === today
+  }, [])
+
+  // Return true on server to hide during SSR
+  const getServerSnapshot = useCallback(() => true, [])
+
+  return useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot)
 }
 
 export function DailyRuleReminder() {
-  const [dismissed, setDismissed] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    if (checkIfDismissedToday()) {
-      setDismissed(true)
-    }
-  }, [])
+  const isDismissedFromStorage = useIsDismissedToday()
+  const [userDismissed, setUserDismissed] = useState(false)
 
   const handleDismiss = () => {
     const today = new Date().toISOString().split('T')[0]
     localStorage.setItem('rule_dismissed_date', today)
-    setDismissed(true)
+    setUserDismissed(true)
   }
 
-  // Don't render until mounted (client-side)
-  if (!mounted || dismissed) return null
+  // Don't render if already dismissed (from storage or user action)
+  if (isDismissedFromStorage || userDismissed) return null
 
   const dailyRule = getDailyRule()
 

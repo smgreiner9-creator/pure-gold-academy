@@ -31,9 +31,12 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
   const [direction, setDirection] = useState<TradeDirection>('long')
   const [entryPrice, setEntryPrice] = useState('')
   const [stopLoss, setStopLoss] = useState('')
+  const [positionSize, setPositionSize] = useState('0.01')
   const [emotion, setEmotion] = useState<EmotionType>('neutral')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const lotSizePresets = ['0.01', '0.05', '0.1', '0.5', '1.0']
 
   const handleSubmit = async () => {
     if (!profile?.id) return
@@ -55,7 +58,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
           direction,
           entry_price: parseFloat(entryPrice),
           stop_loss: stopLoss ? parseFloat(stopLoss) : null,
-          position_size: 0.01,
+          position_size: parseFloat(positionSize) || 0.01,
           emotion_before: emotion,
           trade_date: new Date().toISOString().split('T')[0],
           entry_time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
@@ -70,6 +73,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
       setDirection('long')
       setEntryPrice('')
       setStopLoss('')
+      setPositionSize('0.01')
       setEmotion('neutral')
       onClose()
 
@@ -186,6 +190,29 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                 placeholder="Optional"
                 step="any"
               />
+            </div>
+          </div>
+
+          {/* Position Size */}
+          <div>
+            <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1.5 block">
+              Lot Size
+            </label>
+            <div className="flex gap-2">
+              {lotSizePresets.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setPositionSize(size)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                    positionSize === size
+                      ? 'bg-[var(--gold)] text-black'
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
           </div>
 

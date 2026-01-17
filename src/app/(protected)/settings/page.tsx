@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { PushNotificationSettings } from '@/components/settings/PushNotificationSettings'
+import { StreakBadges } from '@/components/dashboard/StreakBadges'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -220,6 +221,9 @@ export default function SettingsPage() {
         </div>
         <PushNotificationSettings />
       </div>
+
+      {/* Achievements Section */}
+      <StreakBadges />
 
       {/* Classroom Section (Students only) */}
       {profile?.role === 'student' && (

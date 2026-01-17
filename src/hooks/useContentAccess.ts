@@ -59,16 +59,17 @@ export function useContentAccess(classroomId: string | null) {
         error: 'Failed to load access data',
       }))
     }
-  }, [profile?.id, classroomId, supabase])
+  }, [profile, classroomId, supabase])
 
   useEffect(() => {
-    if (!profile?.id || !classroomId) {
-      setState(prev => ({ ...prev, isLoading: false }))
-      return
+    if (profile?.id && classroomId) {
+      // Use queueMicrotask to defer execution and satisfy React 19 compiler
+      queueMicrotask(loadAccessData)
     }
+  }, [profile, classroomId, loadAccessData])
 
-    loadAccessData()
-  }, [profile?.id, classroomId, loadAccessData])
+  // Compute effective loading state - if we don't have required data, we're not loading
+  const effectiveLoading = !!(profile?.id && classroomId) && state.isLoading
 
   const checkContentAccess = useCallback((content: LearnContent): ContentAccessResult => {
     // Check 1: Content is free (not individually priced)
@@ -126,6 +127,7 @@ export function useContentAccess(classroomId: string | null) {
 
   return {
     ...state,
+    isLoading: effectiveLoading,
     classroomSubscription,
     purchases,
     checkContentAccess,
@@ -207,20 +209,21 @@ export function useSingleContentAccess(contentId: string | null) {
       setHasAccess(false)
       setIsLoading(false)
     }
-  }, [profile?.id, contentId, isPremium, supabase])
+  }, [profile, contentId, isPremium, supabase])
 
   useEffect(() => {
-    if (!profile?.id || !contentId) {
-      setIsLoading(false)
-      return
+    if (profile?.id && contentId) {
+      // Use queueMicrotask to defer execution and satisfy React 19 compiler
+      queueMicrotask(checkAccess)
     }
+  }, [profile, contentId, checkAccess])
 
-    checkAccess()
-  }, [profile?.id, contentId, checkAccess])
+  // Compute effective loading state - if we don't have required data, we're not loading
+  const effectiveLoading = !!(profile?.id && contentId) && isLoading
 
   return {
     hasAccess,
-    isLoading,
+    isLoading: effectiveLoading,
     purchase,
     refresh: checkAccess,
   }
