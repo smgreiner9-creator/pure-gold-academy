@@ -16,17 +16,22 @@ export function EquityCurve({ entries }: EquityCurveProps) {
 
     if (entriesWithPnl.length === 0) return null
 
-    // Calculate cumulative P&L
-    let cumulative = 0
-    const points = entriesWithPnl.map((entry) => {
-      cumulative += entry.pnl || 0
-      return {
+    // Calculate cumulative P&L using reduce to avoid mutation
+    const points = entriesWithPnl.reduce<Array<{
+      date: string
+      pnl: number
+      cumulative: number
+      outcome: string | null
+    }>>((acc, entry) => {
+      const prevCumulative = acc.length > 0 ? acc[acc.length - 1].cumulative : 0
+      acc.push({
         date: entry.trade_date,
         pnl: entry.pnl || 0,
-        cumulative,
+        cumulative: prevCumulative + (entry.pnl || 0),
         outcome: entry.outcome,
-      }
-    })
+      })
+      return acc
+    }, [])
 
     // Find min/max for scaling
     const values = points.map((p) => p.cumulative)

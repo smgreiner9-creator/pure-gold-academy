@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from './useAuth'
 import type { ClassroomSubscription, ClassroomPricing } from '@/types/database'
@@ -26,16 +26,7 @@ export function useClassroomAccess(classroomId: string | null) {
   })
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (!profile?.id || !classroomId) {
-      setState(prev => ({ ...prev, isLoading: false }))
-      return
-    }
-
-    checkAccess()
-  }, [profile?.id, classroomId])
-
-  const checkAccess = async () => {
+  const checkAccess = useCallback(async () => {
     if (!profile?.id || !classroomId) return
 
     try {
@@ -88,7 +79,16 @@ export function useClassroomAccess(classroomId: string | null) {
         error: 'Failed to check access',
       }))
     }
-  }
+  }, [profile?.id, classroomId, supabase])
+
+  useEffect(() => {
+    if (!profile?.id || !classroomId) {
+      setState(prev => ({ ...prev, isLoading: false }))
+      return
+    }
+
+    checkAccess()
+  }, [profile?.id, classroomId, checkAccess])
 
   return {
     ...state,

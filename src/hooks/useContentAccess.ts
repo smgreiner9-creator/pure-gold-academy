@@ -28,16 +28,7 @@ export function useContentAccess(classroomId: string | null) {
   const [purchases, setPurchases] = useState<ContentPurchase[]>([])
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (!profile?.id || !classroomId) {
-      setState(prev => ({ ...prev, isLoading: false }))
-      return
-    }
-
-    loadAccessData()
-  }, [profile?.id, classroomId])
-
-  const loadAccessData = async () => {
+  const loadAccessData = useCallback(async () => {
     if (!profile?.id || !classroomId) return
 
     try {
@@ -68,7 +59,16 @@ export function useContentAccess(classroomId: string | null) {
         error: 'Failed to load access data',
       }))
     }
-  }
+  }, [profile?.id, classroomId, supabase])
+
+  useEffect(() => {
+    if (!profile?.id || !classroomId) {
+      setState(prev => ({ ...prev, isLoading: false }))
+      return
+    }
+
+    loadAccessData()
+  }, [profile?.id, classroomId, loadAccessData])
 
   const checkContentAccess = useCallback((content: LearnContent): ContentAccessResult => {
     // Check 1: Content is free (not individually priced)
@@ -141,16 +141,7 @@ export function useSingleContentAccess(contentId: string | null) {
   const [purchase, setPurchase] = useState<ContentPurchase | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (!profile?.id || !contentId) {
-      setIsLoading(false)
-      return
-    }
-
-    checkAccess()
-  }, [profile?.id, contentId])
-
-  const checkAccess = async () => {
+  const checkAccess = useCallback(async () => {
     if (!profile?.id || !contentId) return
 
     try {
@@ -216,7 +207,16 @@ export function useSingleContentAccess(contentId: string | null) {
       setHasAccess(false)
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, contentId, isPremium, supabase])
+
+  useEffect(() => {
+    if (!profile?.id || !contentId) {
+      setIsLoading(false)
+      return
+    }
+
+    checkAccess()
+  }, [profile?.id, contentId, checkAccess])
 
   return {
     hasAccess,

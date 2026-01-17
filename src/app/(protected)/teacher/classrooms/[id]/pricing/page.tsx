@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
-import type { Classroom, ClassroomPricing, TeacherStripeAccount } from '@/types/database'
+import type { Classroom, TeacherStripeAccount } from '@/types/database'
 
 export default function ClassroomPricingPage() {
   const params = useParams()

@@ -29,20 +29,22 @@ function getDailyRule() {
   return tradingRules[dayOfYear % tradingRules.length]
 }
 
+function checkIfDismissedToday(): boolean {
+  if (typeof window === 'undefined') return false
+  const dismissedDate = localStorage.getItem('rule_dismissed_date')
+  const today = new Date().toISOString().split('T')[0]
+  return dismissedDate === today
+}
+
 export function DailyRuleReminder() {
-  const [dailyRule, setDailyRule] = useState<{ rule: string; icon: string } | null>(null)
   const [dismissed, setDismissed] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Check if already dismissed today
-    const dismissedDate = localStorage.getItem('rule_dismissed_date')
-    const today = new Date().toISOString().split('T')[0]
-
-    if (dismissedDate === today) {
+    setMounted(true)
+    if (checkIfDismissedToday()) {
       setDismissed(true)
     }
-
-    setDailyRule(getDailyRule())
   }, [])
 
   const handleDismiss = () => {
@@ -51,7 +53,10 @@ export function DailyRuleReminder() {
     setDismissed(true)
   }
 
-  if (dismissed || !dailyRule) return null
+  // Don't render until mounted (client-side)
+  if (!mounted || dismissed) return null
+
+  const dailyRule = getDailyRule()
 
   return (
     <div className="p-4 rounded-xl border border-[var(--gold)]/20 bg-[var(--gold)]/5">

@@ -13,25 +13,7 @@ let priceCache: { data: Record<string, PriceData>; timestamp: number } | null = 
 const CACHE_TTL = 15 * 60 * 1000 // 15 minutes
 
 // Store previous prices to calculate change
-let previousPrices: Record<string, number> = {}
-
-// Check if forex market is open (rough approximation: Sunday 5pm - Friday 5pm ET)
-function isForexMarketOpen(): boolean {
-  const now = new Date()
-  const utcDay = now.getUTCDay()
-  const utcHour = now.getUTCHours()
-
-  // Saturday (6) - market closed
-  if (utcDay === 6) return false
-
-  // Sunday before 22:00 UTC (5pm ET) - market closed
-  if (utcDay === 0 && utcHour < 22) return false
-
-  // Friday after 22:00 UTC (5pm ET) - market closed
-  if (utcDay === 5 && utcHour >= 22) return false
-
-  return true
-}
+const previousPrices: Record<string, number> = {}
 
 // Primary: Frankfurter API (free, unlimited)
 async function fetchFromFrankfurter(): Promise<Record<string, PriceData> | null> {

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { LearnContent, Classroom, ContentType } from '@/types/database'
@@ -318,12 +319,12 @@ export default function ContentManagementPage() {
           <p className="text-[var(--muted)] mb-6 text-sm">
             Create a classroom first to upload content
           </p>
-          <a
+          <Link
             href="/teacher/classrooms"
             className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
           >
             Create Classroom
-          </a>
+          </Link>
         </div>
       </div>
     )
