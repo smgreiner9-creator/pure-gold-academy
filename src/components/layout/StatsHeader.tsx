@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { useJournalRoute } from '@/hooks/useJournalRoute'
+import { QuickTradeEntry } from '@/components/dashboard/QuickTradeEntry'
 
 const getSessionInfo = () => {
   const hour = new Date().getUTCHours()
@@ -24,8 +25,10 @@ const getSessionInfo = () => {
 }
 
 export function StatsHeader() {
+  const isJournalRoute = useJournalRoute()
   const { profile } = useAuth()
   const supabase = useMemo(() => createClient(), [])
+  const [isQuickTradeOpen, setIsQuickTradeOpen] = useState(false)
   const [stats, setStats] = useState({
     totalTrades: 0,
     winRate: 0,
@@ -105,6 +108,11 @@ export function StatsHeader() {
     })
   }
 
+  // Only show on journal-related pages
+  if (!isJournalRoute) {
+    return null
+  }
+
   return (
     <header className="h-16 border-b border-[var(--card-border)] bg-[var(--card-bg)] flex items-center px-4 lg:px-6 justify-between shrink-0">
       {/* Stats */}
@@ -169,14 +177,20 @@ export function StatsHeader() {
         </div>
 
         {/* New Entry Button */}
-        <Link
-          href="/journal/new"
+        <button
+          onClick={() => setIsQuickTradeOpen(true)}
           className="gold-gradient text-black font-bold h-10 px-4 lg:px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all gold-glow text-sm"
         >
           <span className="material-symbols-outlined text-sm">add</span>
           <span className="hidden sm:inline">NEW ENTRY</span>
-        </Link>
+        </button>
       </div>
+
+      {/* QuickTradeEntry Modal */}
+      <QuickTradeEntry
+        isOpen={isQuickTradeOpen}
+        onClose={() => setIsQuickTradeOpen(false)}
+      />
     </header>
   )
 }

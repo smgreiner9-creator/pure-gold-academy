@@ -199,7 +199,7 @@ async function handleClassroomSubscriptionCreated(
 
 async function handleClassroomSubscriptionUpdated(
   subscription: Stripe.Subscription,
-  classroomId: string
+  _classroomId: string
 ) {
   if (!supabaseAdmin) return
 
@@ -245,7 +245,7 @@ async function handleClassroomSubscriptionUpdated(
 
 async function handleClassroomSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  classroomId: string
+  _classroomId: string
 ) {
   if (!supabaseAdmin) return
 
@@ -269,7 +269,7 @@ async function handleClassroomSubscriptionDeleted(
       .update({ classroom_id: null })
       .eq('id', subData.student_id)
 
-    console.log(`Classroom subscription deleted: student=${subData.student_id}, classroom=${classroomId}`)
+    console.log(`Classroom subscription deleted: student=${subData.student_id}, classroom=${_classroomId}`)
   }
 }
 

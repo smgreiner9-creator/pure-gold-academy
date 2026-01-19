@@ -12,11 +12,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: 'home' },
-  { href: '/journal', label: 'Journal', icon: 'edit_note' },
-  { href: '/learn', label: 'Learn', icon: 'menu_book' },
-  { href: '/community', label: 'Community', icon: 'group' },
-  { href: '/teacher', label: 'Teacher', icon: 'school', teacherOnly: true },
+  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/journal', label: 'Journal', icon: 'auto_stories' },
+  { href: '/learn', label: 'Learn', icon: 'school' },
+  { href: '/community', label: 'Community', icon: 'groups' },
+  { href: '/teacher', label: 'Teacher', icon: 'admin_panel_settings', teacherOnly: true },
 ]
 
 export function MobileNav() {

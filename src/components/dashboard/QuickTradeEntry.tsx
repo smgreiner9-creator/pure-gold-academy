@@ -264,11 +264,20 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
           </button>
         </div>
 
-        {/* Keyboard hint */}
-        <div className="px-4 pb-3 text-center">
+        {/* Keyboard hint and full form link */}
+        <div className="px-4 pb-3 text-center space-y-2">
           <p className="text-[10px] text-[var(--muted)]">
             Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">Q</kbd> to open Quick Trade anytime
           </p>
+          <button
+            onClick={() => {
+              onClose()
+              router.push('/journal/new')
+            }}
+            className="text-[10px] text-[var(--gold)] hover:underline"
+          >
+            Need more details? Use full form
+          </button>
         </div>
       </div>
     </>

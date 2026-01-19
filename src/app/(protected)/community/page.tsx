@@ -131,7 +131,7 @@ export default function CommunityPage() {
           </button>
         ) : (
           <Link
-            href="/settings"
+            href="/classroom/join"
             className="h-10 px-6 rounded-lg flex items-center gap-2 border border-[var(--card-border)] text-[var(--muted)] hover:text-white hover:bg-white/5 transition-all text-sm w-fit"
           >
             <span className="material-symbols-outlined text-sm">group_add</span>
@@ -174,9 +174,10 @@ export default function CommunityPage() {
             </button>
           ) : (
             <Link
-              href="/settings"
+              href="/classroom/join"
               className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
             >
+              <span className="material-symbols-outlined text-sm">group_add</span>
               Join Classroom
             </Link>
           )}

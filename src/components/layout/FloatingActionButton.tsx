@@ -2,9 +2,16 @@
 
 import { useState } from 'react'
 import { QuickTradeEntry } from '@/components/dashboard/QuickTradeEntry'
+import { useJournalRoute } from '@/hooks/useJournalRoute'
 
 export function FloatingActionButton() {
+  const isJournalRoute = useJournalRoute()
   const [isQuickTradeOpen, setIsQuickTradeOpen] = useState(false)
+
+  // Only show on journal-related pages
+  if (!isJournalRoute) {
+    return null
+  }
 
   return (
     <>

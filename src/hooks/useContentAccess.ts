@@ -109,7 +109,7 @@ export function useContentAccess(classroomId: string | null) {
     }
 
     // Check 4: Is premium user and content is premium (but not individually priced)
-    if (isPremium && content.is_premium) {
+    if (isPremium && content.is_premium && !content.is_individually_priced) {
       return {
         hasAccess: true,
         reason: 'premium',

@@ -49,6 +49,38 @@ export function useAuth() {
   const supabase = useMemo(() => getSupabaseClient(), [])
   const initializingRef = useRef(false)
 
+  // Separate effect for auth state subscription - runs once on mount
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event)
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single()
+            setProfile(profileData)
+          }
+          markInitialized()
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setProfile(null)
+          clearInitialized()
+          router.push('/auth/login')
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase, setUser, setProfile, router])
+
+  // Separate effect for initial auth check and visibility handling
   useEffect(() => {
     // Skip if currently initializing (prevent duplicate calls in same render)
     if (initializingRef.current) {
@@ -56,7 +88,7 @@ export function useAuth() {
     }
 
     // Check if we need to reinitialize
-    if (!shouldReinitialize() && !isLoading) {
+    if (!shouldReinitialize()) {
       return
     }
 
@@ -115,30 +147,6 @@ export function useAuth() {
 
     initAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event)
-
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setUser(session?.user ?? null)
-          if (session?.user) {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single()
-            setProfile(profileData)
-          }
-          markInitialized()
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-          clearInitialized()
-          router.push('/auth/login')
-        }
-      }
-    )
-
     // Handle tab visibility change - recheck auth when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -150,10 +158,9 @@ export function useAuth() {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      subscription.unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [supabase, setUser, setProfile, setIsLoading, router, isLoading])
+  }, [supabase, setUser, setProfile, setIsLoading])
 
   const signUp = useCallback(async (email: string, password: string, role: 'student' | 'teacher' = 'student') => {
     const { data, error } = await supabase.auth.signUp({

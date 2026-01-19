@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { ContentCard } from '@/components/learn/ContentCard'
@@ -140,11 +141,20 @@ export default function LearnPage() {
           <h3 className="text-xl font-semibold mb-2">
             {content.length === 0 ? 'No content available' : 'No content matches your filter'}
           </h3>
-          <p className="text-[var(--muted)] text-sm">
+          <p className="text-[var(--muted)] text-sm mb-6">
             {content.length === 0
-              ? 'Join a classroom to access educational content'
+              ? 'Join a classroom to access educational content from your teacher'
               : 'Try changing your filter'}
           </p>
+          {content.length === 0 && (
+            <Link
+              href="/classroom/join"
+              className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
+            >
+              <span className="material-symbols-outlined text-sm">group_add</span>
+              Join a Classroom
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

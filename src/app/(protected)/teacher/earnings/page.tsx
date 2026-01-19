@@ -119,7 +119,6 @@ export default function EarningsPage() {
         learn_content: contentMap.get(p.content_id),
         profile: profileMap.get(p.student_id)
       }))
-      const students = studentsRes.data || []
       const pricing = pricingRes.data || []
 
       // Calculate earnings from subscriptions

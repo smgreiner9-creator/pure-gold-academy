@@ -86,10 +86,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Teacher has not connected their Stripe account' }, { status: 400 })
     }
 
-    // Calculate platform fee
-    const priceInCents = Math.round(pricing.monthly_price * 100)
-    const platformFee = Math.round(priceInCents * (PLATFORM_FEE_PERCENT / 100))
-
     // Create or get Stripe customer for this student
     let customerId: string
     const customers = await stripe.customers.list({
