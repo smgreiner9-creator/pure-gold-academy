@@ -13,6 +13,8 @@ import { NextNewsCountdown } from '@/components/dashboard/NextNewsCountdown'
 import { DailyRuleReminder } from '@/components/dashboard/DailyRuleReminder'
 import { QuickTradeEntry } from '@/components/dashboard/QuickTradeEntry'
 import { KeyboardShortcutsHelp } from '@/components/dashboard/KeyboardShortcutsHelp'
+import { DailyCheckIn } from '@/components/dashboard/DailyCheckIn'
+import { ProgressMilestones } from '@/components/dashboard/ProgressMilestones'
 
 type TabType = 'pulse' | 'news' | 'trades'
 
@@ -88,6 +90,16 @@ export default function DashboardPage() {
                 <span className="material-symbols-outlined">bolt</span>
               </button>
             </div>
+          </div>
+
+          {/* Daily Check-In */}
+          <div className="mb-6">
+            <DailyCheckIn />
+          </div>
+
+          {/* Progress Milestones */}
+          <div className="mb-6">
+            <ProgressMilestones />
           </div>
 
           {/* Daily Rule Reminder */}

@@ -264,13 +264,21 @@ CREATE POLICY "Users can view posts in their classroom" ON community_posts FOR S
   );
 CREATE POLICY "Users can create posts in their classroom" ON community_posts
   FOR INSERT WITH CHECK (
-    classroom_id IN (SELECT classroom_id FROM profiles WHERE user_id = auth.uid())
-    OR
-    classroom_id IN (SELECT id FROM classrooms WHERE teacher_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+    (
+      classroom_id IN (SELECT classroom_id FROM profiles WHERE user_id = auth.uid())
+      OR
+      classroom_id IN (SELECT id FROM classrooms WHERE teacher_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+    )
+    AND title !~* '(buy now|sell now|entry:|tp:|sl:|take profit|stop loss|signal)'
+    AND content !~* '(buy now|sell now|entry:|tp:|sl:|take profit|stop loss|signal)'
   );
 CREATE POLICY "Users can update their own posts" ON community_posts
   FOR UPDATE USING (
     user_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+  ) WITH CHECK (
+    user_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    AND title !~* '(buy now|sell now|entry:|tp:|sl:|take profit|stop loss|signal)'
+    AND content !~* '(buy now|sell now|entry:|tp:|sl:|take profit|stop loss|signal)'
   );
 CREATE POLICY "Users can delete their own posts" ON community_posts
   FOR DELETE USING (

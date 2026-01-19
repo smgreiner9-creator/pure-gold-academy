@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card } from '@/components/ui'
 import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { calculateStreak } from '@/lib/streakUtils'
 
 interface Stats {
   totalTrades: number
@@ -24,48 +25,41 @@ export function QuickStats() {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadStats()
-    }
-  }, [profile?.id])
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!profile?.id) return
 
     try {
-      const { data: entries } = await supabase
-        .from('journal_entries')
-        .select('outcome, r_multiple, trade_date')
-        .eq('user_id', profile.id)
-        .order('trade_date', { ascending: false })
+      // Fetch journal entries and check-ins in parallel
+      const [entriesRes, checkinsRes] = await Promise.all([
+        supabase
+          .from('journal_entries')
+          .select('outcome, r_multiple, trade_date')
+          .eq('user_id', profile.id)
+          .order('trade_date', { ascending: false }),
+        supabase
+          .from('daily_checkins')
+          .select('check_date')
+          .eq('user_id', profile.id)
+      ])
 
-      if (entries && entries.length > 0) {
+      const entries = entriesRes.data || []
+      const checkins = checkinsRes.data || []
+
+      if (entries.length > 0) {
         const wins = entries.filter(e => e.outcome === 'win').length
         const totalWithOutcome = entries.filter(e => e.outcome).length
         const avgR = entries.reduce((sum, e) => sum + (e.r_multiple || 0), 0) / entries.length
 
-        // Calculate streak
-        let streak = 0
-        const sortedDates = [...new Set(entries.map(e => e.trade_date))].sort().reverse()
-
-        for (let i = 0; i < sortedDates.length; i++) {
-          const expectedDate = new Date()
-          expectedDate.setDate(expectedDate.getDate() - i)
-          const expected = expectedDate.toISOString().split('T')[0]
-
-          if (sortedDates[i] === expected) {
-            streak++
-          } else {
-            break
-          }
-        }
+        // Use shared streak utility with rest day support
+        const tradeDates = [...new Set(entries.map(e => e.trade_date))]
+        const checkinDates = checkins.map(c => c.check_date)
+        const streakData = calculateStreak(tradeDates, checkinDates, 1)
 
         setStats({
           totalTrades: entries.length,
           winRate: totalWithOutcome > 0 ? (wins / totalWithOutcome) * 100 : 0,
           avgRMultiple: avgR,
-          journalStreak: streak,
+          journalStreak: streakData.currentStreak,
         })
       }
     } catch (error) {
@@ -73,7 +67,13 @@ export function QuickStats() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadStats()
+    }
+  }, [profile?.id, loadStats])
 
   const statCards = [
     {

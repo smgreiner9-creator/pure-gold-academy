@@ -580,6 +580,30 @@ export interface Database {
         }
         Relationships: []
       }
+      daily_checkins: {
+        Row: {
+          id: string
+          user_id: string
+          check_date: string
+          has_traded: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          check_date: string
+          has_traded?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          check_date?: string
+          has_traded?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -622,3 +646,6 @@ export type TeacherStripeAccount = Database['public']['Tables']['teacher_stripe_
 export type ClassroomPricing = Database['public']['Tables']['classroom_pricing']['Row']
 export type ClassroomSubscription = Database['public']['Tables']['classroom_subscriptions']['Row']
 export type ContentPurchase = Database['public']['Tables']['content_purchases']['Row']
+
+// Daily check-in type
+export type DailyCheckin = Database['public']['Tables']['daily_checkins']['Row']
