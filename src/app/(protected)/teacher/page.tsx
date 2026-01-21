@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -12,6 +12,8 @@ interface DashboardStats {
   totalJournals: number
   avgWinRate: number
   contentCount: number
+  lessonCount: number
+  ruleCount: number
 }
 
 interface StudentAlert {
@@ -31,19 +33,15 @@ export default function TeacherDashboardPage() {
     totalJournals: 0,
     avgWinRate: 0,
     contentCount: 0,
+    lessonCount: 0,
+    ruleCount: 0,
   })
   const [recentJournals, setRecentJournals] = useState<(JournalEntry & { student?: Profile })[]>([])
   const [studentAlerts, setStudentAlerts] = useState<StudentAlert[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadDashboardData()
-    }
-  }, [profile?.id])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -59,7 +57,7 @@ export default function TeacherDashboardPage() {
         const classroomIds = classroomData.map(c => c.id)
 
         // Parallel queries for better performance
-        const [studentsRes, journalsRes, contentCountRes, allJournalsRes] = await Promise.all([
+        const [studentsRes, journalsRes, contentCountRes, allJournalsRes, lessonsCountRes, rulesCountRes] = await Promise.all([
           // Load student count
           supabase
             .from('profiles')
@@ -82,6 +80,14 @@ export default function TeacherDashboardPage() {
           supabase
             .from('journal_entries')
             .select('id, user_id, outcome, created_at')
+            .in('classroom_id', classroomIds),
+          supabase
+            .from('lessons')
+            .select('id', { count: 'exact', head: true })
+            .in('classroom_id', classroomIds),
+          supabase
+            .from('classroom_rules')
+            .select('id', { count: 'exact', head: true })
             .in('classroom_id', classroomIds)
         ])
 
@@ -125,6 +131,8 @@ export default function TeacherDashboardPage() {
           totalJournals,
           avgWinRate: totalWithOutcome > 0 ? (wins / totalWithOutcome) * 100 : 0,
           contentCount: contentCountRes.count || 0,
+          lessonCount: lessonsCountRes.count || 0,
+          ruleCount: rulesCountRes.count || 0,
         })
 
         // Calculate student alerts
@@ -197,7 +205,13 @@ export default function TeacherDashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadDashboardData()
+    }
+  }, [profile?.id, loadDashboardData])
 
   if (isLoading) {
     return (
@@ -211,11 +225,89 @@ export default function TeacherDashboardPage() {
     )
   }
 
+  // First-time teacher experience - show focused getting started view
+  if (classrooms.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl gold-gradient flex items-center justify-center">
+            <span className="material-symbols-outlined text-4xl text-black">school</span>
+          </div>
+          <h1 className="text-3xl font-bold mb-3">Welcome to Pure Gold Academy</h1>
+          <p className="text-[var(--muted)] text-lg">
+            You&apos;re ready to start teaching. Let&apos;s create your first trading strategy.
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] mb-6">
+          <h2 className="font-bold text-lg mb-4">What you can do as a teacher:</h2>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">menu_book</span>
+              </div>
+              <div>
+                <p className="font-semibold">Create Strategy Classrooms</p>
+                <p className="text-sm text-[var(--muted)]">Build structured lessons and rules for your trading methodology</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">group</span>
+              </div>
+              <div>
+                <p className="font-semibold">Accept Students</p>
+                <p className="text-sm text-[var(--muted)]">Share your invite code or make your strategy public</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">analytics</span>
+              </div>
+              <div>
+                <p className="font-semibold">Track Student Progress</p>
+                <p className="text-sm text-[var(--muted)]">Review journals, give feedback, and monitor performance</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[var(--success)]/10 text-[var(--success)] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">payments</span>
+              </div>
+              <div>
+                <p className="font-semibold">Earn Revenue</p>
+                <p className="text-sm text-[var(--muted)]">Set pricing for premium strategies and get paid via Stripe</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Link
+          href="/teacher/strategy/new"
+          className="gold-gradient text-black font-bold h-14 px-8 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition-all text-lg w-full"
+        >
+          <span className="material-symbols-outlined text-2xl">add</span>
+          Create Your First Strategy
+        </Link>
+
+        <p className="text-center text-[var(--muted)] text-sm mt-4">
+          Our guided setup will walk you through each step
+        </p>
+      </div>
+    )
+  }
+
   const statCards = [
     { label: 'Total Students', value: stats.totalStudents, icon: 'group', color: 'text-[var(--gold)]' },
     { label: 'Active (7d)', value: stats.activeStudents, icon: 'trending_up', color: 'text-[var(--success)]' },
     { label: 'Journal Entries', value: stats.totalJournals, icon: 'edit_note', color: 'text-[var(--gold)]' },
     { label: 'Content Items', value: stats.contentCount, icon: 'menu_book', color: 'text-[var(--gold)]' },
+  ]
+
+  const setupSteps = [
+    'Create a strategy',
+    'Add the first lesson',
+    'Upload content',
+    'Set visibility and pricing'
   ]
 
   return (
@@ -224,15 +316,42 @@ export default function TeacherDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
-          <p className="text-[var(--muted)] text-sm">Manage your classrooms and students</p>
+          <p className="text-[var(--muted)] text-sm">Manage your strategies, lessons, and students</p>
         </div>
         <Link
           href="/teacher/classrooms"
           className="gold-gradient text-black font-bold h-10 px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all text-sm w-fit"
         >
           <span className="material-symbols-outlined text-lg">school</span>
-          Manage Classrooms
+          Manage Strategies
         </Link>
+      </div>
+
+      {/* Guided Setup */}
+      <div className="p-6 rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold)]/5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center">
+              <span className="material-symbols-outlined">assistant</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-lg">Guided Strategy Setup</h2>
+              <p className="text-sm text-[var(--muted)]">A step-by-step flow to launch a public or private strategy.</p>
+              <div className="flex flex-wrap gap-3 mt-3 text-xs text-[var(--muted)] uppercase tracking-widest">
+                {setupSteps.map(step => (
+                  <span key={step} className="px-2 py-1 rounded-lg bg-black/30">{step}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/teacher/strategy/new"
+            className="gold-gradient text-black font-bold h-11 px-6 rounded-xl flex items-center gap-2 hover:opacity-90 transition-all text-sm w-fit"
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+            Start Guided Setup
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -251,6 +370,51 @@ export default function TeacherDashboardPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
+          href="/teacher/trade-calls"
+          className="p-4 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 hover:border-[var(--gold)]/50 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">trending_up</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Trade Calls</h3>
+              <p className="text-sm text-[var(--muted)]">Post and track trade ideas</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/teacher/curriculum"
+          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">school</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Curriculum</h3>
+              <p className="text-sm text-[var(--muted)]">Build learning tracks</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/teacher/live"
+          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-red-500">videocam</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Live Sessions</h3>
+              <p className="text-sm text-[var(--muted)]">Schedule live streams</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
           href="/teacher/students"
           className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
         >
@@ -259,7 +423,7 @@ export default function TeacherDashboardPage() {
               <span className="material-symbols-outlined text-2xl text-[var(--gold)]">group</span>
             </div>
             <div>
-              <h3 className="font-bold">Student Analytics</h3>
+              <h3 className="font-bold">Students</h3>
               <p className="text-sm text-[var(--muted)]">View progress and performance</p>
             </div>
           </div>
@@ -274,23 +438,8 @@ export default function TeacherDashboardPage() {
               <span className="material-symbols-outlined text-2xl text-[var(--gold)]">edit_note</span>
             </div>
             <div>
-              <h3 className="font-bold">Review Journals</h3>
-              <p className="text-sm text-[var(--muted)]">Give feedback to students</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/teacher/content"
-          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">menu_book</span>
-            </div>
-            <div>
-              <h3 className="font-bold">Upload Content</h3>
-              <p className="text-sm text-[var(--muted)]">Add videos, PDFs & articles</p>
+              <h3 className="font-bold">Journals</h3>
+              <p className="text-sm text-[var(--muted)]">Review and give feedback</p>
             </div>
           </div>
         </Link>
@@ -305,7 +454,22 @@ export default function TeacherDashboardPage() {
             </div>
             <div>
               <h3 className="font-bold">Earnings</h3>
-              <p className="text-sm text-[var(--muted)]">View revenue & transactions</p>
+              <p className="text-sm text-[var(--muted)]">Revenue & payouts</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/teacher/classrooms"
+          className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">menu_book</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Strategies</h3>
+              <p className="text-sm text-[var(--muted)]">Manage classrooms</p>
             </div>
           </div>
         </Link>
@@ -320,7 +484,7 @@ export default function TeacherDashboardPage() {
             </div>
             <div>
               <h3 className="font-bold">Settings</h3>
-              <p className="text-sm text-[var(--muted)]">Stripe Connect & preferences</p>
+              <p className="text-sm text-[var(--muted)]">Stripe & preferences</p>
             </div>
           </div>
         </Link>
@@ -415,49 +579,30 @@ export default function TeacherDashboardPage() {
       </div>
 
       {/* Classrooms */}
-      {classrooms.length === 0 ? (
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-3xl text-[var(--gold)]">school</span>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Create Your First Classroom</h3>
-          <p className="text-[var(--muted)] mb-6 text-sm">
-            Set up a classroom to start accepting students
-          </p>
-          <Link
-            href="/teacher/classrooms"
-            className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Create Classroom
-          </Link>
-        </div>
-      ) : (
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
-          <h3 className="font-bold text-lg mb-4">Your Classrooms</h3>
-          <div className="space-y-3">
-            {classrooms.map(classroom => (
-              <div
-                key={classroom.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-black/20 border border-[var(--card-border)]"
-              >
-                <div>
-                  <p className="font-bold">{classroom.name}</p>
-                  <p className="text-sm text-[var(--muted)]">
-                    Invite code: <span className="font-mono text-[var(--gold)]">{classroom.invite_code}</span>
-                  </p>
-                </div>
-                <Link
-                  href={`/teacher/classrooms/${classroom.id}`}
-                  className="h-9 px-4 rounded-lg border border-[var(--card-border)] flex items-center gap-2 font-semibold hover:bg-white/5 transition-colors text-sm"
-                >
-                  Manage
-                </Link>
+      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <h3 className="font-bold text-lg mb-4">Your Classrooms</h3>
+        <div className="space-y-3">
+          {classrooms.map(classroom => (
+            <div
+              key={classroom.id}
+              className="flex items-center justify-between p-4 rounded-xl bg-black/20 border border-[var(--card-border)]"
+            >
+              <div>
+                <p className="font-bold">{classroom.name}</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Invite code: <span className="font-mono text-[var(--gold)]">{classroom.invite_code}</span>
+                </p>
               </div>
-            ))}
-          </div>
+              <Link
+                href={`/teacher/classrooms/${classroom.id}`}
+                className="h-9 px-4 rounded-lg border border-[var(--card-border)] flex items-center gap-2 font-semibold hover:bg-white/5 transition-colors text-sm"
+              >
+                Manage
+              </Link>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   )
 }

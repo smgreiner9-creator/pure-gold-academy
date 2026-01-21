@@ -1,6 +1,6 @@
 # Pure Gold Trading Academy
 
-A journaling-first trading education platform for active day and swing traders. Built with Next.js 14, Supabase, and Tailwind CSS.
+A journaling-first trading education platform for active day and swing traders. Built with Next.js 16, Supabase, Stripe, and Tailwind CSS 4.
 
 ## Features
 
@@ -10,12 +10,14 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Learn Section** - Access educational content (videos, PDFs, images, text) with progress tracking
 - **Community** - Discussion area with signal-prevention system to maintain educational focus
 - **Notifications** - Real-time alerts for teacher feedback, community responses, and system updates
+- **Public Strategies** - Discover and join public strategies from the marketplace listing
 
 ### For Teachers
 - **Classroom Management** - Create classrooms with unique invite codes for student enrollment
 - **Student Analytics** - View student performance, journal activity, and progress metrics
 - **Content Uploads** - Upload educational materials (video, PDF, image, text) for students
 - **Journal Review** - Browse and provide feedback on student trade journals
+- **Guided Strategy Setup** - Step-by-step flow: strategy, lesson + content, publish with pricing
 
 ### Subscription Tiers
 - **Free** - Basic journaling, position calculator, session indicator, community access, limited content
@@ -23,12 +25,12 @@ A journaling-first trading education platform for active day and swing traders. 
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth
 - **Storage**: Supabase Storage (screenshots, content files)
-- **Styling**: Tailwind CSS with custom Black & Gold theme
+- **Styling**: Tailwind CSS 4 with custom Black & Gold theme
 - **State Management**: Zustand
 - **Forms**: React Hook Form + Zod validation
 - **Icons**: Lucide React
@@ -82,15 +84,17 @@ npm run dev
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Auth pages (login, signup)
+│   ├── auth/              # Auth pages (login, signup)
 │   ├── (protected)/       # Protected routes requiring auth
 │   │   ├── dashboard/     # Student dashboard
 │   │   ├── journal/       # Trade journaling
 │   │   ├── learn/         # Educational content
 │   │   ├── community/     # Discussion area
+│   │   ├── classroom/     # Classroom join flow
 │   │   ├── notifications/ # Notifications
 │   │   ├── settings/      # User settings
 │   │   └── teacher/       # Teacher backend
+│   │       └── strategy/  # Guided strategy setup
 │   └── api/               # API routes
 │       └── stripe/        # Stripe integration endpoints
 ├── components/
@@ -98,6 +102,7 @@ src/
 │   ├── layout/            # Layout components (Sidebar, Header)
 │   ├── dashboard/         # Dashboard widgets
 │   ├── journal/           # Journal components
+│   ├── analytics/         # Analytics charts
 │   └── learn/             # Learn section components
 ├── hooks/                 # Custom React hooks
 ├── lib/                   # Utilities and clients
@@ -111,6 +116,7 @@ src/
 The application uses the following main tables:
 - `profiles` - User profiles with role (student/teacher) and subscription info
 - `classrooms` - Teacher-created classrooms with invite codes
+- `lessons` - Lessons inside a strategy (classroom)
 - `journal_entries` - Trade journal entries with all trade data
 - `journal_feedback` - Teacher feedback on journal entries
 - `learn_content` - Educational content uploaded by teachers
@@ -120,12 +126,17 @@ The application uses the following main tables:
 - `notifications` - User notifications
 - `subscriptions` - Stripe subscription data
 - `watched_instruments` - User's watched trading instruments
+- `daily_checkins` - Activity tracking and streaks
+- `teacher_stripe_accounts` - Teacher Stripe Connect accounts
+- `classroom_pricing` - Classroom subscription pricing
+- `content_purchases` - Individual content sales
+- `classroom_rules` - Strategy-level rules
 
 See `supabase/schema.sql` for the complete schema with RLS policies.
 
 ## Stripe Integration
 
-The Stripe integration is set up with placeholder endpoints. To enable payments:
+Stripe powers premium subscriptions, classroom subscriptions, and teacher payouts via Connect.
 
 1. Add Stripe keys to `.env.local`:
 ```
@@ -133,14 +144,9 @@ STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-2. Uncomment the Stripe code in:
-   - `src/app/api/stripe/checkout/route.ts`
-   - `src/app/api/stripe/portal/route.ts`
-   - `src/app/api/webhooks/stripe/route.ts`
+2. Create products and prices in Stripe Dashboard
 
-3. Create products and prices in Stripe Dashboard
-
-4. Set up webhook endpoint in Stripe pointing to `/api/webhooks/stripe`
+3. Set up webhook endpoint in Stripe pointing to `/api/webhooks/stripe`
 
 ## User Roles
 
@@ -155,14 +161,16 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 - Full access to teacher backend
 - Can create classrooms and upload content
 - Can review student journals and provide feedback
-- $350 setup fee + $2.80/active student
+- Classroom pricing is configurable; payouts use Stripe Connect
 
 ## Visual Theme
 
 The app uses a Black & Gold color scheme:
-- Background: `#0a0a0a`
-- Gold accent: `#d4af37`
-- Card background: `#141414`
+- Background: `#050505`
+- Gold primary: `#FFB800`
+- Gold light: `#FFD54F`
+- Gold dark: `#E5A500`
+- Card background: `#0F0F0F`
 - Success: `#22c55e`
 - Danger: `#ef4444`
 
@@ -181,6 +189,11 @@ npm run build
 # Start production server
 npm start
 ```
+
+## Updates
+
+- 2026-01-20 18:29 EST - Added lessons + strategy rules, guided strategy setup flow, public strategies, and image explanations.
+- 2026-01-20 19:26 EST - Applied performance-focused refactors: deferred public strategy loading, tightened hook deps, memoized derived data, and switched to `next/image` with Supabase remote patterns.
 
 ## License
 

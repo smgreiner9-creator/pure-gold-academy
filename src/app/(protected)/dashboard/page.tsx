@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { PositionCalculator } from '@/components/dashboard/PositionCalculator'
 import { WatchedInstruments } from '@/components/dashboard/WatchedInstruments'
@@ -27,12 +28,38 @@ const quotes = [
   '"In trading, the impossible happens about twice a year."',
 ]
 
+interface ClassroomRule {
+  rule_text: string
+  description?: string | null
+}
+
 export default function DashboardPage() {
   const { profile } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('pulse')
   const [isQuickTradeOpen, setIsQuickTradeOpen] = useState(false)
+  const [classroomRules, setClassroomRules] = useState<ClassroomRule[]>([])
   // Select quote once on initial render using useState initializer
   const [randomQuote] = useState(() => quotes[Math.floor(Math.random() * quotes.length)])
+  const supabase = useMemo(() => createClient(), [])
+
+  // Fetch classroom rules based on student's classroom
+  useEffect(() => {
+    async function fetchClassroomRules() {
+      if (!profile?.classroom_id) return
+
+      const { data } = await supabase
+        .from('classroom_rules')
+        .select('rule_text, description')
+        .eq('classroom_id', profile.classroom_id)
+        .order('order_index', { ascending: true })
+
+      if (data) {
+        setClassroomRules(data)
+      }
+    }
+
+    fetchClassroomRules()
+  }, [profile?.classroom_id, supabase])
 
   // Quick trade callback for keyboard shortcut
   const handleQuickTrade = useCallback(() => {
@@ -92,6 +119,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Today's Reminder */}
+          <div className="mb-6">
+            <DailyRuleReminder classroomRules={classroomRules} />
+          </div>
+
           {/* Daily Check-In */}
           <div className="mb-6">
             <DailyCheckIn />
@@ -100,11 +132,6 @@ export default function DashboardPage() {
           {/* Progress Milestones */}
           <div className="mb-6">
             <ProgressMilestones />
-          </div>
-
-          {/* Daily Rule Reminder */}
-          <div className="mb-6">
-            <DailyRuleReminder />
           </div>
 
           {/* Next News Countdown */}

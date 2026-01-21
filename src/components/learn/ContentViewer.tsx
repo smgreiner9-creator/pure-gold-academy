@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Card, Button } from '@/components/ui'
 import { ArrowLeft, CheckCircle, ExternalLink } from 'lucide-react'
@@ -19,13 +20,7 @@ export function ContentViewer({ content }: ContentViewerProps) {
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (profile?.id) {
-      checkProgress()
-    }
-  }, [profile?.id])
-
-  const checkProgress = async () => {
+  const checkProgress = useCallback(async () => {
     if (!profile?.id) return
 
     const { data } = await supabase
@@ -38,7 +33,13 @@ export function ContentViewer({ content }: ContentViewerProps) {
     if (data) {
       setIsCompleted(data.completed)
     }
-  }
+  }, [content.id, profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      checkProgress()
+    }
+  }, [profile?.id, checkProgress])
 
   const markComplete = async () => {
     if (!profile?.id) return
@@ -139,11 +140,28 @@ export function ContentViewer({ content }: ContentViewerProps) {
 
       case 'image':
         return (
-          <img
-            src={content.content_url || ''}
-            alt={content.title}
-            className="max-w-full rounded-lg"
-          />
+          <div className="space-y-4">
+            {content.content_url && (
+              <div className="relative w-full overflow-hidden rounded-lg border border-[var(--card-border)]">
+                <Image
+                  src={content.content_url}
+                  alt={content.title}
+                  width={1200}
+                  height={800}
+                  sizes="100vw"
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
+            {content.explanation && (
+              <div className="p-4 rounded-lg border border-[var(--card-border)] bg-black/30">
+                <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2">
+                  Explanation
+                </p>
+                <p className="text-sm">{content.explanation}</p>
+              </div>
+            )}
+          </div>
         )
 
       case 'text':

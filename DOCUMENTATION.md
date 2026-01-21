@@ -73,9 +73,10 @@ src/
 3. **Trade Journaling** - Structured entries with screenshots, emotions, rules
 4. **Learning Content** - Video, PDF, image, and text support
 5. **Teacher Backend** - Classroom management, analytics, feedback
-6. **Community** - Discussion posts and comments
-7. **Push Notifications** - Web push for important updates
-8. **Subscriptions** - Free and premium tiers via Stripe
+6. **Public Strategies** - Marketplace listing for discoverable strategies
+7. **Community** - Discussion posts and comments
+8. **Push Notifications** - Web push for important updates
+9. **Subscriptions** - Free and premium tiers via Stripe
 
 ---
 
@@ -325,9 +326,8 @@ const { isSupported, isSubscribed, subscribe, unsubscribe } = usePushNotificatio
 
 ### Teacher Pricing
 
-- $350 one-time setup fee
-- $2.80 per active student monthly
-- Contact support for setup
+- Classroom pricing is configurable per teacher
+- Teacher payouts use Stripe Connect
 
 ### Stripe Integration
 
@@ -342,6 +342,9 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 - `POST /api/stripe/checkout` - Create checkout session
 - `POST /api/stripe/portal` - Open billing portal
+- `POST /api/stripe/connect/onboard` - Start Stripe Connect onboarding
+- `GET /api/stripe/connect/status` - Check Stripe Connect status
+- `POST /api/stripe/connect/checkout/classroom` - Classroom subscription checkout
 - `POST /api/webhooks/stripe` - Handle Stripe webhooks
 
 #### Webhook Events
@@ -361,7 +364,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 - id (uuid, PK)
 - email (text)
 - display_name (text)
-- role ('student' | 'teacher')
+- role ('student' | 'teacher' | 'admin')
 - classroom_id (uuid, FK -> classrooms)
 - subscription_tier ('free' | 'premium')
 - push_enabled (boolean)
@@ -404,17 +407,31 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 - name (text)
 - description (text)
 - invite_code (text, unique)
+- is_public (boolean)
 - created_at (timestamp)
 ```
 
-#### learning_content
+#### lessons
+```sql
+- id (uuid, PK)
+- classroom_id (uuid, FK -> classrooms)
+- title (text)
+- summary (text)
+- order_index (integer)
+- created_at (timestamp)
+- updated_at (timestamp)
+```
+
+#### learn_content
 ```sql
 - id (uuid, PK)
 - teacher_id (uuid, FK -> profiles)
 - classroom_id (uuid, FK -> classrooms)
+- lesson_id (uuid, FK -> lessons)
 - title (text)
 - description (text)
-- type ('video' | 'pdf' | 'article' | 'image')
+- explanation (text)
+- type ('video' | 'pdf' | 'image' | 'text')
 - content_url (text)
 - thumbnail_url (text)
 - duration_minutes (integer)
@@ -456,6 +473,25 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 - current_period_start (timestamp)
 - current_period_end (timestamp)
 ```
+
+### Additional Tables
+
+- `classroom_rules` - Strategy-level rules
+- `daily_checkins` - Activity tracking and streaks
+- `teacher_stripe_accounts` - Stripe Connect accounts for teachers
+- `classroom_pricing` - Classroom subscription pricing
+- `content_purchases` - Individual content sales
+- `learn_progress` - Student progress on content
+- `journal_feedback` - Teacher feedback on journal entries
+- `community_comments` - Comments on community posts
+- `watched_instruments` - User tracked symbols
+
+---
+
+## Update Log
+
+- 2026-01-20 18:29 EST - Added lessons + strategy rules, public strategy visibility, guided strategy setup flow, and image explanations.
+- 2026-01-20 19:26 EST - Performance refactors: deferred public strategy listing load, hook dependency fixes, memoized derived lists, and `next/image` adoption with Supabase patterns.
 
 ---
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -18,13 +18,7 @@ export default function JoinSuccessPage() {
   const classroomId = searchParams.get('classroom_id')
   const sessionId = searchParams.get('session_id')
 
-  useEffect(() => {
-    if (profile?.id && classroomId) {
-      processJoin()
-    }
-  }, [profile?.id, classroomId])
-
-  const processJoin = async () => {
+  const processJoin = useCallback(async () => {
     if (!profile?.id || !classroomId) return
 
     try {
@@ -81,7 +75,13 @@ export default function JoinSuccessPage() {
       setError('Failed to complete enrollment. Please contact support.')
       setIsProcessing(false)
     }
-  }
+  }, [classroomId, profile?.id, router, sessionId, supabase])
+
+  useEffect(() => {
+    if (profile?.id && classroomId) {
+      processJoin()
+    }
+  }, [profile?.id, classroomId, processJoin])
 
   if (isProcessing) {
     return (

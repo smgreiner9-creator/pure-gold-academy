@@ -1,25 +1,33 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
-import type { LearnContent, Classroom, ContentType } from '@/types/database'
+import type { LearnContent, Classroom, ContentType, Lesson } from '@/types/database'
+
+const UNASSIGNED_LESSON_ID = 'unassigned'
 
 export default function ContentManagementPage() {
   const { profile } = useAuth()
+  const searchParams = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editFileInputRef = useRef<HTMLInputElement>(null)
   const [content, setContent] = useState<LearnContent[]>([])
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
+  const [lessons, setLessons] = useState<Lesson[]>([])
   const [selectedClassroom, setSelectedClassroom] = useState<string>('')
+  const [selectedLesson, setSelectedLesson] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showLessonModal, setShowLessonModal] = useState(false)
   const [editingContent, setEditingContent] = useState<LearnContent | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSavingLesson, setIsSavingLesson] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [stripeConnected, setStripeConnected] = useState(false)
   const [newContent, setNewContent] = useState({
@@ -28,34 +36,28 @@ export default function ContentManagementPage() {
     content_type: 'video' as ContentType,
     content_url: '',
     content_text: '',
+    explanation: '',
     is_premium: false,
     is_individually_priced: false,
     price: '',
   })
+  const [lessonForm, setLessonForm] = useState({ title: '', summary: '' })
   const [editForm, setEditForm] = useState({
+    lesson_id: '',
     title: '',
     description: '',
     content_url: '',
     content_text: '',
+    explanation: '',
     is_premium: false,
     is_individually_priced: false,
     price: '',
   })
   const supabase = useMemo(() => createClient(), [])
+  const preferredClassroomId = searchParams.get('classroomId')
+  const preferredLessonId = searchParams.get('lessonId')
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadClassrooms()
-    }
-  }, [profile?.id])
-
-  useEffect(() => {
-    if (selectedClassroom) {
-      loadContent()
-    }
-  }, [selectedClassroom])
-
-  const loadClassrooms = async () => {
+  const loadClassrooms = useCallback(async () => {
     if (!profile?.id) return
 
     const [classroomsRes, stripeRes] = await Promise.all([
@@ -71,21 +73,124 @@ export default function ContentManagementPage() {
     ])
 
     if (classroomsRes.data && classroomsRes.data.length > 0) {
-      setClassrooms(classroomsRes.data)
-      setSelectedClassroom(classroomsRes.data[0].id)
+      const classroomsData = classroomsRes.data
+      setClassrooms(classroomsData)
+      const initialClassroom = preferredClassroomId && classroomsData.some(c => c.id === preferredClassroomId)
+        ? preferredClassroomId
+        : classroomsData[0].id
+      setSelectedClassroom(initialClassroom)
     }
     setStripeConnected(stripeRes.data?.charges_enabled === true)
     setIsLoading(false)
-  }
+  }, [profile?.id, preferredClassroomId, supabase])
 
-  const loadContent = async () => {
+  const loadLessons = useCallback(async () => {
+    if (!selectedClassroom) return
+
     const { data } = await supabase
-      .from('learn_content')
+      .from('lessons')
       .select('*')
       .eq('classroom_id', selectedClassroom)
       .order('order_index', { ascending: true })
 
+    const lessonData = data || []
+    setLessons(lessonData as Lesson[])
+
+    if (lessonData.length === 0) {
+      setSelectedLesson('')
+      return
+    }
+
+    const preferredLesson = preferredLessonId && lessonData.some(l => l.id === preferredLessonId)
+      ? preferredLessonId
+      : null
+
+    if (preferredLesson) {
+      setSelectedLesson(preferredLesson)
+      return
+    }
+
+    if (!lessonData.some(l => l.id === selectedLesson)) {
+      setSelectedLesson(lessonData[0].id)
+    }
+  }, [preferredLessonId, selectedClassroom, selectedLesson, supabase])
+
+  const loadContent = useCallback(async () => {
+    if (!selectedClassroom) return
+
+    let query = supabase
+      .from('learn_content')
+      .select('*')
+      .eq('classroom_id', selectedClassroom)
+
+    if (selectedLesson === UNASSIGNED_LESSON_ID) {
+      query = query.is('lesson_id', null)
+    } else if (selectedLesson) {
+      query = query.eq('lesson_id', selectedLesson)
+    } else {
+      setContent([])
+      return
+    }
+
+    const { data } = await query.order('order_index', { ascending: true })
+
     setContent(data || [])
+  }, [selectedClassroom, selectedLesson, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadClassrooms()
+    }
+  }, [profile?.id, loadClassrooms])
+
+  useEffect(() => {
+    if (selectedClassroom) {
+      loadLessons()
+    } else {
+      setLessons([])
+      setSelectedLesson('')
+    }
+  }, [selectedClassroom, loadLessons])
+
+  useEffect(() => {
+    if (selectedClassroom && selectedLesson) {
+      loadContent()
+    } else if (selectedClassroom && selectedLesson === UNASSIGNED_LESSON_ID) {
+      loadContent()
+    } else {
+      setContent([])
+    }
+  }, [selectedClassroom, selectedLesson, loadContent])
+
+  const createLesson = async () => {
+    if (!profile?.id || !selectedClassroom || !lessonForm.title.trim()) return
+
+    setIsSavingLesson(true)
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .insert({
+          classroom_id: selectedClassroom,
+          title: lessonForm.title.trim(),
+          summary: lessonForm.summary.trim() || null,
+          order_index: lessons.length,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      if (data) {
+        const updatedLessons = [...lessons, data as Lesson]
+        setLessons(updatedLessons)
+        setSelectedLesson(data.id)
+      }
+      setLessonForm({ title: '', summary: '' })
+      setShowLessonModal(false)
+    } catch (error) {
+      console.error('Error creating lesson:', error)
+    } finally {
+      setIsSavingLesson(false)
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +221,14 @@ export default function ContentManagementPage() {
   }
 
   const addContent = async () => {
-    if (!profile?.id || !selectedClassroom || !newContent.title.trim()) return
+    if (
+      !profile?.id ||
+      !selectedClassroom ||
+      !selectedLesson ||
+      selectedLesson === UNASSIGNED_LESSON_ID ||
+      !newContent.title.trim()
+    ) return
+    if (newContent.content_type === 'image' && !newContent.explanation.trim()) return
 
     setIsAdding(true)
     try {
@@ -126,8 +238,10 @@ export default function ContentManagementPage() {
         .insert({
           classroom_id: selectedClassroom,
           teacher_id: profile.id,
+          lesson_id: selectedLesson,
           title: newContent.title.trim(),
           description: newContent.description.trim() || null,
+          explanation: newContent.explanation.trim() || null,
           content_type: newContent.content_type,
           content_url: newContent.content_url || null,
           content_text: newContent.content_text || null,
@@ -148,6 +262,7 @@ export default function ContentManagementPage() {
         content_type: 'video',
         content_url: '',
         content_text: '',
+        explanation: '',
         is_premium: false,
         is_individually_priced: false,
         price: '',
@@ -174,10 +289,12 @@ export default function ContentManagementPage() {
   const openEditModal = (item: LearnContent) => {
     setEditingContent(item)
     setEditForm({
+      lesson_id: item.lesson_id || lessons[0]?.id || '',
       title: item.title,
       description: item.description || '',
       content_url: item.content_url || '',
       content_text: item.content_text || '',
+      explanation: item.explanation || '',
       is_premium: item.is_premium,
       is_individually_priced: item.is_individually_priced,
       price: item.price?.toString() || '',
@@ -214,6 +331,8 @@ export default function ContentManagementPage() {
 
   const saveEditChanges = async () => {
     if (!editingContent || !editForm.title.trim()) return
+    if (!editForm.lesson_id) return
+    if (editingContent.content_type === 'image' && !editForm.explanation.trim()) return
 
     setIsSaving(true)
     try {
@@ -221,10 +340,12 @@ export default function ContentManagementPage() {
       const { error } = await supabase
         .from('learn_content')
         .update({
+          lesson_id: editForm.lesson_id,
           title: editForm.title.trim(),
           description: editForm.description.trim() || null,
           content_url: editForm.content_url || null,
           content_text: editForm.content_text || null,
+          explanation: editForm.explanation.trim() || null,
           is_premium: editForm.is_premium,
           is_individually_priced: editForm.is_individually_priced && price > 0,
           price: price,
@@ -239,6 +360,7 @@ export default function ContentManagementPage() {
               ...c,
               ...editForm,
               description: editForm.description || null,
+              explanation: editForm.explanation || null,
               is_individually_priced: editForm.is_individually_priced && price > 0,
               price: price,
             }
@@ -315,15 +437,15 @@ export default function ContentManagementPage() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--gold)]">description</span>
           </div>
-          <h3 className="text-xl font-bold mb-2">No Classrooms Yet</h3>
+          <h3 className="text-xl font-bold mb-2">No Strategies Yet</h3>
           <p className="text-[var(--muted)] mb-6 text-sm">
-            Create a classroom first to upload content
+            Create a strategy first to add lessons and content
           </p>
           <Link
             href="/teacher/classrooms"
             className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
           >
-            Create Classroom
+            Create Strategy
           </Link>
         </div>
       </div>
@@ -333,12 +455,12 @@ export default function ContentManagementPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold">Content Management</h1>
-          <p className="text-[var(--muted)] text-sm">Upload and organize educational content</p>
+          <p className="text-[var(--muted)] text-sm">Upload and organize content by lesson</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             value={selectedClassroom}
             onChange={(e) => setSelectedClassroom(e.target.value)}
@@ -348,9 +470,34 @@ export default function ContentManagementPage() {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          <select
+            value={selectedLesson}
+            onChange={(e) => setSelectedLesson(e.target.value)}
+            className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+            disabled={lessons.length === 0}
+          >
+            {lessons.length === 0 ? (
+              <option value="">No lessons yet</option>
+            ) : (
+              <>
+                {lessons.map(lesson => (
+                  <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                ))}
+                <option value={UNASSIGNED_LESSON_ID}>Unassigned content</option>
+              </>
+            )}
+          </select>
+          <button
+            onClick={() => setShowLessonModal(true)}
+            className="h-10 px-4 rounded-lg border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-lg">library_add</span>
+            Add Lesson
+          </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="gold-gradient text-black font-bold h-10 px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all text-sm"
+            disabled={lessons.length === 0 || selectedLesson === UNASSIGNED_LESSON_ID}
+            className="gold-gradient text-black font-bold h-10 px-6 rounded-lg flex items-center gap-2 hover:opacity-90 transition-all text-sm disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-lg">add</span>
             Add Content
@@ -358,17 +505,35 @@ export default function ContentManagementPage() {
         </div>
       </div>
 
-      {content.length === 0 ? (
+      {lessons.length === 0 ? (
+        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-3xl text-[var(--gold)]">layers</span>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Create a Lesson First</h3>
+          <p className="text-[var(--muted)] mb-6 text-sm">
+            Lessons help students follow your strategy step by step.
+          </p>
+          <button
+            onClick={() => setShowLessonModal(true)}
+            className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">library_add</span>
+            Add Lesson
+          </button>
+        </div>
+      ) : content.length === 0 ? (
         <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--gold)]">description</span>
           </div>
           <h3 className="text-xl font-bold mb-2">No Content Yet</h3>
           <p className="text-[var(--muted)] mb-6 text-sm">
-            Add videos, PDFs, and articles for your students
+            Add videos, PDFs, images, and articles for this lesson
           </p>
           <button
             onClick={() => setShowAddModal(true)}
+            disabled={selectedLesson === UNASSIGNED_LESSON_ID}
             className="gold-gradient text-black font-bold h-10 px-6 rounded-lg inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
           >
             <span className="material-symbols-outlined text-lg">add</span>
@@ -430,6 +595,60 @@ export default function ContentManagementPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Lesson Modal */}
+      {showLessonModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="w-full max-w-lg my-8 p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+            <h3 className="text-xl font-bold mb-6">Add Lesson</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                  Lesson Title *
+                </label>
+                <input
+                  type="text"
+                  value={lessonForm.title}
+                  onChange={(e) => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                  Summary
+                </label>
+                <textarea
+                  value={lessonForm.summary}
+                  onChange={(e) => setLessonForm(prev => ({ ...prev, summary: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowLessonModal(false)
+                    setLessonForm({ title: '', summary: '' })
+                  }}
+                  className="flex-1 h-11 px-6 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createLesson}
+                  disabled={isSavingLesson || !lessonForm.title.trim()}
+                  className="flex-1 gold-gradient text-black font-bold h-11 px-6 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-sm disabled:opacity-50"
+                >
+                  {isSavingLesson ? (
+                    <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                  ) : null}
+                  Add Lesson
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -533,6 +752,21 @@ export default function ContentManagementPage() {
                 </div>
               )}
 
+              {newContent.content_type === 'image' && (
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                    Explanation *
+                  </label>
+                  <textarea
+                    value={newContent.explanation}
+                    onChange={(e) => setNewContent(prev => ({ ...prev, explanation: e.target.value }))}
+                    placeholder="Explain the chart or image context..."
+                    rows={4}
+                    className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                  />
+                </div>
+              )}
+
               <label className="flex items-center gap-3 p-3 rounded-xl bg-black/20 cursor-pointer">
                 <input
                   type="checkbox"
@@ -593,7 +827,11 @@ export default function ContentManagementPage() {
                 </button>
                 <button
                   onClick={addContent}
-                  disabled={isAdding || !newContent.title.trim()}
+                  disabled={
+                    isAdding ||
+                    !newContent.title.trim() ||
+                    (newContent.content_type === 'image' && !newContent.explanation.trim())
+                  }
                   className="flex-1 gold-gradient text-black font-bold h-11 px-6 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-sm disabled:opacity-50"
                 >
                   {isAdding ? (
@@ -613,6 +851,20 @@ export default function ContentManagementPage() {
           <div className="w-full max-w-lg my-8 p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
             <h3 className="text-xl font-bold mb-6">Edit Content</h3>
             <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                  Lesson *
+                </label>
+                <select
+                  value={editForm.lesson_id}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, lesson_id: e.target.value }))}
+                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                >
+                  {lessons.map(lesson => (
+                    <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
                   Title *
@@ -688,6 +940,20 @@ export default function ContentManagementPage() {
                 </div>
               )}
 
+              {editingContent.content_type === 'image' && (
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                    Explanation *
+                  </label>
+                  <textarea
+                    value={editForm.explanation}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, explanation: e.target.value }))}
+                    rows={4}
+                    className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                  />
+                </div>
+              )}
+
               <label className="flex items-center gap-3 p-3 rounded-xl bg-black/20 cursor-pointer">
                 <input
                   type="checkbox"
@@ -751,7 +1017,12 @@ export default function ContentManagementPage() {
                 </button>
                 <button
                   onClick={saveEditChanges}
-                  disabled={isSaving || !editForm.title.trim()}
+                  disabled={
+                    isSaving ||
+                    !editForm.title.trim() ||
+                    !editForm.lesson_id ||
+                    (editingContent.content_type === 'image' && !editForm.explanation.trim())
+                  }
                   className="flex-1 gold-gradient text-black font-bold h-11 px-6 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all text-sm disabled:opacity-50"
                 >
                   {isSaving ? (

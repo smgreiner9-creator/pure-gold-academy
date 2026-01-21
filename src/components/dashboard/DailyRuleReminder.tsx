@@ -2,6 +2,15 @@
 
 import { useState, useSyncExternalStore, useCallback } from 'react'
 
+interface ClassroomRule {
+  rule_text: string
+  description?: string | null
+}
+
+interface Props {
+  classroomRules?: ClassroomRule[]
+}
+
 const tradingRules = [
   { rule: 'Always use a stop loss', icon: 'shield' },
   { rule: 'Risk only 1-2% per trade', icon: 'percent' },
@@ -20,12 +29,23 @@ const tradingRules = [
   { rule: 'Stay patient, the setup will come', icon: 'self_improvement' },
 ]
 
-function getDailyRule() {
-  // Use the day of year to select a rule (changes daily)
+function getDayOfYear() {
   const now = new Date()
   const start = new Date(now.getFullYear(), 0, 0)
   const diff = now.getTime() - start.getTime()
-  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24))
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
+
+function getDailyRule(classroomRules?: ClassroomRule[]) {
+  const dayOfYear = getDayOfYear()
+
+  // Use classroom rules if provided and non-empty
+  if (classroomRules && classroomRules.length > 0) {
+    const rule = classroomRules[dayOfYear % classroomRules.length]
+    return { rule: rule.rule_text, icon: 'school' }
+  }
+
+  // Fall back to generic trading rules
   return tradingRules[dayOfYear % tradingRules.length]
 }
 
@@ -46,7 +66,7 @@ function useIsDismissedToday() {
   return useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot)
 }
 
-export function DailyRuleReminder() {
+export function DailyRuleReminder({ classroomRules }: Props) {
   const isDismissedFromStorage = useIsDismissedToday()
   const [userDismissed, setUserDismissed] = useState(false)
 
@@ -59,7 +79,7 @@ export function DailyRuleReminder() {
   // Don't render if already dismissed (from storage or user action)
   if (isDismissedFromStorage || userDismissed) return null
 
-  const dailyRule = getDailyRule()
+  const dailyRule = getDailyRule(classroomRules)
 
   return (
     <div className="p-4 rounded-xl border border-[var(--gold)]/20 bg-[var(--gold)]/5">
@@ -69,7 +89,7 @@ export function DailyRuleReminder() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-bold text-[var(--gold)] uppercase tracking-widest mb-1">
-            Today&apos;s Focus
+            Today&apos;s Reminder
           </p>
           <p className="text-sm font-medium">{dailyRule.rule}</p>
         </div>

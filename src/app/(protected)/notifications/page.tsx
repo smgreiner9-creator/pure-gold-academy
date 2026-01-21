@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, Button } from '@/components/ui'
 import { Bell, Check, CheckCheck, MessageSquare, PenTool, GraduationCap, Trash2 } from 'lucide-react'
@@ -14,13 +14,7 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadNotifications()
-    }
-  }, [profile?.id])
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -36,7 +30,13 @@ export default function NotificationsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadNotifications()
+    }
+  }, [profile?.id, loadNotifications])
 
   const markAsRead = async (id: string) => {
     try {
@@ -104,7 +104,7 @@ export default function NotificationsPage() {
     return date.toLocaleDateString()
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
 
   if (isLoading) {
     return (

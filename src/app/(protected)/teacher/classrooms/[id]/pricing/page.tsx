@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -24,13 +24,7 @@ export default function ClassroomPricingPage() {
 
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id && classroomId) {
-      loadData()
-    }
-  }, [profile?.id, classroomId])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -69,7 +63,13 @@ export default function ClassroomPricingPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [classroomId, profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id && classroomId) {
+      loadData()
+    }
+  }, [profile?.id, classroomId, loadData])
 
   const handleSave = async () => {
     setError(null)

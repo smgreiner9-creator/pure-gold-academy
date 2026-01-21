@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -18,13 +19,7 @@ export default function JournalEntryDetailPage() {
 
   const entryId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : undefined
 
-  useEffect(() => {
-    if (entryId) {
-      loadEntry()
-    }
-  }, [entryId])
-
-  const loadEntry = async () => {
+  const loadEntry = useCallback(async () => {
     if (!entryId) return
 
     try {
@@ -51,7 +46,13 @@ export default function JournalEntryDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [entryId, router, supabase])
+
+  useEffect(() => {
+    if (entryId) {
+      loadEntry()
+    }
+  }, [entryId, loadEntry])
 
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
@@ -228,10 +229,13 @@ export default function JournalEntryDetailPage() {
                 rel="noopener noreferrer"
                 className="block rounded-xl overflow-hidden border border-[var(--card-border)] hover:border-[var(--gold)]/50 transition-colors"
               >
-                <img
+                <Image
                   src={url}
                   alt={`Screenshot ${index + 1}`}
-                  className="w-full hover:opacity-90 transition-opacity"
+                  width={1200}
+                  height={800}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="w-full h-auto hover:opacity-90 transition-opacity"
                 />
               </a>
             ))}

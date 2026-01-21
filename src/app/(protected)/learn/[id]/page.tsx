@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
@@ -16,13 +16,7 @@ export default function ContentPage() {
 
   const contentId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : undefined
 
-  useEffect(() => {
-    if (contentId) {
-      loadContent()
-    }
-  }, [contentId])
-
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     if (!contentId) return
 
     try {
@@ -40,7 +34,13 @@ export default function ContentPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [contentId, router, supabase])
+
+  useEffect(() => {
+    if (contentId) {
+      loadContent()
+    }
+  }, [contentId, loadContent])
 
   if (isLoading) {
     return (

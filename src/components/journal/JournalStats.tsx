@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonStats } from '@/components/ui/Skeleton'
@@ -29,13 +29,7 @@ export function JournalStats() {
   const [isExpanded, setIsExpanded] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadStats()
-    }
-  }, [profile?.id])
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -144,7 +138,13 @@ export function JournalStats() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadStats()
+    }
+  }, [profile?.id, loadStats])
 
   const getEmotionLabel = (emotion: EmotionType) => {
     const labels: Record<EmotionType, string> = {

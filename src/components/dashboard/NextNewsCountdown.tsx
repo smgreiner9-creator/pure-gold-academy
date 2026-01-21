@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 
 interface NewsEvent {
+  date: string
   time: string
   currency: string
   impact: string
@@ -10,9 +11,29 @@ interface NewsEvent {
 }
 
 export function NextNewsCountdown() {
-  const [nextEvent, setNextEvent] = useState<NewsEvent | null>(null)
+  const [nextEvent, setNextEvent] = useState<(NewsEvent & { eventDate: string }) | null>(null)
   const [countdown, setCountdown] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
+
+  const parseEventDateTime = (event: NewsEvent): Date | null => {
+    if (!event.date || !event.time) return null
+    if (event.time === 'All Day' || event.time === 'Tentative') return null
+
+    const timeMatch = event.time.match(/(\d+):(\d+)(am|pm)/i)
+    if (!timeMatch) return null
+
+    const [month, day, year] = event.date.split('-').map(Number)
+    if (!month || !day || !year) return null
+
+    let hours = parseInt(timeMatch[1])
+    const minutes = parseInt(timeMatch[2])
+    const ampm = timeMatch[3].toLowerCase()
+
+    if (ampm === 'pm' && hours !== 12) hours += 12
+    if (ampm === 'am' && hours === 12) hours = 0
+
+    return new Date(year, month - 1, day, hours, minutes, 0, 0)
+  }
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -27,36 +48,36 @@ export function NextNewsCountdown() {
           )
 
           if (highImpactEvents.length > 0) {
-            // Find the next upcoming event
+            // Find the next upcoming event across dates
             const now = new Date()
-            const todayStr = now.toISOString().split('T')[0]
+            let nextCandidate: { event: NewsEvent; date: Date } | null = null
 
             for (const event of highImpactEvents) {
-              if (event.time && event.time !== 'All Day' && event.time !== 'Tentative') {
-                // Parse time (format: "8:30am" or "2:00pm")
-                const timeMatch = event.time.match(/(\d+):(\d+)(am|pm)/i)
-                if (timeMatch) {
-                  let hours = parseInt(timeMatch[1])
-                  const minutes = parseInt(timeMatch[2])
-                  const ampm = timeMatch[3].toLowerCase()
-
-                  if (ampm === 'pm' && hours !== 12) hours += 12
-                  if (ampm === 'am' && hours === 12) hours = 0
-
-                  const eventDate = new Date(todayStr)
-                  eventDate.setHours(hours, minutes, 0, 0)
-
-                  if (eventDate > now) {
-                    setNextEvent(event)
-                    break
-                  }
-                }
+              const eventDate = parseEventDateTime(event)
+              if (!eventDate) continue
+              if (eventDate <= now) continue
+              if (!nextCandidate || eventDate < nextCandidate.date) {
+                nextCandidate = { event, date: eventDate }
               }
             }
+
+            if (nextCandidate) {
+              setNextEvent({
+                ...nextCandidate.event,
+                eventDate: nextCandidate.date.toISOString(),
+              })
+            } else {
+              setNextEvent(null)
+            }
+          } else {
+            setNextEvent(null)
           }
+        } else {
+          setNextEvent(null)
         }
       } catch (error) {
         console.error('Error fetching news:', error)
+        setNextEvent(null)
       } finally {
         setIsLoading(false)
       }
@@ -68,28 +89,11 @@ export function NextNewsCountdown() {
   }, [])
 
   useEffect(() => {
-    if (!nextEvent || !nextEvent.time) return
+    if (!nextEvent) return
 
     const updateCountdown = () => {
       const now = new Date()
-      const todayStr = now.toISOString().split('T')[0]
-
-      const timeMatch = nextEvent.time.match(/(\d+):(\d+)(am|pm)/i)
-      if (!timeMatch) {
-        setCountdown('')
-        return
-      }
-
-      let hours = parseInt(timeMatch[1])
-      const minutes = parseInt(timeMatch[2])
-      const ampm = timeMatch[3].toLowerCase()
-
-      if (ampm === 'pm' && hours !== 12) hours += 12
-      if (ampm === 'am' && hours === 12) hours = 0
-
-      const eventDate = new Date(todayStr)
-      eventDate.setHours(hours, minutes, 0, 0)
-
+      const eventDate = new Date(nextEvent.eventDate)
       const diff = eventDate.getTime() - now.getTime()
 
       if (diff <= 0) {

@@ -83,13 +83,7 @@ export function JournalList() {
   })
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadEntries()
-    }
-  }, [profile?.id, filter])
-
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     if (!profile?.id) return
 
     setIsLoading(true)
@@ -123,7 +117,13 @@ export function JournalList() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filter, profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadEntries()
+    }
+  }, [profile?.id, filter, loadEntries])
 
   const deleteEntry = async (id: string) => {
     if (!confirm('Are you sure you want to delete this entry?')) return

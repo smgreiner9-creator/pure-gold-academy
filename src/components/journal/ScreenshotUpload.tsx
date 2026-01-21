@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
 interface ScreenshotUploadProps {
@@ -164,11 +165,16 @@ export function ScreenshotUpload({
         <div className="grid grid-cols-2 gap-3">
           {screenshots.map((url, index) => (
             <div key={index} className="relative group">
-              <img
-                src={url}
-                alt={`Screenshot ${index + 1}`}
-                className="w-full h-32 object-cover rounded-lg border border-[var(--card-border)]"
-              />
+              <div className="relative w-full h-32 overflow-hidden rounded-lg border border-[var(--card-border)]">
+                <Image
+                  src={url}
+                  alt={`Screenshot ${index + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 200px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => removeScreenshot(url)}

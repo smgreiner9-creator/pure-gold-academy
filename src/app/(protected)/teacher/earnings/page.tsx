@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -42,13 +42,7 @@ export default function EarningsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadEarningsData()
-    }
-  }, [profile?.id])
-
-  const loadEarningsData = async () => {
+  const loadEarningsData = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -230,7 +224,13 @@ export default function EarningsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadEarningsData()
+    }
+  }, [profile?.id, loadEarningsData])
 
   if (isLoading || stripeLoading) {
     return (

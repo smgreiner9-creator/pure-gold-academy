@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -21,19 +21,7 @@ export default function TeacherJournalsPage() {
   const [isSendingFeedback, setIsSendingFeedback] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadClassrooms()
-    }
-  }, [profile?.id])
-
-  useEffect(() => {
-    if (classrooms.length > 0) {
-      loadJournals()
-    }
-  }, [selectedClassroom, classrooms])
-
-  const loadClassrooms = async () => {
+  const loadClassrooms = useCallback(async () => {
     if (!profile?.id) return
 
     const { data } = await supabase
@@ -42,9 +30,9 @@ export default function TeacherJournalsPage() {
       .eq('teacher_id', profile.id)
 
     setClassrooms(data || [])
-  }
+  }, [profile?.id, supabase])
 
-  const loadJournals = async (append = false) => {
+  const loadJournals = useCallback(async (append = false) => {
     if (!profile?.id) return
 
     if (append) {
@@ -117,7 +105,19 @@ export default function TeacherJournalsPage() {
       setIsLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [classrooms, journals.length, profile?.id, selectedClassroom, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadClassrooms()
+    }
+  }, [profile?.id, loadClassrooms])
+
+  useEffect(() => {
+    if (classrooms.length > 0) {
+      loadJournals()
+    }
+  }, [selectedClassroom, classrooms, loadJournals])
 
   const sendFeedback = async () => {
     if (!profile?.id || !selectedJournal || !feedbackText.trim()) return

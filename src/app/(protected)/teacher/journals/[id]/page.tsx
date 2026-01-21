@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
@@ -26,13 +26,7 @@ export default function TeacherJournalDetailPage() {
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id && journalId) {
-      loadJournalData()
-    }
-  }, [profile?.id, journalId])
-
-  const loadJournalData = async () => {
+  const loadJournalData = useCallback(async () => {
     try {
       // Load journal and all feedback
       const [journalRes, feedbackRes] = await Promise.all([
@@ -80,7 +74,13 @@ export default function TeacherJournalDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [journalId, supabase])
+
+  useEffect(() => {
+    if (profile?.id && journalId) {
+      loadJournalData()
+    }
+  }, [profile?.id, journalId, loadJournalData])
 
   const sendFeedback = async () => {
     if (!profile?.id || !newFeedback.trim() || !journal) return

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -26,13 +26,7 @@ export default function JoinClassroomPage() {
 
   const cancelled = searchParams.get('cancelled') === 'true'
 
-  useEffect(() => {
-    if (inviteCode) {
-      loadClassroom()
-    }
-  }, [inviteCode])
-
-  const loadClassroom = async () => {
+  const loadClassroom = useCallback(async () => {
     try {
       // Find classroom by invite code
       const { data: classroomData, error: findError } = await supabase
@@ -73,7 +67,13 @@ export default function JoinClassroomPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [inviteCode, supabase])
+
+  useEffect(() => {
+    if (inviteCode) {
+      loadClassroom()
+    }
+  }, [inviteCode, loadClassroom])
 
   const handleJoinFree = async () => {
     if (!profile?.id || !classroom) return

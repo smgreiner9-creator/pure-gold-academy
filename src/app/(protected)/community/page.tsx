@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -15,13 +15,7 @@ export default function CommunityPage() {
   const [isCreating, setIsCreating] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadPosts()
-    }
-  }, [profile?.id, profile?.classroom_id])
-
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -51,7 +45,13 @@ export default function CommunityPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadPosts()
+    }
+  }, [profile?.id, profile?.classroom_id, loadPosts])
 
   const createPost = async () => {
     if (!profile?.id || !profile?.classroom_id || !newPost.title.trim() || !newPost.content.trim()) return

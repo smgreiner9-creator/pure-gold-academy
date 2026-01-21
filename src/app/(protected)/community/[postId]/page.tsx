@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, Button, Textarea } from '@/components/ui'
 import { ArrowLeft, MessageSquare, Send, Trash2 } from 'lucide-react'
@@ -21,13 +21,7 @@ export default function PostDetailPage() {
 
   const postId = typeof params.postId === 'string' ? params.postId : Array.isArray(params.postId) ? params.postId[0] : undefined
 
-  useEffect(() => {
-    if (postId) {
-      loadPost()
-    }
-  }, [postId])
-
-  const loadPost = async () => {
+  const loadPost = useCallback(async () => {
     if (!postId) return
 
     try {
@@ -53,7 +47,13 @@ export default function PostDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [postId, router, supabase])
+
+  useEffect(() => {
+    if (postId) {
+      loadPost()
+    }
+  }, [postId, loadPost])
 
   const submitComment = async () => {
     if (!profile?.id || !postId || !newComment.trim()) return

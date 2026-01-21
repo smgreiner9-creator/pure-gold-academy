@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, Button, Input, Textarea } from '@/components/ui'
 import { Save, ArrowLeft, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
@@ -100,13 +100,7 @@ export default function EditJournalEntryPage() {
     return { rMultiple, pnl }
   }, [entryPrice, exitPrice, stopLoss, positionSize, direction])
 
-  useEffect(() => {
-    if (entryId) {
-      loadEntry()
-    }
-  }, [entryId])
-
-  const loadEntry = async () => {
+  const loadEntry = useCallback(async () => {
     if (!entryId) return
 
     try {
@@ -148,7 +142,13 @@ export default function EditJournalEntryPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [entryId, supabase])
+
+  useEffect(() => {
+    if (entryId) {
+      loadEntry()
+    }
+  }, [entryId, loadEntry])
 
   const handleSubmit = async () => {
     if (!profile?.id || !entryId) {

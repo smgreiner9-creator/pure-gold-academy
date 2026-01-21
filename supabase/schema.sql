@@ -34,6 +34,7 @@ CREATE TABLE classrooms (
   description TEXT,
   invite_code TEXT UNIQUE DEFAULT encode(gen_random_bytes(6), 'hex'),
   journaling_rules JSONB DEFAULT '{"required_fields": ["instrument", "direction", "entry_price", "emotion_before"], "custom_rules": []}',
+  is_public BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -78,18 +79,44 @@ CREATE TABLE journal_feedback (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Lessons table
+CREATE TABLE lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  classroom_id UUID REFERENCES classrooms(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Classroom rules table
+CREATE TABLE classroom_rules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  classroom_id UUID REFERENCES classrooms(id) ON DELETE CASCADE NOT NULL,
+  rule_text TEXT NOT NULL,
+  description TEXT,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Learn content table
 CREATE TABLE learn_content (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   classroom_id UUID REFERENCES classrooms(id) ON DELETE CASCADE NOT NULL,
   teacher_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  lesson_id UUID REFERENCES lessons(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   description TEXT,
+  explanation TEXT,
   content_type content_type NOT NULL,
   content_url TEXT,
   content_text TEXT,
   order_index INTEGER DEFAULT 0,
   is_premium BOOLEAN DEFAULT false,
+  is_individually_priced BOOLEAN DEFAULT false,
+  price DECIMAL(10, 2) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -168,7 +195,10 @@ CREATE INDEX idx_profiles_classroom_id ON profiles(classroom_id);
 CREATE INDEX idx_journal_entries_user_id ON journal_entries(user_id);
 CREATE INDEX idx_journal_entries_trade_date ON journal_entries(trade_date);
 CREATE INDEX idx_journal_entries_classroom_id ON journal_entries(classroom_id);
+CREATE INDEX idx_lessons_classroom_id ON lessons(classroom_id);
+CREATE INDEX idx_classroom_rules_classroom_id ON classroom_rules(classroom_id);
 CREATE INDEX idx_learn_content_classroom_id ON learn_content(classroom_id);
+CREATE INDEX idx_learn_content_lesson_id ON learn_content(lesson_id);
 CREATE INDEX idx_learn_progress_user_id ON learn_progress(user_id);
 CREATE INDEX idx_community_posts_classroom_id ON community_posts(classroom_id);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
@@ -181,6 +211,8 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE classrooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE journal_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE classroom_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE learn_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE learn_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
@@ -212,6 +244,10 @@ CREATE POLICY "Students can view their classroom" ON classrooms FOR SELECT
   USING (
     id IN (SELECT classroom_id FROM profiles WHERE user_id = auth.uid())
   );
+CREATE POLICY "Anyone can view public classrooms" ON classrooms FOR SELECT
+  USING (
+    is_public = true
+  );
 
 -- Journal entries policies
 CREATE POLICY "Users can manage their own journal entries" ON journal_entries
@@ -237,6 +273,30 @@ CREATE POLICY "Users can view feedback on their entries" ON journal_feedback FOR
     )
     OR
     teacher_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+  );
+
+-- Lessons policies
+CREATE POLICY "Teachers can manage their lessons" ON lessons
+  FOR ALL USING (
+    classroom_id IN (
+      SELECT id FROM classrooms WHERE teacher_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    )
+  );
+CREATE POLICY "Students can view lessons in their classroom" ON lessons FOR SELECT
+  USING (
+    classroom_id IN (SELECT classroom_id FROM profiles WHERE user_id = auth.uid())
+  );
+
+-- Classroom rules policies
+CREATE POLICY "Teachers can manage classroom rules" ON classroom_rules
+  FOR ALL USING (
+    classroom_id IN (
+      SELECT id FROM classrooms WHERE teacher_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    )
+  );
+CREATE POLICY "Students can view classroom rules" ON classroom_rules FOR SELECT
+  USING (
+    classroom_id IN (SELECT classroom_id FROM profiles WHERE user_id = auth.uid())
   );
 
 -- Learn content policies
@@ -362,6 +422,8 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW
 CREATE TRIGGER update_classrooms_updated_at BEFORE UPDATE ON classrooms FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_journal_entries_updated_at BEFORE UPDATE ON journal_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_learn_content_updated_at BEFORE UPDATE ON learn_content FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_lessons_updated_at BEFORE UPDATE ON lessons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_classroom_rules_updated_at BEFORE UPDATE ON classroom_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_community_posts_updated_at BEFORE UPDATE ON community_posts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

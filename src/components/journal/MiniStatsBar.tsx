@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -19,13 +19,7 @@ export function MiniStatsBar() {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadStats()
-    }
-  }, [profile?.id])
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -75,7 +69,13 @@ export function MiniStatsBar() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadStats()
+    }
+  }, [profile?.id, loadStats])
 
   if (isLoading) {
     return (

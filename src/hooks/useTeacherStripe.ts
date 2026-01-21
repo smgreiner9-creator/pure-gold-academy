@@ -26,15 +26,7 @@ export function useTeacherStripe() {
   })
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id && profile?.role === 'teacher') {
-      loadStripeAccount()
-    } else {
-      setState(prev => ({ ...prev, isLoading: false }))
-    }
-  }, [profile?.id, profile?.role])
-
-  const loadStripeAccount = async () => {
+  const loadStripeAccount = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -64,7 +56,15 @@ export function useTeacherStripe() {
         error: 'Failed to load Stripe account',
       }))
     }
-  }
+  }, [profile?.id, supabase])
+
+  useEffect(() => {
+    if (profile?.id && profile?.role === 'teacher') {
+      loadStripeAccount()
+    } else {
+      setState(prev => ({ ...prev, isLoading: false }))
+    }
+  }, [profile?.id, profile?.role, loadStripeAccount])
 
   const startOnboarding = useCallback(async () => {
     try {
@@ -103,7 +103,7 @@ export function useTeacherStripe() {
     } catch (error) {
       console.error('Error refreshing status:', error)
     }
-  }, [])
+  }, [loadStripeAccount])
 
   return {
     ...state,

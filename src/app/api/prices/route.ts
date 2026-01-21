@@ -78,7 +78,7 @@ async function fetchFromApiLayer(): Promise<Record<string, PriceData> | null> {
 
   try {
     const res = await fetch(
-      `http://apilayer.net/api/live?access_key=${apiKey}&currencies=EUR,GBP,JPY,CAD,CHF,AUD,NZD&source=USD&format=1`,
+      `https://apilayer.net/api/live?access_key=${apiKey}&currencies=EUR,GBP,JPY,CAD,CHF,AUD,NZD&source=USD&format=1`,
       { cache: 'no-store' }
     )
 

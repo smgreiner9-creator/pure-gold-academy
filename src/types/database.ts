@@ -11,7 +11,10 @@ export type SubscriptionTier = 'free' | 'premium'
 export type EmotionType = 'calm' | 'confident' | 'anxious' | 'fearful' | 'greedy' | 'frustrated' | 'neutral'
 export type TradeDirection = 'long' | 'short'
 export type TradeOutcome = 'win' | 'loss' | 'breakeven'
-export type ContentType = 'video' | 'pdf' | 'image' | 'text'
+export type ContentType = 'video' | 'pdf' | 'image' | 'text' | 'youtube' | 'tradingview'
+export type TradeCallStatus = 'active' | 'hit_tp1' | 'hit_tp2' | 'hit_tp3' | 'hit_sl' | 'manual_close' | 'cancelled'
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced'
+export type LiveSessionStatus = 'scheduled' | 'live' | 'ended' | 'cancelled'
 export type PricingType = 'free' | 'paid'
 export type ClassroomSubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'past_due'
 export type PurchaseStatus = 'pending' | 'completed' | 'refunded' | 'failed'
@@ -29,6 +32,7 @@ export interface Database {
           role: UserRole
           subscription_tier: SubscriptionTier
           classroom_id: string | null
+          current_track_id: string | null
           created_at: string
           updated_at: string
         }
@@ -41,6 +45,7 @@ export interface Database {
           role?: UserRole
           subscription_tier?: SubscriptionTier
           classroom_id?: string | null
+          current_track_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -53,6 +58,7 @@ export interface Database {
           role?: UserRole
           subscription_tier?: SubscriptionTier
           classroom_id?: string | null
+          current_track_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -66,7 +72,16 @@ export interface Database {
           description: string | null
           invite_code: string
           journaling_rules: Json
+          is_public: boolean
           is_paid: boolean
+          tagline: string | null
+          logo_url: string | null
+          banner_url: string | null
+          trading_style: string | null
+          markets: string[] | null
+          trade_calls_enabled: boolean
+          live_sessions_enabled: boolean
+          curriculum_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -77,7 +92,16 @@ export interface Database {
           description?: string | null
           invite_code?: string
           journaling_rules?: Json
+          is_public?: boolean
           is_paid?: boolean
+          tagline?: string | null
+          logo_url?: string | null
+          banner_url?: string | null
+          trading_style?: string | null
+          markets?: string[] | null
+          trade_calls_enabled?: boolean
+          live_sessions_enabled?: boolean
+          curriculum_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -88,7 +112,16 @@ export interface Database {
           description?: string | null
           invite_code?: string
           journaling_rules?: Json
+          is_public?: boolean
           is_paid?: boolean
+          tagline?: string | null
+          logo_url?: string | null
+          banner_url?: string | null
+          trading_style?: string | null
+          markets?: string[] | null
+          trade_calls_enabled?: boolean
+          live_sessions_enabled?: boolean
+          curriculum_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -199,13 +232,76 @@ export interface Database {
         }
         Relationships: []
       }
+      lessons: {
+        Row: {
+          id: string
+          classroom_id: string
+          title: string
+          summary: string | null
+          order_index: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          title: string
+          summary?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          title?: string
+          summary?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      classroom_rules: {
+        Row: {
+          id: string
+          classroom_id: string
+          rule_text: string
+          description: string | null
+          order_index: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          rule_text: string
+          description?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          rule_text?: string
+          description?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       learn_content: {
         Row: {
           id: string
           classroom_id: string
           teacher_id: string
+          lesson_id: string | null
+          module_id: string | null
           title: string
           description: string | null
+          explanation: string | null
           content_type: ContentType
           content_url: string | null
           content_text: string | null
@@ -220,8 +316,11 @@ export interface Database {
           id?: string
           classroom_id: string
           teacher_id: string
+          lesson_id?: string | null
+          module_id?: string | null
           title: string
           description?: string | null
+          explanation?: string | null
           content_type: ContentType
           content_url?: string | null
           content_text?: string | null
@@ -236,8 +335,11 @@ export interface Database {
           id?: string
           classroom_id?: string
           teacher_id?: string
+          lesson_id?: string | null
+          module_id?: string | null
           title?: string
           description?: string | null
+          explanation?: string | null
           content_type?: ContentType
           content_url?: string | null
           content_text?: string | null
@@ -604,6 +706,294 @@ export interface Database {
         }
         Relationships: []
       }
+      trade_calls: {
+        Row: {
+          id: string
+          classroom_id: string
+          teacher_id: string
+          instrument: string
+          direction: TradeDirection
+          entry_price: number
+          stop_loss: number
+          take_profit_1: number | null
+          take_profit_2: number | null
+          take_profit_3: number | null
+          risk_reward_ratio: number | null
+          timeframe: string | null
+          analysis_text: string | null
+          chart_url: string | null
+          status: TradeCallStatus
+          actual_exit_price: number | null
+          result_pips: number | null
+          result_percent: number | null
+          closed_at: string | null
+          close_notes: string | null
+          published_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          teacher_id: string
+          instrument: string
+          direction: TradeDirection
+          entry_price: number
+          stop_loss: number
+          take_profit_1?: number | null
+          take_profit_2?: number | null
+          take_profit_3?: number | null
+          risk_reward_ratio?: number | null
+          timeframe?: string | null
+          analysis_text?: string | null
+          chart_url?: string | null
+          status?: TradeCallStatus
+          actual_exit_price?: number | null
+          result_pips?: number | null
+          result_percent?: number | null
+          closed_at?: string | null
+          close_notes?: string | null
+          published_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          teacher_id?: string
+          instrument?: string
+          direction?: TradeDirection
+          entry_price?: number
+          stop_loss?: number
+          take_profit_1?: number | null
+          take_profit_2?: number | null
+          take_profit_3?: number | null
+          risk_reward_ratio?: number | null
+          timeframe?: string | null
+          analysis_text?: string | null
+          chart_url?: string | null
+          status?: TradeCallStatus
+          actual_exit_price?: number | null
+          result_pips?: number | null
+          result_percent?: number | null
+          closed_at?: string | null
+          close_notes?: string | null
+          published_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trade_call_follows: {
+        Row: {
+          id: string
+          trade_call_id: string
+          student_id: string
+          journal_entry_id: string | null
+          followed_at: string
+        }
+        Insert: {
+          id?: string
+          trade_call_id: string
+          student_id: string
+          journal_entry_id?: string | null
+          followed_at?: string
+        }
+        Update: {
+          id?: string
+          trade_call_id?: string
+          student_id?: string
+          journal_entry_id?: string | null
+          followed_at?: string
+        }
+        Relationships: []
+      }
+      curriculum_tracks: {
+        Row: {
+          id: string
+          classroom_id: string
+          name: string
+          description: string | null
+          difficulty_level: DifficultyLevel
+          order_index: number
+          is_published: boolean
+          prerequisite_track_id: string | null
+          estimated_hours: number | null
+          icon: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          name: string
+          description?: string | null
+          difficulty_level?: DifficultyLevel
+          order_index?: number
+          is_published?: boolean
+          prerequisite_track_id?: string | null
+          estimated_hours?: number | null
+          icon?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          name?: string
+          description?: string | null
+          difficulty_level?: DifficultyLevel
+          order_index?: number
+          is_published?: boolean
+          prerequisite_track_id?: string | null
+          estimated_hours?: number | null
+          icon?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      track_modules: {
+        Row: {
+          id: string
+          track_id: string
+          title: string
+          summary: string | null
+          order_index: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          track_id: string
+          title: string
+          summary?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          track_id?: string
+          title?: string
+          summary?: string | null
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      track_progress: {
+        Row: {
+          id: string
+          user_id: string
+          track_id: string
+          started_at: string
+          completed_at: string | null
+          current_module_id: string | null
+          progress_percent: number
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          track_id: string
+          started_at?: string
+          completed_at?: string | null
+          current_module_id?: string | null
+          progress_percent?: number
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          track_id?: string
+          started_at?: string
+          completed_at?: string | null
+          current_module_id?: string | null
+          progress_percent?: number
+        }
+        Relationships: []
+      }
+      live_sessions: {
+        Row: {
+          id: string
+          classroom_id: string
+          teacher_id: string
+          title: string
+          description: string | null
+          scheduled_start: string
+          scheduled_duration_minutes: number
+          actual_start: string | null
+          actual_end: string | null
+          status: LiveSessionStatus
+          stream_url: string | null
+          recording_url: string | null
+          thumbnail_url: string | null
+          max_attendees: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          classroom_id: string
+          teacher_id: string
+          title: string
+          description?: string | null
+          scheduled_start: string
+          scheduled_duration_minutes?: number
+          actual_start?: string | null
+          actual_end?: string | null
+          status?: LiveSessionStatus
+          stream_url?: string | null
+          recording_url?: string | null
+          thumbnail_url?: string | null
+          max_attendees?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          classroom_id?: string
+          teacher_id?: string
+          title?: string
+          description?: string | null
+          scheduled_start?: string
+          scheduled_duration_minutes?: number
+          actual_start?: string | null
+          actual_end?: string | null
+          status?: LiveSessionStatus
+          stream_url?: string | null
+          recording_url?: string | null
+          thumbnail_url?: string | null
+          max_attendees?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      session_attendees: {
+        Row: {
+          id: string
+          session_id: string
+          user_id: string
+          joined_at: string
+          left_at: string | null
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          user_id: string
+          joined_at?: string
+          left_at?: string | null
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          user_id?: string
+          joined_at?: string
+          left_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -621,6 +1011,9 @@ export interface Database {
       pricing_type: PricingType
       classroom_subscription_status: ClassroomSubscriptionStatus
       purchase_status: PurchaseStatus
+      trade_call_status: TradeCallStatus
+      difficulty_level: DifficultyLevel
+      live_session_status: LiveSessionStatus
     }
     CompositeTypes: {
       [_ in never]: never
@@ -633,6 +1026,8 @@ export type Profile = Database['public']['Tables']['profiles']['Row']
 export type Classroom = Database['public']['Tables']['classrooms']['Row']
 export type JournalEntry = Database['public']['Tables']['journal_entries']['Row']
 export type JournalFeedback = Database['public']['Tables']['journal_feedback']['Row']
+export type Lesson = Database['public']['Tables']['lessons']['Row']
+export type ClassroomRule = Database['public']['Tables']['classroom_rules']['Row']
 export type LearnContent = Database['public']['Tables']['learn_content']['Row']
 export type LearnProgress = Database['public']['Tables']['learn_progress']['Row']
 export type CommunityPost = Database['public']['Tables']['community_posts']['Row']
@@ -649,3 +1044,35 @@ export type ContentPurchase = Database['public']['Tables']['content_purchases'][
 
 // Daily check-in type
 export type DailyCheckin = Database['public']['Tables']['daily_checkins']['Row']
+
+// Trade Calls types
+export type TradeCall = Database['public']['Tables']['trade_calls']['Row']
+export type TradeCallFollow = Database['public']['Tables']['trade_call_follows']['Row']
+
+// Curriculum types
+export type CurriculumTrack = Database['public']['Tables']['curriculum_tracks']['Row']
+export type TrackModule = Database['public']['Tables']['track_modules']['Row']
+export type TrackProgress = Database['public']['Tables']['track_progress']['Row']
+
+// Live Sessions types
+export type LiveSession = Database['public']['Tables']['live_sessions']['Row']
+export type SessionAttendee = Database['public']['Tables']['session_attendees']['Row']
+
+// Extended types with relations
+export type TradeCallWithTeacher = TradeCall & {
+  teacher?: Profile
+}
+
+export type CurriculumTrackWithModules = CurriculumTrack & {
+  modules?: TrackModule[]
+  content_count?: number
+}
+
+export type TrackModuleWithContent = TrackModule & {
+  content?: LearnContent[]
+}
+
+export type LiveSessionWithTeacher = LiveSession & {
+  teacher?: Profile
+  attendee_count?: number
+}

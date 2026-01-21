@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -48,13 +48,7 @@ export default function StudentDetailPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'journals' | 'feedback'>('overview')
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id && studentId) {
-      loadStudentData()
-    }
-  }, [profile?.id, studentId])
-
-  const loadStudentData = async () => {
+  const loadStudentData = useCallback(async () => {
     try {
       // Load student profile and journals
       const [studentRes, journalsRes] = await Promise.all([
@@ -104,7 +98,13 @@ export default function StudentDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [profile?.id, studentId, supabase])
+
+  useEffect(() => {
+    if (profile?.id && studentId) {
+      loadStudentData()
+    }
+  }, [profile?.id, studentId, loadStudentData])
 
   const calculateStats = (journalsData: JournalEntry[]) => {
     const wins = journalsData.filter(j => j.outcome === 'win').length

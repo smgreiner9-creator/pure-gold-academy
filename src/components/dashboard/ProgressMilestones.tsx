@@ -79,7 +79,7 @@ export function ProgressMilestones() {
 
   useEffect(() => {
     loadStats()
-  }, [profile?.id])
+  }, [profile?.id, loadStats])
 
   // Find next milestone
   const nextMilestone = useMemo(() => {

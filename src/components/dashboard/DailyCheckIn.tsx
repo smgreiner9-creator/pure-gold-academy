@@ -58,7 +58,7 @@ export function DailyCheckIn() {
 
   useEffect(() => {
     loadData()
-  }, [profile?.id])
+  }, [profile?.id, loadData])
 
   const handleNoTradeToday = async () => {
     if (!profile?.id || isSubmitting) return

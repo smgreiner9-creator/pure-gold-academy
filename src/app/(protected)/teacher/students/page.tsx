@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,19 +25,7 @@ export default function StudentsPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (profile?.id) {
-      loadData()
-    }
-  }, [profile?.id])
-
-  useEffect(() => {
-    if (classrooms.length > 0) {
-      loadStudents()
-    }
-  }, [selectedClassroom, classrooms])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!profile?.id) return
 
     try {
@@ -50,9 +38,9 @@ export default function StudentsPage() {
     } catch (error) {
       console.error('Error loading data:', error)
     }
-  }
+  }, [profile?.id, supabase])
 
-  const loadStudents = async (append = false) => {
+  const loadStudents = useCallback(async (append = false) => {
     if (!profile?.id) return
 
     if (append) {
@@ -143,7 +131,19 @@ export default function StudentsPage() {
       setIsLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [classrooms, profile?.id, selectedClassroom, students.length, supabase])
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadData()
+    }
+  }, [profile?.id, loadData])
+
+  useEffect(() => {
+    if (classrooms.length > 0) {
+      loadStudents()
+    }
+  }, [selectedClassroom, classrooms, loadStudents])
 
   if (isLoading && students.length === 0) {
     return (
