@@ -107,21 +107,39 @@ src/
 ### 3. Teacher Portal
 - **Location:** `src/app/(protected)/teacher/`
 - **Features:** Classroom creation, student management, content upload, analytics review, pricing configuration, Stripe Connect
+- **New (Jan 21):** Trade Calls, Curriculum Tracks, Live Sessions
 
 ### 4. Learning System
 - **Location:** `src/app/(protected)/learn/`
-- **Content types:** Video, PDF, image, text
+- **Content types:** Video, PDF, image, text, YouTube embeds, TradingView charts
 - **Access control:** Free, premium, individually priced
+- **New (Jan 21):** Curriculum tracks with modules, progress tracking
 
-### 5. Community Forum
+### 5. Trade Calls (NEW - Jan 21, 2026)
+- **Location:** `src/app/(protected)/teacher/trade-calls/` (teacher), `src/app/(protected)/learn/` (student)
+- **Components:** `src/components/trade-calls/`
+- **Features:** Post trade ideas with entry/SL/TPs, analysis, TradingView charts
+- **Student action:** Copy to journal
+
+### 6. Curriculum Tracks (NEW - Jan 21, 2026)
+- **Location:** `src/app/(protected)/teacher/curriculum/` (teacher), `src/app/(protected)/learn/tracks/` (student)
+- **Features:** Structured learning paths (beginner → advanced), modules, prerequisites
+- **Progress:** Track completion percentage per student
+
+### 7. Live Sessions (NEW - Jan 21, 2026)
+- **Location:** `src/app/(protected)/teacher/live/` (teacher), `src/app/(protected)/learn/live/` (student)
+- **Features:** Schedule streams, go live, end sessions
+- **Streaming:** YouTube/Twitch/Zoom support
+
+### 8. Community Forum
 - **Location:** `src/app/(protected)/community/`
 - **Features:** Posts, comments, signal-prevention filtering
 
-### 6. Strategy Publishing
+### 9. Strategy Publishing
 - **Visibility:** Public or private strategies
 - **Flow:** Guided setup (strategy → lesson + content → publish)
 
-### 7. Payments (Stripe)
+### 10. Payments (Stripe)
 - **Platform subscription:** $2.80/month premium
 - **Classroom subscriptions:** Teacher-set pricing
 - **Content purchases:** Individual content sales
@@ -135,13 +153,13 @@ src/
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `profiles` | User accounts | user_id, email, role (student/teacher/admin), subscription_tier |
-| `classrooms` | Teacher classrooms | teacher_id, name, invite_code, is_paid |
+| `profiles` | User accounts | user_id, email, role (student/teacher/admin), subscription_tier, current_track_id |
+| `classrooms` | Teacher classrooms | teacher_id, name, invite_code, is_paid, tagline, logo_url, banner_url |
 | `journal_entries` | Trade logs | instrument, direction, prices, emotions, rules_followed, screenshots |
 | `journal_feedback` | Teacher comments | journal_entry_id, teacher_id, content |
 | `lessons` | Strategy lessons | classroom_id, title, summary, order_index |
 | `classroom_rules` | Strategy rules | classroom_id, rule_text, description |
-| `learn_content` | Educational materials | classroom_id, lesson_id, content_type, content_url, explanation |
+| `learn_content` | Educational materials | classroom_id, lesson_id, module_id, content_type, content_url |
 | `learn_progress` | Student progress | user_id, content_id, completed |
 | `community_posts` | Forum posts | classroom_id, user_id, title, content |
 | `subscriptions` | Stripe subscription data | user_id, stripe_customer_id, tier, status |
@@ -151,18 +169,44 @@ src/
 | `classroom_pricing` | Classroom subscription pricing | classroom_id, monthly_price |
 | `content_purchases` | Individual content sales | student_id, content_id, amount |
 
+### Trade Calls Tables (NEW - Jan 21, 2026)
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `trade_calls` | Teacher trade ideas | instrument, direction, entry_price, stop_loss, take_profit_1/2/3, status |
+| `trade_call_follows` | Student follows | trade_call_id, student_id, journal_entry_id |
+
+### Curriculum Tables (NEW - Jan 21, 2026)
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `curriculum_tracks` | Learning paths | classroom_id, name, difficulty_level, prerequisite_track_id |
+| `track_modules` | Modules in tracks | track_id, title, order_index |
+| `track_progress` | Student progress | user_id, track_id, progress_percent, completed_at |
+
+### Live Sessions Tables (NEW - Jan 21, 2026)
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `live_sessions` | Scheduled streams | classroom_id, title, scheduled_start, status, stream_url |
+| `session_attendees` | Attendance tracking | session_id, user_id, joined_at |
+
 ### Custom Types
 - `user_role`: student | teacher | admin
 - `subscription_tier`: free | premium
 - `emotion_type`: confident | anxious | fearful | greedy | calm | frustrated | neutral
 - `trade_direction`: long | short
 - `trade_outcome`: win | loss | breakeven
-- `content_type`: video | pdf | image | text
+- `content_type`: video | pdf | image | text | youtube | tradingview
+- `trade_call_status`: active | hit_tp1 | hit_tp2 | hit_tp3 | hit_sl | manual_close | cancelled (NEW)
+- `difficulty_level`: beginner | intermediate | advanced (NEW)
+- `live_session_status`: scheduled | live | ended | cancelled (NEW)
 
 ---
 
 ## API Endpoints
 
+### Payments & Stripe
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/stripe/checkout` | POST | Create premium subscription checkout |
@@ -171,8 +215,43 @@ src/
 | `/api/stripe/connect/status` | GET | Check teacher Stripe status |
 | `/api/stripe/connect/checkout/classroom` | POST | Classroom subscription checkout |
 | `/api/webhooks/stripe` | POST | Stripe webhook handler |
+
+### Data
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
 | `/api/prices` | GET | Live forex/crypto/gold prices (15min cache) |
 | `/api/forex-factory` | GET | Economic calendar events |
+
+### Trade Calls (NEW - Jan 21, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/trade-calls` | GET | List trade calls (filtered by classroom/status) |
+| `/api/trade-calls` | POST | Create new trade call |
+| `/api/trade-calls` | PATCH | Update/close trade call |
+| `/api/trade-calls` | DELETE | Delete trade call |
+| `/api/trade-calls/follow` | GET | Get student's followed calls |
+| `/api/trade-calls/follow` | POST | Student follows a trade call |
+| `/api/trade-calls/follow` | DELETE | Unfollow trade call |
+
+### Curriculum (NEW - Jan 21, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/curriculum/tracks` | GET | List curriculum tracks |
+| `/api/curriculum/tracks` | POST | Create track |
+| `/api/curriculum/tracks` | PATCH | Update track |
+| `/api/curriculum/tracks` | DELETE | Delete track |
+| `/api/curriculum/modules` | GET | List modules |
+| `/api/curriculum/modules` | POST | Create module |
+| `/api/curriculum/modules` | PATCH | Update module |
+| `/api/curriculum/modules` | DELETE | Delete module |
+
+### Live Sessions (NEW - Jan 21, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/live-sessions` | GET | List live sessions |
+| `/api/live-sessions` | POST | Create session |
+| `/api/live-sessions` | PATCH | Update session (including go live/end) |
+| `/api/live-sessions` | DELETE | Delete session |
 
 ---
 
@@ -293,11 +372,47 @@ npm run build && npm start
 
 ## Session History
 
-### Session: January 19, 2026
+### Session: January 21, 2026 (~14:00-18:00 EST)
 **Agent:** Claude Opus 4.5
-**Actions:**
-- Created this reference document (CLAUDE_REFERENCE.md)
-- Performed comprehensive codebase exploration
+**Task:** Teacher Portal Reimagination
+
+**Major Changes:**
+1. **Trade Calls System**
+   - Created `trade_calls` and `trade_call_follows` tables
+   - Built TradeCallCard and TradeCallForm components
+   - Added `/api/trade-calls` and `/api/trade-calls/follow` routes
+   - Teacher pages: `/teacher/trade-calls`, `/teacher/trade-calls/new`
+   - Student view integrated into learn page
+
+2. **Curriculum Tracks**
+   - Created `curriculum_tracks`, `track_modules`, `track_progress` tables
+   - Added `/api/curriculum/tracks` and `/api/curriculum/modules` routes
+   - Teacher pages: `/teacher/curriculum`, `/teacher/curriculum/tracks/[id]`
+   - Student page: `/learn/tracks/[id]`
+
+3. **Live Sessions**
+   - Created `live_sessions` and `session_attendees` tables
+   - Added `/api/live-sessions` route
+   - Teacher page: `/teacher/live`
+   - Student page: `/learn/live`
+
+4. **Embed Support**
+   - Created YouTubeEmbed, TradingViewEmbed, EmbedPicker components
+   - Added embedUtils.ts for URL parsing
+
+5. **Classroom Enhancements**
+   - Added tagline, logo_url, banner_url, trading_style, markets columns
+   - Added feature flags: trade_calls_enabled, live_sessions_enabled, curriculum_enabled
+
+6. **Student Learn Page Redesign**
+   - Tabbed interface: Overview, Tracks, Trade Calls, Live
+   - Integrated all new features
+
+**Files Created:** 26 new files
+**Files Modified:** 38 files
+**Migration:** `supabase/migrations/20260121_teacher_portal_reimagine.sql`
+
+---
 
 ### Session: January 20, 2026
 **Agent:** GPT-5 (Codex)
@@ -309,21 +424,32 @@ npm run build && npm start
 - Updated dashboard reminder label and placement
 - Performance refactors: deferred public strategy listing load, hook dependency fixes, memoized derived lists, and `next/image` adoption
 
-**Current State:**
+---
+
+### Session: January 19, 2026
+**Agent:** Claude Opus 4.5
+**Actions:**
+- Created this reference document (CLAUDE_REFERENCE.md)
+- Performed comprehensive codebase exploration
+
+---
+
+**Current State (as of Jan 21, 2026):**
 - Project version: 0.1.0
-- 70+ TypeScript files
-- 40+ React components
-- 16 database tables
-- All core features implemented
+- 90+ TypeScript files
+- 50+ React components
+- 23 database tables (7 new)
+- All core features + new trade calls, curriculum, live sessions
 
 **Recent Development (from git history):**
-1. Phase 1 retention features (daily check-in, streak protection, milestones)
-2. UX improvements (route-aware chrome, join flow)
-3. UI redesign (warm gold colors, 3D depth effects)
-4. Fix double login issue
-5. Stripe Connect teacher pricing implementation
-6. Teacher portal overhaul
-7. Premium tier features and analytics
+1. Teacher Portal Reimagination (trade calls, curriculum, live sessions)
+2. Phase 1 retention features (daily check-in, streak protection, milestones)
+3. UX improvements (route-aware chrome, join flow)
+4. UI redesign (warm gold colors, 3D depth effects)
+5. Fix double login issue
+6. Stripe Connect teacher pricing implementation
+7. Teacher portal overhaul
+8. Premium tier features and analytics
 
 ---
 
@@ -338,9 +464,11 @@ When working on this codebase:
 5. **Protected routes** - All `/app/(protected)/` routes require authentication
 6. **Supabase RLS** - Database has row-level security; use service role for admin operations
 7. **Stripe integration** - Both platform subscriptions and Connect for teachers
+8. **New features (Jan 21)** - Trade calls, curriculum tracks, live sessions are fully implemented
+9. **Embed support** - Use `src/lib/embedUtils.ts` for YouTube/TradingView URL parsing
 
 **Update this document** after significant changes to keep it current.
 
 ---
 
-*Last Updated: January 20, 2026 (19:26 EST)*
+*Last Updated: January 21, 2026 (~18:00 EST)*

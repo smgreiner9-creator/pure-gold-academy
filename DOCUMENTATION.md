@@ -12,13 +12,16 @@ Pure Gold Trading Academy is a comprehensive web application for trading educati
 4. [Student Dashboard](#student-dashboard)
 5. [Trade Journaling](#trade-journaling)
 6. [Learning Content](#learning-content)
-7. [Teacher Backend](#teacher-backend)
-8. [Community](#community)
-9. [Notifications](#notifications)
-10. [Subscriptions](#subscriptions)
-11. [Database Schema](#database-schema)
-12. [Environment Variables](#environment-variables)
-13. [Deployment](#deployment)
+7. [Trade Calls](#trade-calls)
+8. [Curriculum Tracks](#curriculum-tracks)
+9. [Live Sessions](#live-sessions)
+10. [Teacher Backend](#teacher-backend)
+11. [Community](#community)
+12. [Notifications](#notifications)
+13. [Subscriptions](#subscriptions)
+14. [Database Schema](#database-schema)
+15. [Environment Variables](#environment-variables)
+16. [Deployment](#deployment)
 
 ---
 
@@ -71,12 +74,15 @@ src/
 1. **User Authentication** - Email/password with student/teacher roles
 2. **Student Dashboard** - Market news, session indicator, position calculator
 3. **Trade Journaling** - Structured entries with screenshots, emotions, rules
-4. **Learning Content** - Video, PDF, image, and text support
-5. **Teacher Backend** - Classroom management, analytics, feedback
-6. **Public Strategies** - Marketplace listing for discoverable strategies
-7. **Community** - Discussion posts and comments
-8. **Push Notifications** - Web push for important updates
-9. **Subscriptions** - Free and premium tiers via Stripe
+4. **Learning Content** - Video, PDF, image, text, YouTube embeds, TradingView charts
+5. **Trade Calls** - Real-time teacher trade ideas with entry/SL/TPs and analysis
+6. **Curriculum Tracks** - Structured learning paths (beginner → advanced) with modules
+7. **Live Sessions** - Scheduled live trading streams with teacher
+8. **Teacher Backend** - Classroom management, analytics, feedback, trade calls, curriculum
+9. **Public Strategies** - Marketplace listing for discoverable strategies
+10. **Community** - Discussion posts and comments
+11. **Push Notifications** - Web push for important updates
+12. **Subscriptions** - Free and premium tiers via Stripe
 
 ---
 
@@ -227,6 +233,186 @@ interface LearningContent {
 
 ---
 
+## Trade Calls
+
+> *Added January 21, 2026*
+
+### Overview
+
+Trade calls allow teachers to share real-time trade ideas with their students. Students can view the calls, see the analysis, and optionally copy them to their journal.
+
+### Trade Call Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `instrument` | string | Yes | Trading pair (XAUUSD, EURUSD, etc.) |
+| `direction` | enum | Yes | 'long' or 'short' |
+| `entry_price` | decimal | Yes | Entry price level |
+| `stop_loss` | decimal | Yes | Stop loss price |
+| `take_profit_1` | decimal | No | First take profit target |
+| `take_profit_2` | decimal | No | Second take profit target |
+| `take_profit_3` | decimal | No | Third take profit target |
+| `risk_reward_ratio` | decimal | Auto | Calculated R:R ratio |
+| `timeframe` | string | No | Chart timeframe (1H, 4H, D, etc.) |
+| `analysis_text` | text | No | Trade reasoning and analysis |
+| `chart_url` | url | No | TradingView chart URL |
+| `status` | enum | Auto | active, hit_tp1, hit_tp2, hit_tp3, hit_sl, manual_close, cancelled |
+
+### Trade Call Statuses
+
+- **active** - Trade is currently open
+- **hit_tp1/2/3** - Take profit level was reached
+- **hit_sl** - Stop loss was hit
+- **manual_close** - Teacher manually closed the trade
+- **cancelled** - Trade was cancelled before entry
+
+### Student Features
+
+- View all active and recent trade calls from their classroom
+- See detailed analysis and chart links
+- "Copy to Journal" button pre-fills a new journal entry
+- Track which calls they followed
+
+### Teacher Features
+
+- Post new trade calls quickly from dashboard or dedicated page
+- Close trades with actual exit price and notes
+- View performance stats (win rate, total calls, etc.)
+- Filter by status and classroom
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/trade-calls` | GET | List trade calls |
+| `/api/trade-calls` | POST | Create new trade call |
+| `/api/trade-calls` | PATCH | Update/close trade call |
+| `/api/trade-calls` | DELETE | Delete trade call |
+| `/api/trade-calls/follow` | POST | Student follows a call |
+| `/api/trade-calls/follow` | GET | Get student's followed calls |
+
+---
+
+## Curriculum Tracks
+
+> *Added January 21, 2026*
+
+### Overview
+
+Curriculum tracks provide structured learning paths that guide students from beginner to advanced topics. Each track contains modules, and modules contain content.
+
+### Track Structure
+
+```
+Classroom
+└── Curriculum Track (e.g., "Beginner Forex")
+    ├── Module 1: Market Basics
+    │   ├── Content: What is Forex (video)
+    │   ├── Content: Currency Pairs (text)
+    │   └── Content: Market Hours (image)
+    ├── Module 2: Chart Reading
+    │   ├── Content: Candlestick Patterns (video)
+    │   └── Content: Support & Resistance (video)
+    └── Module 3: First Trade
+        └── Content: Demo Account Setup (pdf)
+```
+
+### Track Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Track name |
+| `description` | text | Track overview |
+| `difficulty_level` | enum | beginner, intermediate, advanced |
+| `prerequisite_track_id` | uuid | Track that must be completed first |
+| `estimated_hours` | integer | Estimated completion time |
+| `is_published` | boolean | Whether students can see it |
+| `order_index` | integer | Display order |
+
+### Module Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Module name |
+| `summary` | text | Module description |
+| `order_index` | integer | Order within track |
+
+### Progress Tracking
+
+- Students can see their progress percentage per track
+- Prerequisite tracks must be completed before unlocking next level
+- Progress is calculated based on content completion within modules
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/curriculum/tracks` | GET | List tracks |
+| `/api/curriculum/tracks` | POST | Create track |
+| `/api/curriculum/tracks` | PATCH | Update track |
+| `/api/curriculum/tracks` | DELETE | Delete track |
+| `/api/curriculum/modules` | GET | List modules |
+| `/api/curriculum/modules` | POST | Create module |
+| `/api/curriculum/modules` | PATCH | Update module |
+| `/api/curriculum/modules` | DELETE | Delete module |
+
+---
+
+## Live Sessions
+
+> *Added January 21, 2026*
+
+### Overview
+
+Live sessions allow teachers to schedule and host live trading streams. Students see upcoming sessions and can join when the teacher goes live.
+
+### Session Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Session title |
+| `description` | text | What will be covered |
+| `scheduled_start` | timestamp | When the session starts |
+| `scheduled_duration_minutes` | integer | Expected length |
+| `status` | enum | scheduled, live, ended, cancelled |
+| `stream_url` | url | YouTube/Twitch/Zoom link |
+| `recording_url` | url | Post-session recording link |
+| `actual_start` | timestamp | When teacher went live |
+| `actual_end` | timestamp | When session ended |
+
+### Session Statuses
+
+- **scheduled** - Upcoming session
+- **live** - Currently streaming
+- **ended** - Session completed
+- **cancelled** - Session was cancelled
+
+### Student Features
+
+- View upcoming sessions with countdown timers
+- See "Live Now" indicator when teacher is streaming
+- Click to join via stream URL
+- Sessions display in local timezone
+
+### Teacher Features
+
+- Schedule sessions with date, time, and duration
+- Add stream URL when ready (can be added later)
+- "Go Live" button to start the session
+- "End Session" button to complete
+- View past sessions
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/live-sessions` | GET | List sessions |
+| `/api/live-sessions` | POST | Create session |
+| `/api/live-sessions` | PATCH | Update session (including status changes) |
+| `/api/live-sessions` | DELETE | Delete session |
+
+---
+
 ## Teacher Backend
 
 ### Teacher Dashboard (`/teacher`)
@@ -235,6 +421,31 @@ interface LearningContent {
 - Total journals reviewed
 - Active classrooms
 - Pending feedback requests
+- Quick links to Trade Calls, Curriculum, Live Sessions
+
+### Trade Calls (`/teacher/trade-calls`)
+
+- List all trade calls with performance stats
+- Filter by classroom and status (active/closed)
+- Create new trade call with quick form
+- Close trades with exit price and notes
+- View win/loss statistics
+
+### Curriculum (`/teacher/curriculum`)
+
+- Manage curriculum tracks per classroom
+- Create/edit tracks with difficulty levels
+- Set prerequisite tracks for progressive learning
+- Publish/unpublish tracks
+- Track detail view for managing modules
+
+### Live Sessions (`/teacher/live`)
+
+- Schedule upcoming live sessions
+- Set title, description, date/time, duration
+- Add stream URL (YouTube/Twitch/Zoom)
+- Go Live / End Session controls
+- View past sessions
 
 ### Classrooms (`/teacher/classrooms`)
 
@@ -474,6 +685,128 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 - current_period_end (timestamp)
 ```
 
+### Trade Calls Tables (NEW - Jan 21, 2026)
+
+#### trade_calls
+```sql
+- id (uuid, PK)
+- classroom_id (uuid, FK -> classrooms)
+- teacher_id (uuid, FK -> profiles)
+- instrument (text)
+- direction (text) -- 'long' | 'short'
+- entry_price (decimal)
+- stop_loss (decimal)
+- take_profit_1 (decimal)
+- take_profit_2 (decimal)
+- take_profit_3 (decimal)
+- risk_reward_ratio (decimal)
+- timeframe (text)
+- analysis_text (text)
+- chart_url (text)
+- status (trade_call_status) -- active, hit_tp1, hit_tp2, hit_tp3, hit_sl, manual_close, cancelled
+- actual_exit_price (decimal)
+- result_pips (decimal)
+- closed_at (timestamp)
+- close_notes (text)
+- published_at (timestamp)
+- created_at (timestamp)
+```
+
+#### trade_call_follows
+```sql
+- id (uuid, PK)
+- trade_call_id (uuid, FK -> trade_calls)
+- student_id (uuid, FK -> profiles)
+- journal_entry_id (uuid, FK -> journal_entries)
+- followed_at (timestamp)
+```
+
+### Curriculum Tables (NEW - Jan 21, 2026)
+
+#### curriculum_tracks
+```sql
+- id (uuid, PK)
+- classroom_id (uuid, FK -> classrooms)
+- name (text)
+- description (text)
+- difficulty_level (difficulty_level) -- beginner, intermediate, advanced
+- order_index (integer)
+- is_published (boolean)
+- prerequisite_track_id (uuid, FK -> curriculum_tracks)
+- estimated_hours (integer)
+- icon (text)
+- created_at (timestamp)
+```
+
+#### track_modules
+```sql
+- id (uuid, PK)
+- track_id (uuid, FK -> curriculum_tracks)
+- title (text)
+- summary (text)
+- order_index (integer)
+- created_at (timestamp)
+```
+
+#### track_progress
+```sql
+- id (uuid, PK)
+- user_id (uuid, FK -> profiles)
+- track_id (uuid, FK -> curriculum_tracks)
+- started_at (timestamp)
+- completed_at (timestamp)
+- current_module_id (uuid, FK -> track_modules)
+- progress_percent (integer)
+```
+
+### Live Sessions Tables (NEW - Jan 21, 2026)
+
+#### live_sessions
+```sql
+- id (uuid, PK)
+- classroom_id (uuid, FK -> classrooms)
+- teacher_id (uuid, FK -> profiles)
+- title (text)
+- description (text)
+- scheduled_start (timestamp)
+- scheduled_duration_minutes (integer)
+- actual_start (timestamp)
+- actual_end (timestamp)
+- status (live_session_status) -- scheduled, live, ended, cancelled
+- stream_url (text)
+- recording_url (text)
+- thumbnail_url (text)
+- max_attendees (integer)
+- created_at (timestamp)
+```
+
+#### session_attendees
+```sql
+- id (uuid, PK)
+- session_id (uuid, FK -> live_sessions)
+- user_id (uuid, FK -> profiles)
+- joined_at (timestamp)
+- left_at (timestamp)
+```
+
+### Classroom Enhancements (Jan 21, 2026)
+
+Added columns to `classrooms` table:
+- `tagline` (text)
+- `logo_url` (text)
+- `banner_url` (text)
+- `trading_style` (text)
+- `markets` (text[])
+- `trade_calls_enabled` (boolean)
+- `live_sessions_enabled` (boolean)
+- `curriculum_enabled` (boolean)
+
+Added column to `profiles` table:
+- `current_track_id` (uuid, FK -> curriculum_tracks)
+
+Added column to `learn_content` table:
+- `module_id` (uuid, FK -> track_modules)
+
 ### Additional Tables
 
 - `classroom_rules` - Strategy-level rules
@@ -490,8 +823,60 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 ## Update Log
 
-- 2026-01-20 18:29 EST - Added lessons + strategy rules, public strategy visibility, guided strategy setup flow, and image explanations.
-- 2026-01-20 19:26 EST - Performance refactors: deferred public strategy listing load, hook dependency fixes, memoized derived lists, and `next/image` adoption with Supabase patterns.
+### January 21, 2026 (~14:00-18:00 EST) - Teacher Portal Reimagination
+**Agent:** Claude Opus 4.5
+
+Major feature release transforming the teacher portal into a comprehensive trading education platform:
+
+**Trade Calls System**
+- New `trade_calls` and `trade_call_follows` tables
+- Teachers can post real-time trade ideas with instrument, direction, entry/SL/TPs
+- Optional analysis text and TradingView chart URLs
+- Status tracking: active → hit_tp/sl/manual_close/cancelled
+- Students see calls in learn page, can copy to journal
+- Performance statistics for teachers
+
+**Curriculum Tracks**
+- New `curriculum_tracks`, `track_modules`, `track_progress` tables
+- Structured learning paths with difficulty levels (beginner/intermediate/advanced)
+- Prerequisite-based track unlocking
+- Modules group content within tracks
+- Progress tracking per student
+
+**Live Sessions**
+- New `live_sessions` and `session_attendees` tables
+- Teachers can schedule live trading streams
+- Go Live / End Session controls
+- Students see upcoming sessions with countdown timers
+- Stream URL support (YouTube/Twitch/Zoom)
+
+**Embed Support**
+- YouTube video embeds with thumbnail preview and lazy loading
+- TradingView chart embeds
+- Auto-detection from pasted URLs
+- New components: YouTubeEmbed, TradingViewEmbed, EmbedPicker
+
+**Classroom Enhancements**
+- Added branding fields: tagline, logo_url, banner_url
+- Added trading_style and markets array
+- Feature flags: trade_calls_enabled, live_sessions_enabled, curriculum_enabled
+
+**New Files Created**
+- 9 new page components (teacher + student views)
+- 5 new API route files
+- 6 new components (trade-calls, embeds)
+- 1 new utility file (embedUtils.ts)
+- 1 new migration file
+
+**Migration:** `supabase/migrations/20260121_teacher_portal_reimagine.sql`
+
+---
+
+### January 20, 2026 (19:26 EST)
+- Performance refactors: deferred public strategy listing load, hook dependency fixes, memoized derived lists, and `next/image` adoption with Supabase patterns.
+
+### January 20, 2026 (18:29 EST)
+- Added lessons + strategy rules, public strategy visibility, guided strategy setup flow, and image explanations.
 
 ---
 
