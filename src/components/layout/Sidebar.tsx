@@ -20,15 +20,28 @@ const navItems: NavItem[] = [
   { href: '/teacher', label: 'Teacher Panel', icon: 'admin_panel_settings', teacherOnly: true },
 ]
 
+const teacherSubNav: NavItem[] = [
+  { href: '/teacher', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/teacher/topics', label: 'My Topics', icon: 'topic' },
+  { href: '/teacher/lessons/new', label: 'Add Lesson', icon: 'add_circle' },
+  { href: '/teacher/trade-calls', label: 'Trade Calls', icon: 'trending_up' },
+  { href: '/teacher/live', label: 'Live Sessions', icon: 'videocam' },
+  { href: '/teacher/settings', label: 'Settings', icon: 'settings' },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
   const { profile, signOut, isTeacher, isPremium } = useAuth()
+
+  const isOnTeacherRoutes = pathname.startsWith('/teacher')
 
   const filteredNavItems = navItems.filter(item => {
     if (item.teacherOnly && !isTeacher) return false
     if (item.studentOnly && isTeacher) return false
     return true
   })
+
+  const activeNavItems = isOnTeacherRoutes && isTeacher ? teacherSubNav : filteredNavItems
 
   return (
     <aside className="sidebar-3d fixed left-0 top-0 h-full w-20 lg:w-64 flex flex-col z-50">
@@ -45,10 +58,27 @@ export function Sidebar() {
         </Link>
       </div>
 
+      {/* Back to main nav when in teacher context */}
+      {isOnTeacherRoutes && isTeacher && (
+        <div className="px-3 lg:px-4">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-[var(--muted)] hover:text-white transition-colors text-sm"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            <span className="hidden lg:block font-medium">Main Menu</span>
+          </Link>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex-1 px-3 lg:px-4 space-y-2 mt-4">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+        {activeNavItems.map((item) => {
+          const isActive = isOnTeacherRoutes
+            ? item.href === '/teacher'
+              ? pathname === '/teacher'
+              : pathname === item.href || pathname.startsWith(item.href + '/')
+            : pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.href}

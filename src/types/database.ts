@@ -16,6 +16,8 @@ export type TradeCallStatus = 'active' | 'hit_tp1' | 'hit_tp2' | 'hit_tp3' | 'hi
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced'
 export type LiveSessionStatus = 'scheduled' | 'live' | 'ended' | 'cancelled'
 export type PricingType = 'free' | 'paid'
+export type LessonContentType = 'video' | 'chart' | 'pdf' | 'text'
+export type LessonStatus = 'draft' | 'published'
 export type ClassroomSubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'past_due'
 export type PurchaseStatus = 'pending' | 'completed' | 'refunded' | 'failed'
 
@@ -239,6 +241,13 @@ export interface Database {
           title: string
           summary: string | null
           order_index: number
+          content_type: LessonContentType | null
+          content_url: string | null
+          content_text: string | null
+          explanation: string
+          status: LessonStatus
+          attachment_urls: string[]
+          teacher_id: string | null
           created_at: string
           updated_at: string
         }
@@ -248,6 +257,13 @@ export interface Database {
           title: string
           summary?: string | null
           order_index?: number
+          content_type?: LessonContentType | null
+          content_url?: string | null
+          content_text?: string | null
+          explanation?: string
+          status?: LessonStatus
+          attachment_urls?: string[]
+          teacher_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -257,6 +273,13 @@ export interface Database {
           title?: string
           summary?: string | null
           order_index?: number
+          content_type?: LessonContentType | null
+          content_url?: string | null
+          content_text?: string | null
+          explanation?: string
+          status?: LessonStatus
+          attachment_urls?: string[]
+          teacher_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1075,4 +1098,12 @@ export type TrackModuleWithContent = TrackModule & {
 export type LiveSessionWithTeacher = LiveSession & {
   teacher?: Profile
   attendee_count?: number
+}
+
+// Topic is a simplified alias for Classroom in the new teacher flow
+export type Topic = Classroom
+
+// Extended lesson type with topic info
+export type LessonWithTopic = Lesson & {
+  classroom?: Classroom
 }

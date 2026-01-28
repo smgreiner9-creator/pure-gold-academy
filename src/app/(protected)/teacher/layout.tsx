@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { TeacherFAB } from '@/components/teacher/TeacherFAB'
 
 export default function TeacherLayout({
   children,
@@ -52,5 +53,10 @@ export default function TeacherLayout({
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <TeacherFAB />
+    </>
+  )
 }

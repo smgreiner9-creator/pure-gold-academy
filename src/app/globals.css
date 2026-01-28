@@ -16,6 +16,11 @@
 
   /* Additional UI Colors */
   --input-bg: rgba(0, 0, 0, 0.5);
+
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(15, 15, 15, 0.6);
+  --glass-border: rgba(255, 184, 0, 0.12);
+  --glass-border-hover: rgba(255, 184, 0, 0.35);
 }
 
 @theme inline {
@@ -30,7 +35,7 @@
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-muted: var(--muted);
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Urbanist', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -46,7 +51,7 @@ body {
     radial-gradient(ellipse 100% 80% at 120% 120%, rgba(255, 184, 0, 0.25) 0%, transparent 55%),
     linear-gradient(180deg, #0A0A0A 0%, #030303 50%, #000000 100%);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Urbanist', system-ui, sans-serif;
   min-height: 100vh;
 }
 
@@ -235,7 +240,7 @@ body {
 
 .input-field::placeholder {
   color: var(--muted);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Urbanist', sans-serif;
 }
 
 /* Label Styles */
@@ -287,4 +292,194 @@ body {
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* ==============================
+   LIQUID GOLD — Landing Page
+   ============================== */
+
+/* Keyframes */
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(40px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes mesh-drift {
+  0%, 100% {
+    background-position: 0% 50%, 100% 50%, 50% 100%;
+  }
+  33% {
+    background-position: 50% 0%, 0% 100%, 100% 50%;
+  }
+  66% {
+    background-position: 100% 100%, 50% 0%, 0% 50%;
+  }
+}
+
+@keyframes gold-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(255, 184, 0, 0.3),
+      0 0 40px rgba(255, 184, 0, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 184, 0, 0.5),
+      0 0 60px rgba(255, 184, 0, 0.25),
+      0 0 90px rgba(255, 184, 0, 0.1);
+  }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes border-rotate {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Glass Utilities */
+.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: 0 0 30px rgba(255, 184, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Gold Shimmer Text */
+.gold-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--gold-dark) 0%,
+    var(--gold-light) 25%,
+    #FFF8E1 50%,
+    var(--gold-light) 75%,
+    var(--gold-dark) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 4s linear infinite;
+}
+
+/* Mesh Background */
+.mesh-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(255, 184, 0, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 80% 60%, rgba(255, 160, 0, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(229, 165, 0, 0.05) 0%, transparent 70%);
+  background-size: 100% 100%;
+  animation: mesh-drift 20s ease-in-out infinite;
+}
+
+/* Particle Field */
+.particle-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: particle-float linear infinite;
+  box-shadow: 0 0 6px rgba(255, 184, 0, 0.4);
+}
+
+/* Typing Cursor */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--gold);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink-cursor 0.8s step-end infinite;
+}
+
+/* Animated Border (Premium Card) */
+.animated-border {
+  --border-angle: 0deg;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    conic-gradient(from var(--border-angle), var(--gold), transparent 30%, transparent 70%, var(--gold)) border-box;
+  animation: border-rotate 4s linear infinite;
+}
+
+/* Focus Visible */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .particle-field {
+    display: none !important;
+  }
+
+  .gold-shimmer-text {
+    animation: none;
+    background-size: 100% auto;
+  }
+
+  .animated-border {
+    animation: none;
+    border: 2px solid var(--gold);
+  }
 }

@@ -46,8 +46,12 @@ src/
 │   │   ├── journal/          # Trade journaling (CRUD + analytics)
 │   │   ├── learn/            # Educational content viewer
 │   │   ├── community/        # Discussion forum
-│   │   ├── teacher/          # Teacher portal (10+ pages)
-│   │   │   └── strategy/      # Guided strategy setup
+│   │   ├── teacher/          # Teacher portal
+│   │   │   ├── topics/        # Topic list & detail pages
+│   │   │   ├── lessons/new/   # Single-page lesson creation
+│   │   │   ├── trade-calls/   # Trade calls management
+│   │   │   ├── live/          # Live sessions
+│   │   │   └── settings/      # Teacher settings
 │   │   ├── classroom/        # Classroom join flow
 │   │   ├── notifications/    # Notification center
 │   │   └── settings/         # User settings & subscriptions
@@ -106,7 +110,8 @@ src/
 
 ### 3. Teacher Portal
 - **Location:** `src/app/(protected)/teacher/`
-- **Features:** Classroom creation, student management, content upload, analytics review, pricing configuration, Stripe Connect
+- **Features:** Topic management, single-page lesson creation, student management, pricing configuration, Stripe Connect
+- **Redesigned (Jan 28):** Simplified to Topics + Lessons model. Single-page lesson form with content type picker. Floating Add Lesson FAB.
 - **New (Jan 21):** Trade Calls, Curriculum Tracks, Live Sessions
 
 ### 4. Learning System
@@ -135,9 +140,13 @@ src/
 - **Location:** `src/app/(protected)/community/`
 - **Features:** Posts, comments, signal-prevention filtering
 
-### 9. Strategy Publishing
-- **Visibility:** Public or private strategies
-- **Flow:** Guided setup (strategy → lesson + content → publish)
+### 9. Topics & Lessons (NEW - Jan 28, 2026)
+- **Topics Location:** `src/app/(protected)/teacher/topics/`
+- **Lesson Form:** `src/components/teacher/LessonForm.tsx`
+- **Components:** `src/components/teacher/` (TopicSelector, TopicsList, TeacherFAB)
+- **API:** `/api/topics` (GET, POST), `/api/lessons` (POST)
+- **Flow:** Teacher selects/creates topic → fills single-page lesson form → publish or save draft
+- **Dual-write:** Lessons write to both `lessons` and `learn_content` tables for backward compatibility
 
 ### 10. Payments (Stripe)
 - **Platform subscription:** $2.80/month premium
@@ -154,10 +163,10 @@ src/
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `profiles` | User accounts | user_id, email, role (student/teacher/admin), subscription_tier, current_track_id |
-| `classrooms` | Teacher classrooms | teacher_id, name, invite_code, is_paid, tagline, logo_url, banner_url |
+| `classrooms` | Teacher topics (UI: "Topics") | teacher_id, name, invite_code, is_paid, tagline, logo_url, banner_url |
 | `journal_entries` | Trade logs | instrument, direction, prices, emotions, rules_followed, screenshots |
 | `journal_feedback` | Teacher comments | journal_entry_id, teacher_id, content |
-| `lessons` | Strategy lessons | classroom_id, title, summary, order_index |
+| `lessons` | Topic lessons | classroom_id, teacher_id, title, summary, content_type, content_url, content_text, explanation, status, attachment_urls, order_index |
 | `classroom_rules` | Strategy rules | classroom_id, rule_text, description |
 | `learn_content` | Educational materials | classroom_id, lesson_id, module_id, content_type, content_url |
 | `learn_progress` | Student progress | user_id, content_id, completed |
@@ -221,6 +230,13 @@ src/
 |----------|--------|---------|
 | `/api/prices` | GET | Live forex/crypto/gold prices (15min cache) |
 | `/api/forex-factory` | GET | Economic calendar events |
+
+### Topics & Lessons (NEW - Jan 28, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/topics` | GET | List teacher's topics with lesson counts and pricing |
+| `/api/topics` | POST | Create topic (classroom + classroom_pricing rows) |
+| `/api/lessons` | POST | Create lesson with dual-write to learn_content |
 
 ### Trade Calls (NEW - Jan 21, 2026)
 | Endpoint | Method | Purpose |
@@ -294,7 +310,10 @@ Protected routes in `src/middleware.ts`:
 |---------|------------|
 | Dashboard | `src/app/(protected)/dashboard/page.tsx` |
 | Journal | `src/app/(protected)/journal/page.tsx` |
-| Teacher | `src/app/(protected)/teacher/page.tsx` |
+| Teacher Dashboard | `src/app/(protected)/teacher/page.tsx` |
+| Teacher Topics | `src/app/(protected)/teacher/topics/page.tsx` |
+| Teacher Topic Detail | `src/app/(protected)/teacher/topics/[id]/page.tsx` |
+| Lesson Form | `src/components/teacher/LessonForm.tsx` |
 | Learning | `src/app/(protected)/learn/page.tsx` |
 
 ---
@@ -372,6 +391,60 @@ npm run build && npm start
 
 ## Session History
 
+### Session: January 28, 2026
+**Agent:** Claude Opus 4.5
+**Task:** Teacher Flow Redesign — Simplified Topics + Lessons Model
+
+**Problem:** The teacher flow was scattered across multiple pages with unnecessary fields. Teachers had to navigate Classroom → Strategy Wizard → Content Management → Pricing → Curriculum just to add a lesson.
+
+**Solution:** Streamlined to: Topics contain Lessons. Pricing is per-topic. Lesson creation is a single page. Inspired by Podia and Teachable's simplicity.
+
+**Major Changes:**
+
+1. **Topics + Lessons Model**
+   - `classrooms` table reused as "Topics" (no schema rename, just UI relabeling)
+   - Per-topic pricing (free or paid monthly subscription)
+   - Created TopicSelector, TopicsList, TeacherFAB, LessonForm components
+   - New pages: `/teacher/topics`, `/teacher/topics/[id]`, `/teacher/lessons/new`
+
+2. **Single-Page Lesson Creation**
+   - Icon-based content type picker (Video / Chart / PDF / Text)
+   - Adaptive content input (URL field, file upload, or textarea)
+   - Always-present explanation field
+   - Optional file attachments
+   - Save as Draft / Publish actions
+
+3. **API Routes**
+   - `POST /api/topics` — Creates classroom + classroom_pricing
+   - `GET /api/topics` — Lists topics with lesson counts and pricing
+   - `POST /api/lessons` — Creates lesson with dual-write to learn_content
+
+4. **Teacher Dashboard Rewrite**
+   - Reduced from 609 to ~160 lines
+   - 2 stat cards (students + earnings) + TopicsList
+
+5. **Sidebar Overhaul**
+   - Teacher sub-navigation when on `/teacher` routes
+   - Dashboard, My Topics, Add Lesson, Trade Calls, Live Sessions, Settings
+   - Active state with prefix matching for nested routes
+
+6. **Backward Compatibility**
+   - 7 redirect stubs from old URLs to new equivalents
+   - Dual-write to learn_content for student learn pages
+   - No database table renames
+
+7. **Security (from code review)**
+   - All mutations routed through API routes with server-side auth
+   - teacher_id ownership checks on topic detail page
+   - Error logging for dual-write failures
+   - useMemo fix for Supabase client stability
+
+**Files Created:** 15 new files (4 components, 3 pages, 2 API routes, 7 redirect stubs, 1 migration)
+**Files Modified:** 6 files (types, sidebar, teacher layout, teacher dashboard, topic detail, lesson form)
+**Migration:** `supabase/migrations/20260128_topic_simplification.sql`
+
+---
+
 ### Session: January 21, 2026 (~14:00-18:00 EST)
 **Agent:** Claude Opus 4.5
 **Task:** Teacher Portal Reimagination
@@ -434,22 +507,22 @@ npm run build && npm start
 
 ---
 
-**Current State (as of Jan 21, 2026):**
+**Current State (as of Jan 28, 2026):**
 - Project version: 0.1.0
-- 90+ TypeScript files
-- 50+ React components
-- 23 database tables (7 new)
-- All core features + new trade calls, curriculum, live sessions
+- 100+ TypeScript files
+- 55+ React components
+- 23 database tables (lessons table expanded with 7 new columns)
+- Simplified teacher flow: Topics → Lessons with single-page creation
+- All core features + trade calls, live sessions, curriculum tracks
 
 **Recent Development (from git history):**
-1. Teacher Portal Reimagination (trade calls, curriculum, live sessions)
-2. Phase 1 retention features (daily check-in, streak protection, milestones)
-3. UX improvements (route-aware chrome, join flow)
-4. UI redesign (warm gold colors, 3D depth effects)
-5. Fix double login issue
+1. **Teacher Flow Redesign** (Jan 28) — Topics + Lessons model, single-page lesson creation, dashboard rewrite
+2. Teacher Portal Reimagination (Jan 21) — trade calls, curriculum, live sessions
+3. Phase 1 retention features — daily check-in, streak protection, milestones
+4. UX improvements — route-aware chrome, join flow
+5. UI redesign — warm gold colors, 3D depth effects
 6. Stripe Connect teacher pricing implementation
-7. Teacher portal overhaul
-8. Premium tier features and analytics
+7. Premium tier features and analytics
 
 ---
 
@@ -466,9 +539,11 @@ When working on this codebase:
 7. **Stripe integration** - Both platform subscriptions and Connect for teachers
 8. **New features (Jan 21)** - Trade calls, curriculum tracks, live sessions are fully implemented
 9. **Embed support** - Use `src/lib/embedUtils.ts` for YouTube/TradingView URL parsing
+10. **Teacher flow (Jan 28)** - Topics + Lessons model. Components in `src/components/teacher/`. API routes at `/api/topics` and `/api/lessons`. Lessons dual-write to `learn_content`.
+11. **Old teacher URLs** - `/teacher/classrooms`, `/teacher/strategy/new`, `/teacher/content`, `/teacher/curriculum` all redirect to new equivalents
 
 **Update this document** after significant changes to keep it current.
 
 ---
 
-*Last Updated: January 21, 2026 (~18:00 EST)*
+*Last Updated: January 28, 2026*

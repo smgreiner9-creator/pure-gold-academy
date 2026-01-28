@@ -415,13 +415,41 @@ Live sessions allow teachers to schedule and host live trading streams. Students
 
 ## Teacher Backend
 
+> *Redesigned January 28, 2026 — simplified Topics + Lessons model*
+
 ### Teacher Dashboard (`/teacher`)
 
-- Total students count
-- Total journals reviewed
-- Active classrooms
-- Pending feedback requests
-- Quick links to Trade Calls, Curriculum, Live Sessions
+- 2 stat cards: Total students, Total earnings
+- TopicsList component showing all topics with lesson counts and pricing badges
+- Floating "Add Lesson" button (TeacherFAB) on all teacher pages
+- Empty state CTA for new teachers
+
+### Teacher Sidebar Navigation
+
+When on `/teacher` routes, the sidebar shows:
+- Dashboard (`/teacher`)
+- My Topics (`/teacher/topics`)
+- Add Lesson (`/teacher/lessons/new`)
+- Trade Calls (`/teacher/trade-calls`)
+- Live Sessions (`/teacher/live`)
+- Settings (`/teacher/settings`)
+
+### Topics (`/teacher/topics`)
+
+- **List View**: Topic cards with name, lesson count (published/total), free/paid badge, student count
+- **Detail View** (`/teacher/topics/[id]`): Inline-editable name and description, pricing badge, student count, invite code, lesson list with content type icons, delete lesson capability
+- **Inline Creation**: Topics can be created inline from the TopicSelector component during lesson creation
+
+### Lesson Creation (`/teacher/lessons/new`)
+
+Single-page form with:
+- **TopicSelector**: Dropdown with lesson counts, inline "New Topic" form (name, description, free/paid toggle, monthly price)
+- **Lesson Title**: Required text field
+- **Content Type Picker**: Icon-based selector (Video / Chart / PDF / Text)
+- **Adaptive Content Input**: Video URL field, file upload for chart/PDF, textarea for text
+- **Explanation**: Always-present required textarea for teaching notes
+- **Attachments**: Optional PDF/image file uploads
+- **Actions**: Save as Draft / Publish Lesson
 
 ### Trade Calls (`/teacher/trade-calls`)
 
@@ -447,12 +475,13 @@ Live sessions allow teachers to schedule and host live trading streams. Students
 - Go Live / End Session controls
 - View past sessions
 
-### Classrooms (`/teacher/classrooms`)
+### Classrooms / Topics
 
-- Create new classrooms with name and description
-- Auto-generated invite codes
-- View student count per classroom
-- Delete classroom functionality
+> Classrooms are now referred to as "Topics" in the teacher UI. The `classrooms` table is unchanged — only the UI labeling and flow have been simplified.
+
+- Old URLs (`/teacher/classrooms`, `/teacher/classrooms/[id]`, `/teacher/strategy/new`, `/teacher/content`, `/teacher/curriculum`) redirect to new equivalents
+- Topics are created inline during lesson creation or from the topics list
+- Pricing set per-topic (free or paid monthly subscription)
 
 ### Students (`/teacher/students`)
 
@@ -468,12 +497,14 @@ Live sessions allow teachers to schedule and host live trading streams. Students
 - Inline feedback form
 - Notification sent to student on feedback
 
-### Content Management (`/teacher/content`)
+### Content Management
 
-- Upload new content (video, PDF, article, image)
-- Assign to specific classrooms
-- Set premium/free access
-- Reorder content
+> *Content management has been replaced by the single-page Lesson Form at `/teacher/lessons/new`. Old `/teacher/content` URL redirects there.*
+
+- Content is now created as part of lessons with type-specific inputs
+- Each lesson has: primary content (video URL, chart image, PDF file, or text) + optional attachments
+- Explanation field always present for teacher commentary
+- Lessons dual-write to `learn_content` table for backward compatibility with student learn pages
 
 ---
 
@@ -626,9 +657,16 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```sql
 - id (uuid, PK)
 - classroom_id (uuid, FK -> classrooms)
+- teacher_id (uuid, FK -> profiles)          -- Added Jan 28, 2026
 - title (text)
 - summary (text)
 - order_index (integer)
+- content_type (text)                         -- Added Jan 28: video/chart/pdf/text
+- content_url (text)                          -- Added Jan 28: URL for video/chart/pdf
+- content_text (text)                         -- Added Jan 28: text content body
+- explanation (text)                          -- Added Jan 28: teacher commentary (required)
+- status (text)                               -- Added Jan 28: draft/published
+- attachment_urls (text[])                    -- Added Jan 28: optional file attachments
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -821,7 +859,70 @@ Added column to `learn_content` table:
 
 ---
 
+### Topics & Lessons API (NEW - Jan 28, 2026)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/topics` | GET | List teacher's topics with lesson counts and pricing |
+| `/api/topics` | POST | Create topic (classroom + pricing) |
+| `/api/lessons` | POST | Create lesson with dual-write to learn_content |
+
+---
+
 ## Update Log
+
+### January 28, 2026 - Teacher Flow Redesign: Topics + Lessons
+**Agent:** Claude Opus 4.5
+
+Redesigned the teacher experience from a scattered multi-page flow into a streamlined model: Topics contain Lessons. Pricing is per-topic. Lesson creation is a single page.
+
+**Design Philosophy:**
+- Inspired by Podia and Teachable's simplicity
+- Minimal required fields, sensible defaults, single-page flows
+- Teacher should: login → add lesson → set price → done
+
+**New Components:**
+- `LessonForm` - Single-page lesson creation with adaptive content inputs
+- `TopicSelector` - Dropdown with inline topic creation (name, description, pricing)
+- `TopicsList` - Topic cards with lesson counts and pricing badges
+- `TeacherFAB` - Floating "Add Lesson" button on all teacher pages
+
+**New Pages:**
+- `/teacher/topics` - Topic listing
+- `/teacher/topics/[id]` - Topic detail with inline editing and lesson management
+- `/teacher/lessons/new` - Single-page lesson creation
+
+**New API Routes:**
+- `POST /api/topics` - Create topic (classroom + pricing rows)
+- `GET /api/topics` - List teacher's topics with counts
+- `POST /api/lessons` - Create lesson with dual-write to learn_content
+
+**Modified Files:**
+- `src/app/(protected)/teacher/page.tsx` - Dashboard rewrite (609 → ~160 lines)
+- `src/components/layout/Sidebar.tsx` - Added teacher sub-navigation
+- `src/app/(protected)/teacher/layout.tsx` - Added TeacherFAB
+- `src/types/database.ts` - Added LessonContentType, LessonStatus, new Lesson fields
+
+**Redirect Stubs (7 files):**
+- `/teacher/classrooms` → `/teacher/topics`
+- `/teacher/classrooms/[id]` → `/teacher/topics/[id]`
+- `/teacher/classrooms/[id]/pricing` → `/teacher/topics/[id]`
+- `/teacher/strategy/new` → `/teacher/lessons/new`
+- `/teacher/content` → `/teacher/lessons/new`
+- `/teacher/curriculum` → `/teacher/topics`
+- `/teacher/curriculum/tracks/[id]` → `/teacher/topics`
+
+**Security Fixes (from code review):**
+- Routed all mutations through API routes with server-side auth
+- Added teacher_id ownership checks to topic detail page
+- Added error logging for dual-write failures
+- Fixed TopicSelector infinite loop (useMemo for Supabase client)
+
+**Database Migration:** `supabase/migrations/20260128_topic_simplification.sql`
+- Added columns to `lessons`: content_type, content_url, content_text, explanation, status, attachment_urls, teacher_id
+- Created `lesson-attachments` storage bucket
+
+---
 
 ### January 21, 2026 (~14:00-18:00 EST) - Teacher Portal Reimagination
 **Agent:** Claude Opus 4.5

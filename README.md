@@ -15,14 +15,13 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Public Strategies** - Discover and join public strategies from the marketplace listing
 
 ### For Teachers
+- **Topics & Lessons** - Create topics (e.g. "Forex Basics"), add lessons with video/chart/PDF/text content, explanation, and attachments. Single-page lesson creation with inline topic management
+- **Topic Pricing** - Set topics as free or paid (per-topic monthly subscription via Stripe Connect)
 - **Trade Calls** - Post real-time trade ideas with instrument, direction, entry, SL, TPs, analysis, and TradingView charts
-- **Curriculum Tracks** - Create structured learning paths (beginner → intermediate → advanced) with modules
 - **Live Sessions** - Schedule and manage live trading streams with YouTube/Twitch/Zoom integration
-- **Classroom Management** - Create classrooms with unique invite codes, branding (logo, banner, tagline)
+- **Minimal Dashboard** - Student count, earnings overview, and topic list with floating "Add Lesson" button
 - **Student Analytics** - View student performance, journal activity, and progress metrics
-- **Content Uploads** - Upload educational materials with YouTube and TradingView embed support
 - **Journal Review** - Browse and provide feedback on student trade journals
-- **Guided Strategy Setup** - Step-by-step flow: strategy, lesson + content, publish with pricing
 
 ### Subscription Tiers
 - **Free** - Basic journaling, position calculator, session indicator, community access, limited content
@@ -36,9 +35,11 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Auth**: Supabase Auth
 - **Storage**: Supabase Storage (screenshots, content files)
 - **Styling**: Tailwind CSS 4 with custom Black & Gold theme
+- **Animation**: Framer Motion (scroll-triggered reveals, parallax, stagger)
 - **State Management**: Zustand
 - **Forms**: React Hook Form + Zod validation
 - **Icons**: Lucide React
+- **Fonts**: Urbanist (primary), JetBrains Mono (monospace)
 
 ## Getting Started
 
@@ -101,12 +102,15 @@ src/
 │   │   ├── notifications/ # Notifications
 │   │   ├── settings/      # User settings
 │   │   └── teacher/       # Teacher backend
+│   │       ├── topics/        # Topic management & detail
+│   │       ├── lessons/new/   # Single-page lesson creation
 │   │       ├── trade-calls/   # Trade calls management
-│   │       ├── curriculum/    # Curriculum tracks & modules
 │   │       ├── live/          # Live sessions scheduling
-│   │       └── strategy/      # Guided strategy setup
+│   │       └── settings/      # Teacher settings
 │   └── api/               # API routes
 │       ├── stripe/        # Stripe integration endpoints
+│       ├── topics/        # Topic CRUD
+│       ├── lessons/       # Lesson CRUD (dual-writes to learn_content)
 │       ├── trade-calls/   # Trade calls CRUD + follow
 │       ├── curriculum/    # Tracks & modules CRUD
 │       └── live-sessions/ # Live sessions CRUD
@@ -117,6 +121,7 @@ src/
 │   ├── journal/           # Journal components
 │   ├── analytics/         # Analytics charts
 │   ├── learn/             # Learn section components
+│   ├── teacher/           # Teacher components (LessonForm, TopicSelector, TopicsList, TeacherFAB)
 │   ├── trade-calls/       # Trade call card & form
 │   └── embeds/            # YouTube & TradingView embeds
 ├── hooks/                 # Custom React hooks
@@ -134,7 +139,7 @@ The application uses the following main tables:
 ### Core Tables
 - `profiles` - User profiles with role (student/teacher) and subscription info
 - `classrooms` - Teacher-created classrooms with invite codes, branding, and feature flags
-- `lessons` - Lessons inside a strategy (classroom)
+- `lessons` - Lessons inside a topic (classroom), with content_type, content_url, content_text, explanation, status, attachment_urls
 - `journal_entries` - Trade journal entries with all trade data
 - `journal_feedback` - Teacher feedback on journal entries
 - `learn_content` - Educational content (video, PDF, image, text, YouTube, TradingView)
@@ -202,14 +207,35 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 ## Visual Theme
 
-The app uses a Black & Gold color scheme:
-- Background: `#050505`
-- Gold primary: `#FFB800`
-- Gold light: `#FFD54F`
-- Gold dark: `#E5A500`
-- Card background: `#0F0F0F`
-- Success: `#22c55e`
-- Danger: `#ef4444`
+The app uses a "Liquid Gold" aesthetic — deep glassmorphism, animated gold particles, and a dark obsidian background.
+
+### Colors
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `--background` | `#050505` | Page background |
+| `--foreground` | `#F8FAFC` | Primary text |
+| `--gold` | `#FFB800` | Brand accent |
+| `--gold-light` | `#FFD54F` | Gold hover state |
+| `--gold-dark` | `#E5A500` | Gold pressed state |
+| `--card-bg` | `#0F0F0F` | Card backgrounds |
+| `--glass-bg` | `rgba(15,15,15,0.6)` | Glassmorphism fill |
+| `--glass-border` | `rgba(255,184,0,0.12)` | Glass border |
+| `--success` | `#22C55E` | Positive/win |
+| `--danger` | `#EF4444` | Negative/loss |
+
+### CSS Utilities
+- `.glass` / `.glass-hover` — Glassmorphism panels with backdrop blur
+- `.gold-shimmer-text` — Animated gold gradient sweep on text
+- `.mesh-bg` — Drifting radial gradient background
+- `.particle` / `.particle-field` — Floating gold particle effect
+- `.animated-border` — Rotating conic-gradient border (premium card)
+- `.typing-cursor` — Blinking gold cursor for auto-type effect
+
+### Accessibility
+- `prefers-reduced-motion: reduce` disables all animations and hides particles
+- Semantic HTML (`<header>`, `<main>`, `<section>`, `<footer>`)
+- `focus-visible` ring styles on all interactive elements
+- Gold on black contrast ratio ~15:1 (AAA)
 
 ## Development
 
@@ -229,6 +255,37 @@ npm start
 
 ## Updates
 
+See [CHANGELOG.md](./CHANGELOG.md) for full history.
+
+- **2026-01-28** - **Landing Page Redesign: "Liquid Gold"** (Claude Opus 4.5)
+  - Complete rewrite of `page.tsx` as `"use client"` with Framer Motion animations
+  - Glassmorphic header with scroll-based blur, mobile hamburger menu
+  - Full-viewport hero with mesh gradient, floating gold particles, parallax, gold shimmer text
+  - 6-card features grid (Trade Journal, Topics & Lessons, Trade Calls, Live Sessions, Community, Teacher Classrooms)
+  - Interactive journal demo with auto-typing terminal mock and feature checklist
+  - Dedicated "For Educators" section with 3-card value prop
+  - Pricing section with animated rotating conic-gradient border on premium card
+  - Final CTA with pulsing gold glow button
+  - ~130 lines of new CSS: 6 keyframes, glassmorphism utilities, particle system, `@property` border animation
+  - `prefers-reduced-motion` support: disables all animations, hides particles, shows full text
+  - Font changed from Inter to **Urbanist** (sleek, geometric, modern luxury)
+  - Custom logo (`public/logo.jpg`) replacing generic "P" placeholder in header and footer
+  - Added `framer-motion` dependency
+  - Dual CTAs targeting both students and teachers
+
+- **2026-01-28** - **Teacher Flow Redesign: Topics + Lessons** (Claude Opus 4.5)
+  - **Simplified Teacher Model**: Replaced scattered multi-page flow (Classroom → Strategy Wizard → Content Management → Pricing → Curriculum) with streamlined Topics + Lessons model. Teachers login, add lesson, set price, done.
+  - **Topics**: `classrooms` table reused as topics. Per-topic pricing (free or paid). Inline topic creation from lesson form.
+  - **Single-Page Lesson Creation**: `/teacher/lessons/new` with icon-based content type picker (Video/Chart/PDF/Text), primary content + optional attachments, always-present explanation field, draft/publish states.
+  - **New Components**: `LessonForm`, `TopicSelector` (with inline creation), `TopicsList`, `TeacherFAB` (floating Add Lesson button)
+  - **New Pages**: `/teacher/topics` (listing), `/teacher/topics/[id]` (detail with inline edit), `/teacher/lessons/new`
+  - **New API Routes**: `/api/topics` (GET, POST), `/api/lessons` (POST with dual-write to `learn_content`)
+  - **Dashboard Rewrite**: Teacher dashboard reduced from 609 to ~160 lines. 2 stats (students + earnings) + topic list.
+  - **Sidebar Update**: Teacher sub-navigation (Dashboard, My Topics, Add Lesson, Trade Calls, Live Sessions, Settings) when on `/teacher` routes
+  - **Backward Compatibility**: Dual-write to `learn_content` table for student learn pages. Old URLs redirect to new equivalents.
+  - **Security**: All mutations routed through API routes with server-side auth + ownership checks. Client components read-only via Supabase.
+  - **Database Migration**: `supabase/migrations/20260128_topic_simplification.sql` (new columns on `lessons` + storage bucket)
+
 - **2026-01-21 ~14:00-18:00 EST** - **Teacher Portal Reimagination** (Claude Opus 4.5)
   - **Trade Calls System**: Teachers can post real-time trade ideas with instrument, direction, entry, SL, TPs (1-3), timeframe, analysis text, and TradingView chart URLs. Students see calls in feed and can copy to journal.
   - **Curriculum Tracks**: Structured learning paths with difficulty levels (beginner/intermediate/advanced), prerequisite unlocking, and modules for organizing content.
@@ -247,4 +304,3 @@ npm start
 ## License
 
 MIT
-# pure-gold-
