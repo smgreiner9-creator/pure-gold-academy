@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, BarChart3 } from 'lucide-react'
 
 interface TradingViewEmbedProps {
   url: string
@@ -17,7 +16,7 @@ export function TradingViewEmbed({ url, title, className = '', height = 400 }: T
   // So we provide a clickable preview with link to open
   if (hasError || !url.includes('tradingview.com')) {
     return (
-      <div className={`bg-[var(--card-bg)] rounded-lg p-4 text-center ${className}`}>
+      <div className={`glass-surface rounded-lg p-4 text-center ${className}`}>
         <p className="text-[var(--muted)]">Unable to embed chart</p>
         <a
           href={url}
@@ -25,7 +24,7 @@ export function TradingViewEmbed({ url, title, className = '', height = 400 }: T
           rel="noopener noreferrer"
           className="text-[var(--gold)] hover:underline inline-flex items-center gap-1 mt-2"
         >
-          Open in TradingView <ExternalLink size={14} />
+          Open in TradingView <span className="material-symbols-outlined text-sm">open_in_new</span>
         </a>
       </div>
     )
@@ -36,23 +35,23 @@ export function TradingViewEmbed({ url, title, className = '', height = 400 }: T
 
   if (isSnapshot) {
     return (
-      <div className={`relative rounded-lg overflow-hidden bg-[var(--card-bg)] ${className}`}>
+      <div className={`relative rounded-lg overflow-hidden glass-surface ${className}`}>
         {/* Preview card */}
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block p-6 hover:bg-[var(--card-border)] transition-colors"
+          className="block p-6 hover:bg-black/[0.04] transition-colors"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-[var(--gold)]/10 rounded-lg flex items-center justify-center">
-              <BarChart3 size={24} className="text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">bar_chart</span>
             </div>
             <div className="flex-1">
               <p className="font-semibold">{title || 'TradingView Chart'}</p>
               <p className="text-sm text-[var(--muted)] truncate">{url}</p>
             </div>
-            <ExternalLink size={20} className="text-[var(--muted)]" />
+            <span className="material-symbols-outlined text-xl text-[var(--muted)]">open_in_new</span>
           </div>
         </a>
       </div>

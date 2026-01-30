@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, Button, Input, Textarea } from '@/components/ui'
-import { Save, ArrowLeft, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { ScreenshotUpload } from '@/components/journal/ScreenshotUpload'
@@ -238,9 +237,9 @@ export default function EditJournalEntryPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <Card className="animate-pulse">
-          <div className="h-8 bg-[var(--card-border)] rounded w-1/3 mb-4" />
-          <div className="h-6 bg-[var(--card-border)] rounded w-1/2 mb-2" />
-          <div className="h-6 bg-[var(--card-border)] rounded w-1/4" />
+          <div className="h-8 bg-[var(--glass-surface-border)] rounded w-1/3 mb-4" />
+          <div className="h-6 bg-[var(--glass-surface-border)] rounded w-1/2 mb-2" />
+          <div className="h-6 bg-[var(--glass-surface-border)] rounded w-1/4" />
         </Card>
       </div>
     )
@@ -250,7 +249,7 @@ export default function EditJournalEntryPage() {
     return (
       <Card className="max-w-2xl mx-auto text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--success)]/20 flex items-center justify-center">
-          <Save size={32} className="text-[var(--success)]" />
+          <span className="material-symbols-outlined text-3xl text-[var(--success)]">save</span>
         </div>
         <h2 className="text-2xl font-bold mb-2">Changes Saved!</h2>
         <p className="text-[var(--muted)]">Redirecting...</p>
@@ -264,7 +263,7 @@ export default function EditJournalEntryPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft size={18} />
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Edit Trade</h1>
@@ -277,7 +276,7 @@ export default function EditJournalEntryPage() {
           onClick={handleDelete}
           className="text-[var(--danger)] hover:bg-[var(--danger)]/10"
         >
-          <Trash2 size={18} />
+          <span className="material-symbols-outlined text-lg">delete</span>
         </Button>
       </div>
 
@@ -297,7 +296,7 @@ export default function EditJournalEntryPage() {
                   className={`p-3 rounded-lg text-sm font-medium transition-all ${
                     instrument === i.value
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   {i.label}
@@ -324,10 +323,10 @@ export default function EditJournalEntryPage() {
                 className={`p-4 rounded-lg flex items-center justify-center gap-2 transition-all ${
                   direction === 'long'
                     ? 'bg-[var(--success)] text-white'
-                    : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                    : 'bg-[var(--background)] hover:bg-black/[0.04]'
                 }`}
               >
-                <TrendingUp size={20} />
+                <span className="material-symbols-outlined text-xl">trending_up</span>
                 <span className="font-medium">Long (Buy)</span>
               </button>
               <button
@@ -336,10 +335,10 @@ export default function EditJournalEntryPage() {
                 className={`p-4 rounded-lg flex items-center justify-center gap-2 transition-all ${
                   direction === 'short'
                     ? 'bg-[var(--danger)] text-white'
-                    : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                    : 'bg-[var(--background)] hover:bg-black/[0.04]'
                 }`}
               >
-                <TrendingDown size={20} />
+                <span className="material-symbols-outlined text-xl">trending_down</span>
                 <span className="font-medium">Short (Sell)</span>
               </button>
             </div>
@@ -427,7 +426,7 @@ export default function EditJournalEntryPage() {
                         : o.value === 'loss'
                         ? 'bg-[var(--danger)] text-white'
                         : 'bg-[var(--gold)] text-black'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   {o.label}
@@ -454,7 +453,7 @@ export default function EditJournalEntryPage() {
                   className={`p-2 rounded-lg text-xs transition-all ${
                     emotionBefore === e.value
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   {e.label}
@@ -474,7 +473,7 @@ export default function EditJournalEntryPage() {
                   className={`p-2 rounded-lg text-xs transition-all ${
                     emotionDuring === e.value
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   {e.label}
@@ -494,7 +493,7 @@ export default function EditJournalEntryPage() {
                   className={`p-2 rounded-lg text-xs transition-all ${
                     emotionAfter === e.value
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   {e.label}
@@ -520,7 +519,7 @@ export default function EditJournalEntryPage() {
                   className={`p-2 rounded-lg text-left text-xs transition-all flex items-center gap-2 ${
                     rulesFollowed.includes(rule.id)
                       ? 'bg-[var(--success)]/10 text-[var(--success)]'
-                      : 'bg-[var(--background)] hover:bg-[var(--card-border)]'
+                      : 'bg-[var(--background)] hover:bg-black/[0.04]'
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm">
@@ -562,7 +561,7 @@ export default function EditJournalEntryPage() {
             Cancel
           </Button>
           <Button onClick={handleSubmit} isLoading={isSaving} className="flex-1">
-            <Save size={18} />
+            <span className="material-symbols-outlined text-lg">save</span>
             Save Changes
           </Button>
         </div>

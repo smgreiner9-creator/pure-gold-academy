@@ -15,6 +15,21 @@ const CACHE_TTL = 15 * 60 * 1000 // 15 minutes
 // Store previous prices to calculate change
 const previousPrices: Record<string, number> = {}
 
+// Helper to create price entry with change calculation
+function createPriceEntry(symbol: string, price: number, decimals: number): PriceData {
+  const prevPrice = previousPrices[symbol]
+  const change = prevPrice ? price - prevPrice : 0
+  const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0
+
+  return {
+    symbol,
+    price: parseFloat(price.toFixed(decimals)),
+    change: parseFloat(change.toFixed(decimals)),
+    changePercent: parseFloat(changePercent.toFixed(2)),
+    lastUpdated: new Date().toISOString(),
+  }
+}
+
 // Primary: Frankfurter API (free, unlimited)
 async function fetchFromFrankfurter(): Promise<Record<string, PriceData> | null> {
   try {
@@ -28,22 +43,6 @@ async function fetchFromFrankfurter(): Promise<Record<string, PriceData> | null>
     const forexData = await forexRes.json()
     const rates = forexData.rates || {}
     const prices: Record<string, PriceData> = {}
-    const now = new Date().toISOString()
-
-    // Helper to create price entry with change calculation
-    const createPriceEntry = (symbol: string, price: number, decimals: number): PriceData => {
-      const prevPrice = previousPrices[symbol]
-      const change = prevPrice ? price - prevPrice : 0
-      const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0
-
-      return {
-        symbol,
-        price: parseFloat(price.toFixed(decimals)),
-        change: parseFloat(change.toFixed(decimals)),
-        changePercent: parseFloat(changePercent.toFixed(2)),
-        lastUpdated: now,
-      }
-    }
 
     // XXX/USD pairs (inverted)
     if (rates.EUR) prices['EURUSD'] = createPriceEntry('EURUSD', 1 / rates.EUR, 5)
@@ -92,21 +91,6 @@ async function fetchFromApiLayer(): Promise<Record<string, PriceData> | null> {
 
     const quotes = data.quotes
     const prices: Record<string, PriceData> = {}
-    const now = new Date().toISOString()
-
-    const createPriceEntry = (symbol: string, price: number, decimals: number): PriceData => {
-      const prevPrice = previousPrices[symbol]
-      const change = prevPrice ? price - prevPrice : 0
-      const changePercent = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0
-
-      return {
-        symbol,
-        price: parseFloat(price.toFixed(decimals)),
-        change: parseFloat(change.toFixed(decimals)),
-        changePercent: parseFloat(changePercent.toFixed(2)),
-        lastUpdated: now,
-      }
-    }
 
     // APILayer returns USDEUR, USDGBP etc. - need to invert for EURUSD, GBPUSD
     if (quotes.USDEUR) prices['EURUSD'] = createPriceEntry('EURUSD', 1 / quotes.USDEUR, 5)
@@ -186,7 +170,7 @@ async function fetchGoldPrice(): Promise<Record<string, PriceData>> {
       if (Array.isArray(goldData) && goldData.length > 0) {
         prices['XAUUSD'] = {
           symbol: 'XAUUSD',
-          price: goldData[0].price || 2650,
+          price: goldData[0].price,
           change: 0,
           changePercent: 0,
           lastUpdated: new Date().toISOString(),
@@ -219,14 +203,8 @@ async function fetchGoldPrice(): Promise<Record<string, PriceData>> {
         }
       }
     } catch {
-      // Use fallback price if all APIs fail
-      prices['XAUUSD'] = {
-        symbol: 'XAUUSD',
-        price: 2650.00,
-        change: 0,
-        changePercent: 0,
-        lastUpdated: new Date().toISOString(),
-      }
+      // All gold price APIs failed - do not use a hardcoded fallback
+      // The UI should handle the missing price gracefully
     }
   }
 

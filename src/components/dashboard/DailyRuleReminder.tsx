@@ -95,7 +95,7 @@ export function DailyRuleReminder({ classroomRules }: Props) {
         </div>
         <button
           onClick={handleDismiss}
-          className="text-[var(--muted)] hover:text-white transition-colors shrink-0"
+          className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors shrink-0"
           title="Dismiss for today"
         >
           <span className="material-symbols-outlined text-lg">close</span>

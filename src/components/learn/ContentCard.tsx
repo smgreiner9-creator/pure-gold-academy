@@ -46,9 +46,9 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
   return (
     <Link href={isLocked ? '/settings/subscription' : `/learn/${content.id}`}>
       <div
-        className={`p-5 rounded-2xl border bg-[var(--card-bg)] h-full hover:border-[var(--gold)]/50 transition-all ${
-          isLocked ? 'opacity-75 border-[var(--card-border)]' : ''
-        } ${isCompleted ? 'border-[var(--success)]/50' : 'border-[var(--card-border)]'}`}
+        className={`glass-surface glass-interactive p-6 h-full ${
+          isLocked ? 'opacity-75' : ''
+        } ${isCompleted ? 'border-[var(--success)]/50' : ''}`}
       >
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
@@ -63,7 +63,7 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-white/5 text-[var(--muted)]">
+              <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-black/5 text-[var(--muted)]">
                 {getTypeLabel()}
               </span>
               {content.is_premium && (

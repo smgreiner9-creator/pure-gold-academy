@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (lessonError) {
-      return NextResponse.json({ error: lessonError.message }, { status: 500 })
+      console.error('Error creating lesson:', lessonError)
+      return NextResponse.json({ error: 'Failed to create lesson' }, { status: 500 })
     }
 
     // Dual-write to learn_content for backward compatibility
@@ -155,7 +156,8 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (lessonError) {
-      return NextResponse.json({ error: lessonError.message }, { status: 500 })
+      console.error('Error updating lesson:', lessonError)
+      return NextResponse.json({ error: 'Failed to update lesson' }, { status: 500 })
     }
 
     // Also update the corresponding learn_content row

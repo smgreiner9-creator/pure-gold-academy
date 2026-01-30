@@ -141,9 +141,9 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
       />
 
       {/* Modal */}
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-sm mx-auto bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl z-50 overflow-hidden">
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-sm mx-auto glass-floating rounded-2xl z-50 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--card-border)]">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--glass-surface-border)]">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               trade.direction === 'long'
@@ -163,7 +163,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-white hover:bg-white/5 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 transition-colors"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -180,7 +180,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
               type="number"
               value={exitPrice}
               onChange={(e) => setExitPrice(e.target.value)}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
+              className="w-full input-field rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
               placeholder="0.00"
               step="any"
               autoFocus
@@ -189,7 +189,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
 
           {/* Auto-detected outcome */}
           {detectedOutcome && (
-            <div className="p-3 rounded-xl bg-black/40 border border-[var(--card-border)]">
+            <div className="p-3 rounded-xl glass-surface">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
                   Detected Outcome
@@ -221,7 +221,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
                           ? o === 'win' ? 'bg-[var(--success)] text-white' :
                             o === 'loss' ? 'bg-[var(--danger)] text-white' :
                             'bg-[var(--warning)] text-black'
-                          : 'bg-white/5 hover:bg-white/10'
+                          : 'bg-black/5 hover:bg-black/[0.06]'
                       }`}
                     >
                       {o}
@@ -236,7 +236,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
           {(calculations.rMultiple !== null || calculations.pnl !== null) && (
             <div className="grid grid-cols-2 gap-3">
               {calculations.rMultiple !== null && (
-                <div className="p-3 rounded-xl bg-black/40 border border-[var(--card-border)]">
+                <div className="p-3 rounded-xl glass-surface">
                   <p className="text-[10px] text-[var(--muted)] uppercase tracking-widest mb-1">R-Multiple</p>
                   <p className={`text-lg font-bold mono-num ${
                     calculations.rMultiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
@@ -246,7 +246,7 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
                 </div>
               )}
               {calculations.pnl !== null && (
-                <div className="p-3 rounded-xl bg-black/40 border border-[var(--card-border)]">
+                <div className="p-3 rounded-xl glass-surface">
                   <p className="text-[10px] text-[var(--muted)] uppercase tracking-widest mb-1">Est. P&L</p>
                   <p className={`text-lg font-bold mono-num ${
                     calculations.pnl >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
@@ -264,10 +264,10 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[var(--card-border)] flex gap-3">
+        <div className="p-4 border-t border-[var(--glass-surface-border)] flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors"
+            className="flex-1 py-3 rounded-xl btn-glass font-semibold hover:bg-black/5 transition-colors"
           >
             Cancel
           </button>

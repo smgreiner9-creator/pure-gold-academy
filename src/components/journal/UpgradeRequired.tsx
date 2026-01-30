@@ -5,7 +5,7 @@ import { FREE_TIER_JOURNAL_LIMIT, PRICING } from '@/lib/constants'
 
 export function UpgradeRequired() {
   return (
-    <div className="max-w-md mx-auto p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+    <div className="max-w-md mx-auto p-6 rounded-2xl glass-surface text-center">
       {/* Icon */}
       <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center">
         <span className="material-symbols-outlined text-4xl text-[var(--gold)]">lock</span>
@@ -19,7 +19,7 @@ export function UpgradeRequired() {
       </p>
 
       {/* Premium benefits */}
-      <div className="text-left p-4 rounded-xl bg-black/40 border border-[var(--card-border)] mb-6">
+      <div className="text-left p-4 rounded-xl glass-surface mb-6">
         <p className="text-xs font-bold text-[var(--gold)] uppercase tracking-widest mb-3">
           Premium includes
         </p>
@@ -58,7 +58,7 @@ export function UpgradeRequired() {
       {/* Back link */}
       <Link
         href="/journal"
-        className="inline-block mt-4 text-sm text-[var(--muted)] hover:text-white transition-colors"
+        className="inline-block mt-4 text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
       >
         Back to Journal
       </Link>

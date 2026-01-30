@@ -136,9 +136,13 @@ src/
 - **Features:** Schedule streams, go live, end sessions
 - **Streaming:** YouTube/Twitch/Zoom support
 
-### 8. Community Forum
+### 8. Community Forum (Rewritten Jan 29, 2026)
 - **Location:** `src/app/(protected)/community/`
-- **Features:** Posts, comments, signal-prevention filtering
+- **Components:** `src/components/community/` (ThreadedComment, VoteButton, PostFilters, TradeReviewPost)
+- **Features:** Threaded discussions (3 levels), upvote/downvote, categories (Chart Analysis, Strategy, Psychology, Question, Trade Review, General), sort by hot/new/top, search, signal-prevention filtering, classroom-scoped posts
+- **Trade Reviews:** Share journal entries with privacy controls, embedded TradingView charts
+- **API:** `/api/community/trade-review` (POST)
+- **Utilities:** `src/lib/communityUtils.ts` (shared formatDate, getCategoryColor, getCategoryLabel)
 
 ### 9. Topics & Lessons (NEW - Jan 28, 2026)
 - **Topics Location:** `src/app/(protected)/teacher/topics/`
@@ -148,7 +152,34 @@ src/
 - **Flow:** Teacher selects/creates topic → fills single-page lesson form → publish or save draft
 - **Dual-write:** Lessons write to both `lessons` and `learn_content` tables for backward compatibility
 
-### 10. Payments (Stripe)
+### 10. TradingView Charts in Journal (NEW - Jan 29, 2026)
+- **Components:** `src/components/charts/` (TradingViewChart, ChartAnnotationToolbar)
+- **Utilities:** `src/lib/chartUtils.ts` (serialize/deserialize chart state)
+- **Library:** `lightweight-charts` v5 (SSR-safe via `next/dynamic`)
+- **Features:** Interactive chart with 7 annotation tools, saved as JSONB, read-only display on detail page
+
+### 11. Pre-Trade Mindset (NEW - Jan 29, 2026)
+- **Component:** `src/components/journal/MindsetCapture.tsx`
+- **Analytics:** `src/components/analytics/PsychologyAnalysis.tsx`
+- **Features:** Readiness score (1-5), quick-tag badges, feeds into Psychology analytics tab
+
+### 12. Teacher Marketplace (NEW - Jan 29, 2026)
+- **Public pages:** `/teachers` (directory), `/teachers/[slug]` (profile), `/courses` (catalog), `/courses/[id]` (detail)
+- **Components:** `src/components/teacher/` (TeacherProfileCard, TrackRecordBadge), `src/components/marketplace/` (CourseCard, CourseFilters, ReviewCard, ReviewForm)
+- **API:** `/api/courses` (GET), `/api/reviews` (GET/POST/PATCH)
+
+### 13. Teacher Analytics Dashboard (NEW - Jan 29, 2026)
+- **Location:** `src/app/(protected)/teacher/students/`
+- **Components:** `src/components/teacher/` (ClassAnalytics, StudentAlerts)
+- **Features:** Aggregate class analytics, student alerts, individual deep-dive with 6 tabs reusing analytics components
+
+### 14. Progress Reports (NEW - Jan 29, 2026)
+- **Component:** `src/components/reports/ProgressReport.tsx`
+- **Student page:** `src/app/(protected)/journal/reports/page.tsx`
+- **API:** `/api/reports/generate` (POST/GET/PATCH)
+- **Features:** Auto-computed analytics, teacher notes, period comparison
+
+### 15. Payments (Stripe)
 - **Platform subscription:** $2.80/month premium
 - **Classroom subscriptions:** Teacher-set pricing
 - **Content purchases:** Individual content sales
@@ -162,15 +193,18 @@ src/
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `profiles` | User accounts | user_id, email, role (student/teacher/admin), subscription_tier, current_track_id |
+| `profiles` | User accounts | user_id, email, role (student/teacher/admin), subscription_tier, current_track_id, bio, social_links (JSONB), slug |
 | `classrooms` | Teacher topics (UI: "Topics") | teacher_id, name, invite_code, is_paid, tagline, logo_url, banner_url |
-| `journal_entries` | Trade logs | instrument, direction, prices, emotions, rules_followed, screenshots |
+| `journal_entries` | Trade logs | instrument, direction, prices, emotions, rules_followed, screenshots, chart_data (JSONB), pre_trade_mindset (JSONB) |
 | `journal_feedback` | Teacher comments | journal_entry_id, teacher_id, content |
 | `lessons` | Topic lessons | classroom_id, teacher_id, title, summary, content_type, content_url, content_text, explanation, status, attachment_urls, order_index |
 | `classroom_rules` | Strategy rules | classroom_id, rule_text, description |
 | `learn_content` | Educational materials | classroom_id, lesson_id, module_id, content_type, content_url |
 | `learn_progress` | Student progress | user_id, content_id, completed |
-| `community_posts` | Forum posts | classroom_id, user_id, title, content |
+| `community_posts` | Forum posts | classroom_id, user_id, title, content, category, tags, post_type, shared_journal_data, journal_entry_id |
+| `community_votes` | Post/comment votes (NEW Jan 29) | user_id, post_id, comment_id, vote_type (+1/-1) |
+| `topic_reviews` | Classroom ratings/reviews (NEW Jan 29) | student_id, classroom_id, rating (1-5), review_text, teacher_response |
+| `progress_reports` | Student analytics reports (NEW Jan 29) | user_id, classroom_id, period_start, period_end, report_data (JSONB), teacher_notes |
 | `subscriptions` | Stripe subscription data | user_id, stripe_customer_id, tier, status |
 | `watched_instruments` | Tracked symbols | user_id, symbol, name |
 | `daily_checkins` | Activity tracking | user_id, check_date, has_traded |
@@ -268,6 +302,26 @@ src/
 | `/api/live-sessions` | POST | Create session |
 | `/api/live-sessions` | PATCH | Update session (including go live/end) |
 | `/api/live-sessions` | DELETE | Delete session |
+
+### Marketplace (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/courses` | GET | Public course catalog listing |
+| `/api/reviews` | GET | Fetch reviews for a classroom |
+| `/api/reviews` | POST | Create review (auth, one per student per classroom) |
+| `/api/reviews` | PATCH | Update own review |
+
+### Community (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/community/trade-review` | POST | Create trade review post from journal entry |
+
+### Progress Reports (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/reports/generate` | POST | Generate progress report (teacher auth) |
+| `/api/reports/generate` | GET | Fetch reports (teacher or student) |
+| `/api/reports/generate` | PATCH | Update teacher notes on report |
 
 ---
 
@@ -374,22 +428,146 @@ npm run build && npm start
 
 ## Design System
 
-### Colors (Black & Gold Theme)
-- **Background:** #050505 (deep black)
-- **Gold Primary:** #FFB800
-- **Gold Light:** #FFD54F
-- **Gold Dark:** #E5A500
-- **Card Background:** #0F0F0F
+### Glass Command Center (Redesigned Jan 29, 2026)
+
+The UI uses a 3-tier Apple-inspired frosted glassmorphism system with selective gold accents.
+
+#### Glass Tiers
+| Tier | Class | Blur | Saturate | Use |
+|------|-------|------|----------|-----|
+| Surface | `.glass-surface` | 16px | 1.2 | Base panels, sidebar, cards |
+| Elevated | `.glass-elevated` | 24px | 1.3 | Active nav, interactive cards |
+| Floating | `.glass-floating` | 36px | 1.4 | Modals, dropdowns, popovers |
+
+All tiers include SVG frosted noise texture via `::before` pseudo-element (`mix-blend-mode: overlay`).
+
+#### Colors
+- **Background:** #050505 (warm dark with ambient gold/indigo gradients, `background-attachment: fixed`)
+- **Gold Primary:** #F5A623 (warmer than original #FFB800)
+- **Gold Light:** #FFCC4D
+- **Gold Dark:** #D4911E
+- **Gold Muted:** #A07818
+- **Indigo Accent:** #6366F1 (secondary CTAs, info badges)
 - **Success:** #22C55E
 - **Danger:** #EF4444
 
-### Typography
-- Sans: Inter (variable)
+#### Gold Usage Rules
+- **Gold IS for:** `btn-gold` CTAs, active nav text, achievements, positive numbers, logo
+- **Gold is NOT for:** Card backgrounds, every hover state, tab fills, section headers
+
+#### Key CSS Classes
+- `.glass-surface` / `.glass-elevated` / `.glass-floating` — panel tiers
+- `.glass-interactive` — hover glow + lift
+- `.glass-shimmer` — light sweep on hover
+- `.btn-gold` / `.btn-glass` / `.btn-outline` — button hierarchy
+- `.input-field` — glass input with gold focus ring
+- `.skeleton-glass` — loading shimmer
+- `.nav-active` — navigation active state
+
+#### Typography
+- Sans: Urbanist (primary)
 - Mono: JetBrains Mono
+
+#### Icons
+- **Material Symbols Outlined** (Google) — all icons use `<span className="material-symbols-outlined">icon_name</span>`
+- Icon wrapper: `src/components/ui/Icon.tsx` with size scale (sm=14px, md=20px, lg=24px, xl=30px)
 
 ---
 
 ## Session History
+
+### Session: January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX
+**Agent:** Claude Opus 4.5
+**Task:** Replace 26-week heatmap with monthly calendar + insight panel; update RecentTrades close button
+
+**Calendar Heatmap (`CalendarHeatmap.tsx`) — Complete Rewrite:**
+- Replaced 26-week horizontal GitHub-style heatmap strip with single-month calendar grid
+- 7-column Mon–Sun layout with `w-10 h-10 rounded-lg` cells, showing day number + trade count
+- Month navigation (`<` / `>` buttons) around "January 2026" header
+- Two-column layout: calendar (`lg:w-[60%]`) + insight panel (`lg:w-[40%]`), stacks on mobile
+- `loadHeatmapData` uses `Promise.all` for two parallel Supabase queries: heatmap data + insight data (with `emotion_before`)
+- Self-contained `generateInsight()` function with priority: negative emotion pattern > streak > best day of week > instrument focus > win rate fallback > low activity > no trades
+- Insight panel: `glass-elevated` card with lightbulb icon + insight text, plus 3-column month stats (trades count, win rate, total R)
+- Removed: `WEEKS` constant, `gridDates` memo, `monthLabels` memo, broken `absolute-ish` month header row
+- Preserved: `DayData`/`DayEntry` interfaces, `getCellColor`/`getCellTextColor`, day click detail panel with `AnimatePresence`, today/selected ring highlights, future day disabling
+
+**Recent Trades (`RecentTrades.tsx`):**
+- Changed open trade close button from `<button>` opening `QuickCloseModal` to `<Link>` navigating to `/journal/${trade.id}`
+- Removed `QuickCloseModal` import, `closingTrade` state, and modal render block
+
+**Files Modified:** 2 (`CalendarHeatmap.tsx`, `RecentTrades.tsx`)
+**Build:** 0 errors
+
+---
+
+### Session: January 29, 2026 — Glass Command Center Redesign
+**Agent:** Claude Opus 4.5
+**Task:** Frontend Redesign — Apple-inspired frosted glassmorphism
+
+Complete visual overhaul following an 8-batch implementation plan:
+- **Batch 1:** Design system foundation — new CSS variables, glass utility classes, updated Card/Button components
+- **Batch 2:** Shared components — Icon.tsx (Material Symbols wrapper), GlassModal.tsx, updated Skeleton.tsx
+- **Batch 3:** Layout shell — Sidebar, StatsHeader, MobileNav, Header converted to glass system
+- **Batch 4:** Journal pages — restructured with glass panels
+- **Batch 5:** Analytics redesign — hybrid overview grid + 3 deep-dive tabs
+- **Batch 6:** Learn + Community — glass styling, Lucide→Material Symbols migration
+- **Batch 7:** Remaining Lucide cleanup — all files converted
+- **Batch 8:** Final polish — swept 70+ files replacing `card-bg`/`card-border` with glass classes, removed `lucide-react` dependency, cleaned dead CSS
+- **Frosted finish:** Added SVG noise texture, increased background gradient warmth, added `saturate()` to backdrop-filter, increased border opacity
+
+**Key Design Decisions:**
+- Gold restricted to CTAs, active nav text, achievements, positive numbers only
+- Indigo (#6366F1) as secondary accent for badges and secondary CTAs
+- All glass panels have frosted noise overlay for Apple-style tactile feel
+- Background gradients fixed-position so blur always has color to catch
+
+**Files Created:** 2 (Icon.tsx, GlassModal.tsx)
+**Files Modified:** 70+ (glass sweep + icon migration)
+**Dependencies Removed:** `lucide-react`
+
+---
+
+### Session: January 29, 2026 ~02:00-03:30 UTC
+**Agent:** Claude Opus 4.5
+**Task:** Strategic Enhancement Plan — 4-Phase Implementation
+
+Implemented the full competitive moat strategy across 4 phases using parallel subagent dispatching.
+
+**Phase 1: TradingView Charts + Psychology Deepening**
+- `lightweight-charts` v5 interactive chart in journal form (7 annotation tools)
+- Pre-trade mindset capture (readiness 1-5 + tag badges)
+- Psychology analytics tab + emotion flow Sankey diagram
+- Files: TradingViewChart, ChartAnnotationToolbar, chartUtils, MindsetCapture, PsychologyAnalysis, EmotionFlow
+
+**Phase 2: Teacher Marketplace Completion**
+- Public teacher directory + profiles with SEO metadata
+- Course catalog + detail pages (server-rendered)
+- Ratings & reviews system (topic_reviews table, ReviewForm, ReviewCard, /api/reviews)
+- Track record badge from trade call data
+- Teacher profile editing (bio, slug, social links)
+
+**Phase 3: Community Enhancement**
+- Threaded discussions (3 levels) replacing flat comments
+- Upvote/downvote with community_votes table
+- Post categories, sort (hot/new/top), search
+- Trade review post type with privacy controls + embedded charts
+- Share to Community button on journal detail
+
+**Phase 4: Teacher Analytics & Student Insights**
+- Teacher student analytics dashboard (ClassAnalytics, StudentAlerts)
+- Individual student deep-dive (6 tabs reusing analytics components)
+- Automated progress reports (API + ProgressReport renderer)
+- Student reports page at /journal/reports
+
+**Code Review & Fixes:**
+- Fixed N+1 query, missing auth checks, annotation duplication, classroom isolation, FK constraints, vote_type validation, delete ownership, shared utilities
+
+**New Tables:** topic_reviews, community_votes, progress_reports
+**Migrations:** 6 new SQL files (phase1a, 1b, 2a, 3a, 3b, 4b)
+**Files Created:** ~40 new files
+**Files Modified:** ~15 existing files
+
+---
 
 ### Session: January 28, 2026
 **Agent:** Claude Opus 4.5
@@ -507,22 +685,32 @@ npm run build && npm start
 
 ---
 
-**Current State (as of Jan 28, 2026):**
+**Current State (as of Jan 29, 2026):**
 - Project version: 0.1.0
-- 100+ TypeScript files
-- 55+ React components
-- 23 database tables (lessons table expanded with 7 new columns)
-- Simplified teacher flow: Topics → Lessons with single-page creation
+- 140+ TypeScript files
+- 95+ React components
+- 26 database tables (3 new: topic_reviews, community_votes, progress_reports)
+- Interactive TradingView charts in journal with annotation tools
+- Pre-trade psychology tracking (readiness + tags) with analytics
+- Public teacher marketplace with profiles, course catalog, and reviews
+- Threaded community discussions with voting and trade review sharing
+- Teacher analytics dashboard with student deep-dive and progress reports
 - All core features + trade calls, live sessions, curriculum tracks
+- Apple-inspired frosted glassmorphism with 3-tier elevation system
+- Material Symbols Outlined (no Lucide React)
+- Monthly calendar heatmap with behavioral insight panel
 
-**Recent Development (from git history):**
-1. **Teacher Flow Redesign** (Jan 28) — Topics + Lessons model, single-page lesson creation, dashboard rewrite
-2. Teacher Portal Reimagination (Jan 21) — trade calls, curriculum, live sessions
-3. Phase 1 retention features — daily check-in, streak protection, milestones
-4. UX improvements — route-aware chrome, join flow
-5. UI redesign — warm gold colors, 3D depth effects
-6. Stripe Connect teacher pricing implementation
-7. Premium tier features and analytics
+**Recent Development:**
+1. **Calendar Heatmap Redesign + Recent Trades UX** (Jan 29) — single-month calendar grid replacing 26-week strip, behavioral insight panel, RecentTrades close button navigates to detail page
+2. **Glass Command Center Redesign** (Jan 29) — 3-tier frosted glassmorphism, SVG noise texture, icon migration to Material Symbols, 70+ file sweep
+3. **Strategic Enhancement Plan** (Jan 29) — 4-phase implementation: charts, psychology, marketplace, community, teacher analytics, progress reports
+4. **Teacher Flow Redesign** (Jan 28) — Topics + Lessons model, single-page lesson creation, dashboard rewrite
+5. Teacher Portal Reimagination (Jan 21) — trade calls, curriculum, live sessions
+6. Phase 1 retention features — daily check-in, streak protection, milestones
+7. UX improvements — route-aware chrome, join flow
+8. UI redesign — warm gold colors, 3D depth effects
+9. Stripe Connect teacher pricing implementation
+10. Premium tier features and analytics
 
 ---
 
@@ -541,9 +729,21 @@ When working on this codebase:
 9. **Embed support** - Use `src/lib/embedUtils.ts` for YouTube/TradingView URL parsing
 10. **Teacher flow (Jan 28)** - Topics + Lessons model. Components in `src/components/teacher/`. API routes at `/api/topics` and `/api/lessons`. Lessons dual-write to `learn_content`.
 11. **Old teacher URLs** - `/teacher/classrooms`, `/teacher/strategy/new`, `/teacher/content`, `/teacher/curriculum` all redirect to new equivalents
+12. **Charts (Jan 29)** - `lightweight-charts` v5 via `next/dynamic`. Components in `src/components/charts/`. Utilities in `src/lib/chartUtils.ts`. Chart data stored as JSONB on `journal_entries.chart_data`.
+13. **Psychology (Jan 29)** - Mindset capture in `src/components/journal/MindsetCapture.tsx`. Analytics in `src/components/analytics/PsychologyAnalysis.tsx`. Data stored as JSONB on `journal_entries.pre_trade_mindset`.
+14. **Marketplace (Jan 29)** - Public pages outside `(protected)` route group at `/teachers` and `/courses`. Components in `src/components/marketplace/` and `src/components/teacher/`. Server-rendered for SEO.
+15. **Community (Jan 29)** - Threaded comments, voting, categories. Components in `src/components/community/`. Shared utils in `src/lib/communityUtils.ts`. Posts scoped to user's classrooms.
+16. **Teacher Analytics (Jan 29)** - Dashboard at `/teacher/students`. Components in `src/components/teacher/` (ClassAnalytics, StudentAlerts). Student deep-dive reuses all analytics components.
+17. **Progress Reports (Jan 29)** - API at `/api/reports/generate`. Component at `src/components/reports/ProgressReport.tsx`. Student page at `/journal/reports`.
+18. **Supabase joins** - All `Relationships` arrays are empty in generated types. NEVER use join syntax like `profiles!user_id(...)`. Fetch related data in separate queries and merge with a Map.
+19. **Glass system (Jan 29)** - Use `.glass-surface`, `.glass-elevated`, `.glass-floating` for panels. Never use inline `bg-[var(--card-bg)] border border-[var(--card-border)]`. Use `.btn-gold`, `.btn-glass`, `.input-field` for standard elements.
+20. **Icons (Jan 29)** - Use `<span className="material-symbols-outlined">icon_name</span>` or the `Icon` component from `src/components/ui/Icon.tsx`. Do NOT import from `lucide-react` (removed).
+21. **Gold restraint (Jan 29)** - Gold only on: `btn-gold` CTAs, active nav text color, achievement badges, positive stat numbers, logo. Use `glass-elevated` for active tabs/pills instead of gold background.
+22. **Calendar Heatmap (Jan 29)** - `CalendarHeatmap.tsx` uses a single-month calendar grid (Mon–Sun, 7 columns) with `<`/`>` month navigation. Two-column layout: calendar (60%) + behavioral insight panel (40%). Insight panel generates one prioritized insight per month using emotion, streak, day-of-week, and instrument data. Stacks vertically on mobile.
+23. **Recent Trades close button (Jan 29)** - Open trades in `RecentTrades.tsx` show a close button that navigates to `/journal/[id]` (the trade detail page) instead of opening a modal. The `QuickCloseModal` is no longer used by this component.
 
 **Update this document** after significant changes to keep it current.
 
 ---
 
-*Last Updated: January 28, 2026*
+*Last Updated: January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX*

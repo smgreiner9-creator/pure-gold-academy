@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Card, Button } from '@/components/ui'
-import { Bell, Check, CheckCheck, MessageSquare, PenTool, GraduationCap, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { PageHeader } from '@/components/layout/PageHeader'
 import type { Notification } from '@/types/database'
 
 export default function NotificationsPage() {
@@ -81,13 +81,13 @@ export default function NotificationsPage() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'feedback':
-        return <PenTool size={18} className="text-[var(--gold)]" />
+        return <span className="material-symbols-outlined text-lg text-[var(--gold)]">edit</span>
       case 'comment':
-        return <MessageSquare size={18} className="text-[var(--success)]" />
+        return <span className="material-symbols-outlined text-lg text-[var(--success)]">chat_bubble</span>
       case 'content':
-        return <GraduationCap size={18} className="text-[var(--gold)]" />
+        return <span className="material-symbols-outlined text-lg text-[var(--gold)]">school</span>
       default:
-        return <Bell size={18} className="text-[var(--muted)]" />
+        return <span className="material-symbols-outlined text-lg text-[var(--muted)]">notifications</span>
     }
   }
 
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="content-grid-narrow">
         {[1, 2, 3].map(i => (
           <Card key={i} className="animate-pulse h-20" />
         ))}
@@ -117,25 +117,25 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-[var(--muted)]">
-            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead}>
-            <CheckCheck size={18} />
-            Mark All Read
-          </Button>
-        )}
-      </div>
+    <>
+      <PageHeader
+        title="Notifications"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+        action={
+          unreadCount > 0 ? (
+            <Button variant="outline" onClick={markAllAsRead}>
+              <span className="material-symbols-outlined text-lg">done_all</span>
+              Mark All Read
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <div className="content-grid-narrow">
 
       {notifications.length === 0 ? (
         <Card className="text-center py-12">
-          <Bell size={48} className="mx-auto text-[var(--muted)] mb-4" />
+          <span className="material-symbols-outlined text-5xl mx-auto text-[var(--muted)] mb-4">notifications</span>
           <h3 className="text-xl font-semibold mb-2">No Notifications</h3>
           <p className="text-[var(--muted)]">
             You&apos;re all caught up!
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
                       className="p-2 rounded hover:bg-[var(--background)] transition-colors"
                       title="Mark as read"
                     >
-                      <Check size={16} />
+                      <span className="material-symbols-outlined text-base">check</span>
                     </button>
                   )}
                   {notification.link && (
@@ -183,7 +183,7 @@ export default function NotificationsPage() {
                     onClick={() => deleteNotification(notification.id)}
                     className="p-2 rounded hover:bg-[var(--danger)]/10 text-[var(--muted)] hover:text-[var(--danger)] transition-colors"
                   >
-                    <Trash2 size={16} />
+                    <span className="material-symbols-outlined text-base">delete</span>
                   </button>
                 </div>
               </div>
@@ -192,5 +192,6 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
+    </>
   )
 }

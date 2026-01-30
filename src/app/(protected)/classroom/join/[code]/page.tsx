@@ -88,7 +88,7 @@ export default function JoinClassroomPage() {
 
       if (error) throw error
 
-      router.push('/dashboard?joined=true')
+      router.push('/journal?joined=true')
     } catch (error) {
       console.error('Error joining classroom:', error)
       setError('Failed to join classroom')
@@ -129,9 +129,9 @@ export default function JoinClassroomPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse">
-          <div className="h-8 bg-white/10 rounded mb-4" />
-          <div className="h-4 bg-white/10 rounded w-2/3" />
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface animate-pulse">
+          <div className="h-8 bg-black/[0.06] rounded mb-4" />
+          <div className="h-4 bg-black/[0.06] rounded w-2/3" />
         </div>
       </div>
     )
@@ -140,7 +140,7 @@ export default function JoinClassroomPage() {
   if (error && !classroom) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--danger)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--danger)]">error</span>
           </div>
@@ -160,7 +160,7 @@ export default function JoinClassroomPage() {
   if (profile?.classroom_id === classroom?.id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--success)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--success)]">check_circle</span>
           </div>
@@ -169,7 +169,7 @@ export default function JoinClassroomPage() {
             You&apos;re already a member of {classroom?.name}
           </p>
           <Link
-            href="/dashboard"
+            href="/journal"
             className="gold-gradient text-black font-bold h-11 px-6 rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
           >
             Go to Dashboard
@@ -198,7 +198,7 @@ export default function JoinClassroomPage() {
           </div>
         )}
 
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-6 rounded-2xl glass-surface">
           {/* Classroom Info */}
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
@@ -285,7 +285,7 @@ export default function JoinClassroomPage() {
           <div className="mt-6 text-center">
             <Link
               href="/settings"
-              className="text-[var(--muted)] hover:text-white text-sm transition-colors"
+              className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm transition-colors"
             >
               Back to Settings
             </Link>

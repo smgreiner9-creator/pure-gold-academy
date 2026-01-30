@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 interface StripeStatus {
   connected: boolean
@@ -20,6 +22,62 @@ export default function TeacherSettingsPage() {
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isConnecting, setIsConnecting] = useState(false)
+
+  // Public profile state
+  const [bio, setBio] = useState('')
+  const [slug, setSlug] = useState('')
+  const [socialLinks, setSocialLinks] = useState<{
+    twitter?: string
+    youtube?: string
+    discord?: string
+  }>({})
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+
+  // Load profile data into form state
+  useEffect(() => {
+    if (profile) {
+      setBio((profile as any).bio || '')
+      setSlug((profile as any).slug || '')
+      setSocialLinks(((profile as any).social_links as any) || {})
+    }
+  }, [profile])
+
+  const slugPreview = useMemo(() => {
+    const clean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '')
+    return clean ? `puregoldacademy.com/teachers/${clean}` : ''
+  }, [slug])
+
+  const handleSaveProfile = async () => {
+    if (!profile) return
+    setIsSaving(true)
+    setSaveMessage(null)
+    try {
+      const supabase = createClient()
+      const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '')
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          bio,
+          slug: cleanSlug || null,
+          social_links: socialLinks,
+        })
+        .eq('id', profile.id)
+
+      if (error) {
+        setSaveMessage(error.message.includes('idx_profiles_slug')
+          ? 'This slug is already taken. Please choose another.'
+          : `Error: ${error.message}`)
+      } else {
+        setSaveMessage('Profile saved successfully!')
+        setTimeout(() => setSaveMessage(null), 3000)
+      }
+    } catch {
+      setSaveMessage('An unexpected error occurred.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const stripeSuccess = searchParams.get('stripe_success')
   const stripeRefresh = searchParams.get('stripe_refresh')
@@ -69,27 +127,146 @@ export default function TeacherSettingsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-48" />
+      <div className="content-grid-narrow">
+        <div className="p-6 rounded-2xl glass-surface animate-pulse h-48" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Back Link */}
-      <Link
-        href="/teacher"
-        className="inline-flex items-center gap-1 text-[var(--muted)] hover:text-white transition-colors text-sm"
-      >
-        <span className="material-symbols-outlined text-lg">arrow_back</span>
-        Back to Dashboard
-      </Link>
+    <>
+      <PageHeader title="Teacher Settings" subtitle="Manage your public profile, payments, and account settings" />
 
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Teacher Settings</h1>
-        <p className="text-[var(--muted)] text-sm mt-1">Manage your payments and account settings</p>
+      <div className="content-grid-narrow">
+      {/* Public Profile Section */}
+      <div className="p-6 rounded-2xl glass-surface">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[var(--gold)] text-2xl">person</span>
+          </div>
+          <div className="flex-1 space-y-5">
+            <div>
+              <h2 className="font-bold text-lg">Public Profile</h2>
+              <p className="text-[var(--muted)] text-sm mt-1">
+                Set up your public teacher profile so students can find you
+              </p>
+            </div>
+
+            {/* Bio */}
+            <div>
+              <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest block mb-1.5">
+                Bio
+              </label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, 500))}
+                placeholder="Tell students about your trading experience, style, and what they'll learn..."
+                rows={4}
+                className="w-full rounded-xl bg-[var(--bg)] border border-[var(--glass-surface-border)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]/50 transition-colors resize-none"
+              />
+              <p className="text-xs text-[var(--muted)] mt-1 text-right">
+                {bio.length}/500
+              </p>
+            </div>
+
+            {/* Slug */}
+            <div>
+              <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest block mb-1.5">
+                Profile URL Slug
+              </label>
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="your-name"
+                className="w-full h-10 rounded-xl bg-[var(--bg)] border border-[var(--glass-surface-border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]/50 transition-colors"
+              />
+              {slugPreview && (
+                <p className="text-xs text-[var(--muted)] mt-1.5 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">link</span>
+                  {slugPreview}
+                </p>
+              )}
+            </div>
+
+            {/* Social Links */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest block">
+                Social Links
+              </label>
+              <div className="grid gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[var(--muted)] w-20 shrink-0">X / Twitter</span>
+                  <input
+                    type="url"
+                    value={socialLinks.twitter || ''}
+                    onChange={(e) =>
+                      setSocialLinks((prev) => ({ ...prev, twitter: e.target.value }))
+                    }
+                    placeholder="https://x.com/yourhandle"
+                    className="flex-1 h-10 rounded-xl bg-[var(--bg)] border border-[var(--glass-surface-border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]/50 transition-colors"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[var(--muted)] w-20 shrink-0">YouTube</span>
+                  <input
+                    type="url"
+                    value={socialLinks.youtube || ''}
+                    onChange={(e) =>
+                      setSocialLinks((prev) => ({ ...prev, youtube: e.target.value }))
+                    }
+                    placeholder="https://youtube.com/@yourchannel"
+                    className="flex-1 h-10 rounded-xl bg-[var(--bg)] border border-[var(--glass-surface-border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]/50 transition-colors"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[var(--muted)] w-20 shrink-0">Discord</span>
+                  <input
+                    type="url"
+                    value={socialLinks.discord || ''}
+                    onChange={(e) =>
+                      setSocialLinks((prev) => ({ ...prev, discord: e.target.value }))
+                    }
+                    placeholder="https://discord.gg/yourinvite"
+                    className="flex-1 h-10 rounded-xl bg-[var(--bg)] border border-[var(--glass-surface-border)] px-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]/50 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button + Message */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="h-10 px-6 rounded-lg gold-gradient text-black font-bold text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">save</span>
+                    Save Profile
+                  </>
+                )}
+              </button>
+              {saveMessage && (
+                <p
+                  className={`text-sm ${
+                    saveMessage.startsWith('Error') || saveMessage.startsWith('This slug') || saveMessage.startsWith('An unexpected')
+                      ? 'text-[var(--danger)]'
+                      : 'text-[var(--success)]'
+                  }`}
+                >
+                  {saveMessage}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Success Message */}
@@ -101,7 +278,7 @@ export default function TeacherSettingsPage() {
       )}
 
       {/* Stripe Connect Card */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-[#635BFF]/10 flex items-center justify-center shrink-0">
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#635BFF">
@@ -155,7 +332,7 @@ export default function TeacherSettingsPage() {
                   </span>
                   <button
                     onClick={handleConnectStripe}
-                    className="text-sm text-[var(--muted)] hover:text-white transition-colors"
+                    className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
                   >
                     Update account
                   </button>
@@ -190,7 +367,7 @@ export default function TeacherSettingsPage() {
       </div>
 
       {/* Info Card */}
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <span className="material-symbols-outlined text-[var(--gold)]">info</span>
           How it works
@@ -224,7 +401,7 @@ export default function TeacherSettingsPage() {
         <div className="grid grid-cols-2 gap-4">
           <Link
             href="/teacher/classrooms"
-            className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/50 transition-colors group"
+            className="p-4 rounded-xl glass-surface glass-interactive transition-colors group"
           >
             <span className="material-symbols-outlined text-2xl text-[var(--gold)] mb-2">school</span>
             <p className="font-semibold group-hover:text-[var(--gold)] transition-colors">Set Classroom Prices</p>
@@ -232,7 +409,7 @@ export default function TeacherSettingsPage() {
           </Link>
           <Link
             href="/teacher/content"
-            className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/50 transition-colors group"
+            className="p-4 rounded-xl glass-surface glass-interactive transition-colors group"
           >
             <span className="material-symbols-outlined text-2xl text-[var(--gold)] mb-2">video_library</span>
             <p className="font-semibold group-hover:text-[var(--gold)] transition-colors">Set Content Prices</p>
@@ -241,5 +418,6 @@ export default function TeacherSettingsPage() {
         </div>
       )}
     </div>
+    </>
   )
 }

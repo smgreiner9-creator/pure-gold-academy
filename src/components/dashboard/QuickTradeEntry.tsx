@@ -98,9 +98,9 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
       />
 
       {/* Modal */}
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl z-50 overflow-hidden">
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto glass-floating rounded-2xl z-50 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--card-border)]">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--glass-surface-border)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center">
               <span className="material-symbols-outlined">bolt</span>
@@ -112,7 +112,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-white hover:bg-white/5 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 transition-colors"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -129,7 +129,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   instrument === inst
                     ? 'bg-[var(--gold)] text-black'
-                    : 'bg-white/5 hover:bg-white/10'
+                    : 'bg-black/5 hover:bg-black/[0.06]'
                 }`}
               >
                 {inst}
@@ -144,7 +144,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
               className={`p-3 rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${
                 direction === 'long'
                   ? 'bg-[var(--success)] text-white'
-                  : 'bg-white/5 hover:bg-white/10'
+                  : 'bg-black/5 hover:bg-black/[0.06]'
               }`}
             >
               <span className="material-symbols-outlined text-lg">trending_up</span>
@@ -155,7 +155,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
               className={`p-3 rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${
                 direction === 'short'
                   ? 'bg-[var(--danger)] text-white'
-                  : 'bg-white/5 hover:bg-white/10'
+                  : 'bg-black/5 hover:bg-black/[0.06]'
               }`}
             >
               <span className="material-symbols-outlined text-lg">trending_down</span>
@@ -173,7 +173,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                 type="number"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(e.target.value)}
-                className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
+                className="w-full input-field rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
                 placeholder="0.00"
                 step="any"
               />
@@ -186,7 +186,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                 type="number"
                 value={stopLoss}
                 onChange={(e) => setStopLoss(e.target.value)}
-                className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
+                className="w-full input-field rounded-xl px-3 py-2.5 focus:outline-none focus:border-[var(--gold)] mono-num transition-colors"
                 placeholder="Optional"
                 step="any"
               />
@@ -207,7 +207,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
                     positionSize === size
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-white/5 hover:bg-white/10'
+                      : 'bg-black/5 hover:bg-black/[0.06]'
                   }`}
                 >
                   {size}
@@ -229,7 +229,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
                   className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
                     emotion === em.value
                       ? 'bg-[var(--gold)] text-black'
-                      : 'bg-white/5 hover:bg-white/10'
+                      : 'bg-black/5 hover:bg-black/[0.06]'
                   }`}
                 >
                   {em.label}
@@ -244,10 +244,10 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[var(--card-border)] flex gap-3">
+        <div className="p-4 border-t border-[var(--glass-surface-border)] flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors"
+            className="flex-1 py-3 rounded-xl btn-glass font-semibold hover:bg-black/5 transition-colors"
           >
             Cancel
           </button>
@@ -267,7 +267,7 @@ export function QuickTradeEntry({ isOpen, onClose }: QuickTradeEntryProps) {
         {/* Keyboard hint and full form link */}
         <div className="px-4 pb-3 text-center space-y-2">
           <p className="text-[10px] text-[var(--muted)]">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">Q</kbd> to open Quick Trade anytime
+            Press <kbd className="px-1.5 py-0.5 rounded bg-black/[0.06] font-mono">Q</kbd> to open Quick Trade anytime
           </p>
           <button
             onClick={() => {

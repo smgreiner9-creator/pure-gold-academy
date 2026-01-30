@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui'
-import { Link, Youtube, BarChart3, AlertCircle, Check } from 'lucide-react'
 import { parseEmbedUrl, detectContentType, isValidUrl } from '@/lib/embedUtils'
 import { YouTubeEmbed } from './YouTubeEmbed'
 import { TradingViewEmbed } from './TradingViewEmbed'
@@ -58,7 +57,7 @@ export function EmbedPicker({
     <div className="space-y-3">
       <div className="relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]">
-          <Link size={18} />
+          <span className="material-symbols-outlined text-lg">link</span>
         </div>
         <Input
           value={url}
@@ -73,34 +72,34 @@ export function EmbedPicker({
         <div className="flex items-center gap-2 text-sm">
           {detectedType === 'youtube' && (
             <>
-              <Youtube size={16} className="text-red-500" />
+              <span className="material-symbols-outlined text-base text-red-500">smart_display</span>
               <span className="text-[var(--success)]">YouTube video detected</span>
-              <Check size={14} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-sm text-[var(--success)]">check</span>
             </>
           )}
           {detectedType === 'tradingview' && (
             <>
-              <BarChart3 size={16} className="text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-base text-[var(--gold)]">bar_chart</span>
               <span className="text-[var(--success)]">TradingView chart detected</span>
-              <Check size={14} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-sm text-[var(--success)]">check</span>
             </>
           )}
           {detectedType === 'video' && (
             <>
               <span className="text-[var(--success)]">Video file detected</span>
-              <Check size={14} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-sm text-[var(--success)]">check</span>
             </>
           )}
           {detectedType === 'image' && (
             <>
               <span className="text-[var(--success)]">Image file detected</span>
-              <Check size={14} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-sm text-[var(--success)]">check</span>
             </>
           )}
           {detectedType === 'pdf' && (
             <>
               <span className="text-[var(--success)]">PDF document detected</span>
-              <Check size={14} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-sm text-[var(--success)]">check</span>
             </>
           )}
         </div>
@@ -109,15 +108,15 @@ export function EmbedPicker({
       {/* Error message */}
       {error && (
         <div className="flex items-center gap-2 text-sm text-[var(--danger)]">
-          <AlertCircle size={14} />
+          <span className="material-symbols-outlined text-sm">error</span>
           <span>{error}</span>
         </div>
       )}
 
       {/* Preview */}
       {showPreview && embedInfo && embedInfo.type !== 'unknown' && (
-        <div className="border border-[var(--card-border)] rounded-lg overflow-hidden">
-          <div className="p-2 bg-[var(--card-bg)] border-b border-[var(--card-border)]">
+        <div className="border border-[var(--glass-surface-border)] rounded-lg overflow-hidden">
+          <div className="p-2 glass-surface border-b border-[var(--glass-surface-border)]">
             <p className="text-xs text-[var(--muted)]">Preview</p>
           </div>
           <div className="p-3">

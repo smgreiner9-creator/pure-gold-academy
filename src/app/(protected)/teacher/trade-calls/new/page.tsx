@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, Button, Select } from '@/components/ui'
 import { TradeCallForm, TradeCallFormData } from '@/components/trade-calls'
-import { ArrowLeft, Target } from 'lucide-react'
 import type { Classroom } from '@/types/database'
 
 export default function NewTradeCallPage() {
@@ -83,7 +82,7 @@ export default function NewTradeCallPage() {
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="h-8 w-48 bg-[var(--card-border)] rounded animate-pulse mb-6" />
+        <div className="h-8 w-48 bg-[var(--glass-surface-border)] rounded animate-pulse mb-6" />
         <Card className="h-96 animate-pulse" />
       </div>
     )
@@ -93,7 +92,7 @@ export default function NewTradeCallPage() {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <Card className="text-center py-12">
-          <Target size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">target</span>
           <h2 className="text-xl font-semibold mb-2">Create a Strategy First</h2>
           <p className="text-[var(--muted)] mb-4">
             You need to create a trading strategy before you can post trade calls.
@@ -112,7 +111,7 @@ export default function NewTradeCallPage() {
       <div className="flex items-center gap-4">
         <Link href="/teacher/trade-calls">
           <Button variant="ghost" size="sm">
-            <ArrowLeft size={18} />
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
           </Button>
         </Link>
         <div>
@@ -156,7 +155,7 @@ export default function NewTradeCallPage() {
       />
 
       {/* Tips */}
-      <Card className="bg-[var(--card-bg)]">
+      <Card>
         <h3 className="font-semibold mb-2">Tips for Good Trade Calls</h3>
         <ul className="text-sm text-[var(--muted)] space-y-1 list-disc list-inside">
           <li>Include clear entry and exit levels</li>

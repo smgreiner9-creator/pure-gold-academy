@@ -4,21 +4,6 @@ import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "
 import Link from "next/link";
 import Image from "next/image";
 import {
-  BookOpen,
-  Users,
-  PenTool,
-  Crown,
-  CheckCircle,
-  ArrowRight,
-  Radio,
-  Video,
-  GraduationCap,
-  Megaphone,
-  DollarSign,
-  Menu,
-  X,
-} from "lucide-react";
-import {
   motion,
   useScroll,
   useTransform,
@@ -115,7 +100,7 @@ function CountUp({
   );
 }
 
-function ParticleField({ count = 30 }: { count?: number }) {
+function ParticleField({ count = 24 }: { count?: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -129,7 +114,7 @@ function ParticleField({ count = 30 }: { count?: number }) {
       el.className = "particle";
       el.style.left = `${Math.random() * 100}%`;
       el.style.bottom = "-10px";
-      const size = 2 + Math.random() * 3;
+      const size = 1.5 + Math.random() * 2;
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;
       el.style.animationDelay = `${Math.random() * 8}s`;
@@ -150,65 +135,65 @@ function ParticleField({ count = 30 }: { count?: number }) {
 import type { Variants } from "framer-motion";
 
 const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const staggerContainer: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
+  visible: { transition: { staggerChildren: 0.08 } },
 };
 
 const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const slideInLeft: Variants = {
-  hidden: { opacity: 0, x: -40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, x: -30 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const slideInRight: Variants = {
-  hidden: { opacity: 0, x: 40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden: { opacity: 0, x: 30 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
 
 /* ─── Data ───────────────────────────────────────────────── */
 
 const features = [
   {
-    icon: PenTool,
+    icon: "edit",
     title: "Trade Journal",
     description:
       "Structured logging with screenshots, emotions, and R-multiples. Build consistency through reflection.",
   },
   {
-    icon: BookOpen,
+    icon: "auto_stories",
     title: "Topics & Lessons",
     description:
       "Video, text, and PDF courses from beginner to advanced. Learn strategies that actually work.",
   },
   {
-    icon: Megaphone,
+    icon: "campaign",
     title: "Trade Calls",
     description:
       "Real-time setups from verified educators. See the trade before it happens.",
   },
   {
-    icon: Video,
+    icon: "videocam",
     title: "Live Sessions",
     description:
       "Live market analysis and Q&A streams. Learn by watching experts trade in real time.",
   },
   {
-    icon: Users,
+    icon: "group",
     title: "Community",
     description:
       "Connect with fellow traders. Share insights, get feedback, and stay accountable.",
   },
   {
-    icon: GraduationCap,
+    icon: "school",
     title: "Teacher Classrooms",
     description:
       "Build your brand, publish content, host live sessions, and earn recurring revenue.",
@@ -268,7 +253,7 @@ export default function Home() {
   const headerBlur = useTransform(scrollY, [0, 100], [8, 20]);
 
   // Hero parallax
-  const heroY = useTransform(scrollY, [0, 600], [0, -80]);
+  const heroY = useTransform(scrollY, [0, 600], [0, -50]);
 
   // Journal demo auto-type
   const journalRef = useRef<HTMLDivElement>(null);
@@ -295,7 +280,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       {/* ── Header ─────────────────────────────────────── */}
       <motion.header
-        className="fixed top-0 left-0 right-0 z-50 glass"
+        className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/[0.04]"
         style={
           reduced
             ? {}
@@ -305,7 +290,7 @@ export default function Home() {
               }
         }
       >
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-[72px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
               src="/logo.jpg"
@@ -351,7 +336,7 @@ export default function Home() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <span className="material-symbols-outlined text-2xl">close</span> : <span className="material-symbols-outlined text-2xl">menu</span>}
           </button>
         </div>
 
@@ -362,7 +347,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="md:hidden absolute top-16 inset-x-0 glass border-t border-[var(--glass-border)] p-6 flex flex-col gap-4"
+              className="md:hidden absolute top-[72px] inset-x-0 glass border-t border-[var(--glass-border)] p-6 flex flex-col gap-4"
             >
               <a
                 href="#features"
@@ -402,15 +387,15 @@ export default function Home() {
         <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
           {/* Mesh background */}
           <div className="mesh-bg absolute inset-0 pointer-events-none" />
-          <ParticleField count={30} />
+          <ParticleField count={24} />
 
           <motion.div
-            className="relative z-10 max-w-4xl mx-auto text-center pt-16"
+            className="relative z-10 max-w-3xl mx-auto text-center pt-16"
             style={reduced ? {} : { y: heroY }}
           >
             <motion.div {...motionProps(fadeInUp)}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8">
-                <Crown size={16} className="text-[var(--gold)]" />
+                <span className="material-symbols-outlined text-base text-[var(--gold)]">workspace_premium</span>
                 <span className="text-sm text-[var(--gold)]">
                   The Trading Education Platform
                 </span>
@@ -418,7 +403,7 @@ export default function Home() {
             </motion.div>
 
             <motion.h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
+              className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-6 tracking-tight"
               {...motionProps(fadeInUp)}
             >
               Master the Markets.
@@ -443,7 +428,7 @@ export default function Home() {
                 className="w-full sm:w-auto px-8 py-4 rounded-lg bg-[var(--gold)] text-black font-semibold text-lg hover:bg-[var(--gold-light)] transition-colors flex items-center justify-center gap-2"
               >
                 Start Trading Free
-                <ArrowRight size={20} />
+                <span className="material-symbols-outlined text-xl">arrow_forward</span>
               </Link>
               <Link
                 href="/auth/signup"
@@ -456,7 +441,7 @@ export default function Home() {
         </section>
 
         {/* ── Features Grid ──────────────────────────────── */}
-        <section id="features" className="py-24 px-4">
+        <section id="features" className="py-32 px-4">
           <div className="max-w-6xl mx-auto">
             <motion.div
               className="text-center mb-16"
@@ -479,12 +464,12 @@ export default function Home() {
               {features.map((feature) => (
                 <motion.div
                   key={feature.title}
-                  className="p-6 rounded-xl glass glass-hover"
+                  className="p-6 rounded-xl glass glass-hover glass-shimmer"
                   variants={reduced ? undefined : scaleIn}
                   whileHover={reduced ? undefined : { y: -4 }}
                 >
-                  <div className="w-12 h-12 rounded-lg bg-[var(--gold)]/10 flex items-center justify-center mb-4">
-                    <feature.icon size={24} className="text-[var(--gold)]" />
+                  <div className="w-12 h-12 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/10 flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined text-2xl text-[var(--gold)]">{feature.icon}</span>
                   </div>
                   <h3 className="text-lg font-semibold mb-2">
                     {feature.title}
@@ -499,7 +484,7 @@ export default function Home() {
         </section>
 
         {/* ── Journal Demo ───────────────────────────────── */}
-        <section className="py-24 px-4">
+        <section className="py-32 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               {/* Terminal mock */}
@@ -541,10 +526,7 @@ export default function Home() {
                 <ul className="space-y-4">
                   {journalChecklist.map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <CheckCircle
-                        size={22}
-                        className="text-[var(--gold)] mt-0.5 shrink-0"
-                      />
+                      <span className="material-symbols-outlined text-xl text-[var(--gold)] mt-0.5 shrink-0">check_circle</span>
                       <span className="text-[var(--foreground)]/90">
                         {item}
                       </span>
@@ -557,7 +539,7 @@ export default function Home() {
         </section>
 
         {/* ── For Teachers ───────────────────────────────── */}
-        <section className="relative py-24 px-4 overflow-hidden">
+        <section className="relative py-32 px-4 overflow-hidden">
           <div className="mesh-bg absolute inset-0 opacity-50 pointer-events-none" />
           <div className="relative z-10 max-w-6xl mx-auto">
             <motion.div
@@ -565,7 +547,7 @@ export default function Home() {
               {...motionProps(fadeInUp)}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
-                <GraduationCap size={16} className="text-[var(--gold)]" />
+                <span className="material-symbols-outlined text-base text-[var(--gold)]">school</span>
                 <span className="text-sm text-[var(--gold)]">
                   For Educators
                 </span>
@@ -586,19 +568,19 @@ export default function Home() {
             >
               {[
                 {
-                  icon: BookOpen,
+                  icon: "auto_stories",
                   title: "Create & Publish",
                   description:
                     "Build lessons, topics, and strategies. Upload videos, PDFs, and structured courses.",
                 },
                 {
-                  icon: Radio,
+                  icon: "radio_button_checked",
                   title: "Go Live",
                   description:
                     "Schedule and stream trading sessions. Students join in real-time for live analysis.",
                 },
                 {
-                  icon: DollarSign,
+                  icon: "attach_money",
                   title: "Earn",
                   description:
                     "$2.80 per active student monthly. Stripe payouts directly to your account.",
@@ -606,12 +588,12 @@ export default function Home() {
               ].map((card) => (
                 <motion.div
                   key={card.title}
-                  className="p-6 rounded-xl glass glass-hover text-center"
+                  className="p-6 rounded-xl glass glass-hover glass-shimmer text-center"
                   variants={reduced ? undefined : scaleIn}
                   whileHover={reduced ? undefined : { y: -4 }}
                 >
-                  <div className="w-14 h-14 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center mx-auto mb-4">
-                    <card.icon size={28} className="text-[var(--gold)]" />
+                  <div className="w-14 h-14 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="material-symbols-outlined text-3xl text-[var(--gold)]">{card.icon}</span>
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
                   <p className="text-[var(--muted)] text-sm">
@@ -630,14 +612,14 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-[var(--gold)] text-black font-semibold text-lg hover:bg-[var(--gold-light)] transition-colors"
               >
                 Create Your Teacher Account
-                <ArrowRight size={20} />
+                <span className="material-symbols-outlined text-xl">arrow_forward</span>
               </Link>
             </motion.div>
           </div>
         </section>
 
         {/* ── Pricing ────────────────────────────────────── */}
-        <section id="pricing" className="py-24 px-4">
+        <section id="pricing" className="py-32 px-4">
           <div className="max-w-4xl mx-auto">
             <motion.div
               className="text-center mb-16"
@@ -671,7 +653,7 @@ export default function Home() {
                 <ul className="space-y-3 mb-8">
                   {pricingFeatures.free.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
-                      <CheckCircle size={16} className="text-[var(--success)]" />
+                      <span className="material-symbols-outlined text-base text-[var(--success)]">check_circle</span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -696,7 +678,7 @@ export default function Home() {
                   </span>
                 </div>
                 <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                  <Crown size={20} className="text-[var(--gold)]" />
+                  <span className="material-symbols-outlined text-xl text-[var(--gold)]">workspace_premium</span>
                   Premium
                 </h3>
                 <p className="text-4xl font-bold mb-6">
@@ -707,12 +689,12 @@ export default function Home() {
                 </p>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center gap-2 text-sm">
-                    <CheckCircle size={16} className="text-[var(--gold)]" />
+                    <span className="material-symbols-outlined text-base text-[var(--gold)]">check_circle</span>
                     <span>Everything in Free</span>
                   </li>
                   {pricingFeatures.premium.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
-                      <CheckCircle size={16} className="text-[var(--gold)]" />
+                      <span className="material-symbols-outlined text-base text-[var(--gold)]">check_circle</span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -749,9 +731,9 @@ export default function Home() {
         </section>
 
         {/* ── Final CTA ──────────────────────────────────── */}
-        <section className="relative py-24 px-4 overflow-hidden">
+        <section className="relative py-32 px-4 overflow-hidden">
           <div className="mesh-bg absolute inset-0 pointer-events-none" />
-          <ParticleField count={15} />
+          <ParticleField count={12} />
 
           <motion.div
             className="relative z-10 max-w-3xl mx-auto text-center"
@@ -778,7 +760,7 @@ export default function Home() {
                 style={{ animation: "pulse-glow 3s ease-in-out infinite" }}
               >
                 Create Your Free Account
-                <ArrowRight size={20} />
+                <span className="material-symbols-outlined text-xl">arrow_forward</span>
               </Link>
             </motion.div>
           </motion.div>
@@ -786,7 +768,7 @@ export default function Home() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────── */}
-      <footer className="py-12 px-4 border-t border-[var(--card-border)]">
+      <footer className="py-16 px-4 border-t border-[var(--glass-surface-border)] bg-black/20">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">

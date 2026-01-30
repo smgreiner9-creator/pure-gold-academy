@@ -2,18 +2,6 @@
 
 import { useState } from 'react'
 import { Card, Button } from '@/components/ui'
-import {
-  TrendingUp,
-  TrendingDown,
-  Target,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Copy,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink
-} from 'lucide-react'
 import { TradeCall, TradeCallStatus } from '@/types/database'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -26,13 +14,13 @@ interface TradeCallCardProps {
 }
 
 const statusConfig: Record<TradeCallStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  active: { label: 'Active', color: 'bg-[var(--gold)]/20 text-[var(--gold)]', icon: <Target size={14} /> },
-  hit_tp1: { label: 'TP1 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <CheckCircle2 size={14} /> },
-  hit_tp2: { label: 'TP2 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <CheckCircle2 size={14} /> },
-  hit_tp3: { label: 'TP3 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <CheckCircle2 size={14} /> },
-  hit_sl: { label: 'SL Hit', color: 'bg-[var(--danger)]/20 text-[var(--danger)]', icon: <XCircle size={14} /> },
-  manual_close: { label: 'Closed', color: 'bg-[var(--muted)]/20 text-[var(--muted)]', icon: <CheckCircle2 size={14} /> },
-  cancelled: { label: 'Cancelled', color: 'bg-[var(--muted)]/20 text-[var(--muted)]', icon: <XCircle size={14} /> },
+  active: { label: 'Active', color: 'bg-[var(--gold)]/20 text-[var(--gold)]', icon: <span className="material-symbols-outlined text-sm">target</span> },
+  hit_tp1: { label: 'TP1 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <span className="material-symbols-outlined text-sm">check_circle</span> },
+  hit_tp2: { label: 'TP2 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <span className="material-symbols-outlined text-sm">check_circle</span> },
+  hit_tp3: { label: 'TP3 Hit', color: 'bg-[var(--success)]/20 text-[var(--success)]', icon: <span className="material-symbols-outlined text-sm">check_circle</span> },
+  hit_sl: { label: 'SL Hit', color: 'bg-[var(--danger)]/20 text-[var(--danger)]', icon: <span className="material-symbols-outlined text-sm">cancel</span> },
+  manual_close: { label: 'Closed', color: 'bg-[var(--muted)]/20 text-[var(--muted)]', icon: <span className="material-symbols-outlined text-sm">check_circle</span> },
+  cancelled: { label: 'Cancelled', color: 'bg-[var(--muted)]/20 text-[var(--muted)]', icon: <span className="material-symbols-outlined text-sm">cancel</span> },
 }
 
 export function TradeCallCard({
@@ -72,7 +60,7 @@ export function TradeCallCard({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${directionBg}`}>
-              {isLong ? <TrendingUp size={16} className={directionColor} /> : <TrendingDown size={16} className={directionColor} />}
+              {isLong ? <span className={`material-symbols-outlined text-base ${directionColor}`}>trending_up</span> : <span className={`material-symbols-outlined text-base ${directionColor}`}>trending_down</span>}
               <span className={`text-sm font-semibold ${directionColor}`}>
                 {tradeCall.direction.toUpperCase()}
               </span>
@@ -121,13 +109,13 @@ export function TradeCallCard({
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 text-sm text-[var(--muted)] hover:text-[var(--foreground)] mb-2"
           >
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {expanded ? <span className="material-symbols-outlined text-base">expand_less</span> : <span className="material-symbols-outlined text-base">expand_more</span>}
             {expanded ? 'Show less' : 'Show more'}
           </button>
         )}
 
         {expanded && (
-          <div className="space-y-3 border-t border-[var(--card-border)] pt-3">
+          <div className="space-y-3 border-t border-[var(--glass-surface-border)] pt-3">
             {/* Additional TPs */}
             {(tradeCall.take_profit_2 || tradeCall.take_profit_3) && (
               <div className="flex gap-4">
@@ -162,14 +150,14 @@ export function TradeCallCard({
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm text-[var(--gold)] hover:underline"
               >
-                <ExternalLink size={14} />
+                <span className="material-symbols-outlined text-sm">open_in_new</span>
                 View Chart
               </a>
             )}
 
             {/* Result (if closed) */}
             {tradeCall.status !== 'active' && tradeCall.status !== 'cancelled' && (
-              <div className="bg-[var(--card-bg)] rounded p-3">
+              <div className="glass-surface rounded p-3">
                 <p className="text-xs text-[var(--muted)] mb-1">Result</p>
                 <div className="flex items-center gap-4">
                   {tradeCall.actual_exit_price && (
@@ -196,9 +184,9 @@ export function TradeCallCard({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--card-border)]">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--glass-surface-border)]">
           <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-            <Clock size={12} />
+            <span className="material-symbols-outlined text-xs">schedule</span>
             {formatDistanceToNow(new Date(tradeCall.published_at), { addSuffix: true })}
             {tradeCall.teacher?.display_name && (
               <>
@@ -216,7 +204,7 @@ export function TradeCallCard({
                   size="sm"
                   onClick={() => onCopyToJournal(tradeCall)}
                 >
-                  <Copy size={14} />
+                  <span className="material-symbols-outlined text-sm">content_copy</span>
                   Copy to Journal
                 </Button>
               )}

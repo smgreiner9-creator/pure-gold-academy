@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
+
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
@@ -122,7 +122,7 @@ export function ScreenshotUpload({
       {screenshots.length < maxFiles && (
         <div
           onClick={() => !isUploading && fileInputRef.current?.click()}
-          className={`border-2 border-dashed border-[var(--card-border)] rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-[var(--gold)] ${
+          className={`border-2 border-dashed border-[var(--glass-surface-border)] rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-[var(--gold)] ${
             isUploading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
@@ -138,13 +138,13 @@ export function ScreenshotUpload({
 
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
-              <Loader2 size={32} className="animate-spin text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-3xl animate-spin text-[var(--gold)]">progress_activity</span>
               <span className="text-sm text-[var(--muted)]">Uploading...</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
-                <Upload size={24} className="text-[var(--gold)]" />
+                <span className="material-symbols-outlined text-2xl text-[var(--gold)]">upload</span>
               </div>
               <span className="text-sm font-medium">Click to upload chart screenshots</span>
               <span className="text-xs text-[var(--muted)]">
@@ -165,7 +165,7 @@ export function ScreenshotUpload({
         <div className="grid grid-cols-2 gap-3">
           {screenshots.map((url, index) => (
             <div key={index} className="relative group">
-              <div className="relative w-full h-32 overflow-hidden rounded-lg border border-[var(--card-border)]">
+              <div className="relative w-full h-32 overflow-hidden rounded-lg border border-[var(--glass-surface-border)]">
                 <Image
                   src={url}
                   alt={`Screenshot ${index + 1}`}
@@ -180,7 +180,7 @@ export function ScreenshotUpload({
                 onClick={() => removeScreenshot(url)}
                 className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--danger)]"
               >
-                <X size={14} />
+                <span className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
           ))}
@@ -190,7 +190,7 @@ export function ScreenshotUpload({
       {/* Empty state hint */}
       {screenshots.length === 0 && !isUploading && (
         <p className="text-xs text-[var(--muted)] flex items-center gap-1">
-          <ImageIcon size={12} />
+          <span className="material-symbols-outlined text-xs">image</span>
           Add chart screenshots to improve your trade analysis
         </p>
       )}

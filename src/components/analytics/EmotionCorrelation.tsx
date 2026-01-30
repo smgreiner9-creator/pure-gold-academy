@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import type { JournalEntry, EmotionType } from '@/types/database'
+import { EmotionFlow } from './EmotionFlow'
 
 interface EmotionCorrelationProps {
   entries: JournalEntry[]
@@ -58,7 +59,7 @@ export function EmotionCorrelation({ entries, expanded = false }: EmotionCorrela
 
   if (emotionStats.length === 0) {
     return (
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-surface p-6">
         <h3 className="font-bold text-lg mb-4">Emotion Analysis</h3>
         <p className="text-[var(--muted)] text-center py-8">
           No closed trades with emotion data to analyze.
@@ -68,7 +69,7 @@ export function EmotionCorrelation({ entries, expanded = false }: EmotionCorrela
   }
 
   return (
-    <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="glass-surface p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-bold text-lg">Emotion Analysis</h3>
         <span className="material-symbols-outlined text-[var(--gold)]">psychology</span>
@@ -135,11 +136,9 @@ export function EmotionCorrelation({ entries, expanded = false }: EmotionCorrela
 
       {/* Expanded: Before/During/After comparison */}
       {expanded && (
-        <div className="mt-8 pt-6 border-t border-[var(--card-border)]">
+        <div className="mt-8 pt-6 border-t border-[var(--glass-surface-border)]">
           <h4 className="font-semibold mb-4">Emotion State Transitions</h4>
-          <p className="text-sm text-[var(--muted)]">
-            Track how your emotions change during trades in your journal entries to see patterns here.
-          </p>
+          <EmotionFlow entries={entries} />
         </div>
       )}
     </div>

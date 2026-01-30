@@ -63,7 +63,7 @@ export function PositionCalculator() {
   }
 
   return (
-    <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl overflow-hidden">
+    <div className="glass-surface rounded-2xl overflow-hidden">
       <div className="p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -89,7 +89,7 @@ export function PositionCalculator() {
               value={accountBalance}
               onChange={handleBalanceChange}
               onBlur={(e) => setAccountBalance(formatBalance(e.target.value))}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] mono-num text-lg transition-colors"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] mono-num text-lg transition-colors"
               placeholder="10,000.00"
             />
           </div>
@@ -102,7 +102,7 @@ export function PositionCalculator() {
             <select
               value={selectedPair}
               onChange={(e) => setSelectedPair(e.target.value)}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm font-semibold appearance-none cursor-pointer transition-colors"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm font-semibold appearance-none cursor-pointer transition-colors"
             >
               {currencyPairs.map((p) => (
                 <option key={p.symbol} value={p.symbol}>
@@ -126,7 +126,7 @@ export function PositionCalculator() {
                 step="0.25"
                 value={riskPercent}
                 onChange={(e) => setRiskPercent(parseFloat(e.target.value))}
-                className="flex-1 accent-[var(--gold)] h-2 bg-[var(--card-border)] rounded-full appearance-none cursor-pointer"
+                className="flex-1 accent-[var(--gold)] h-2 bg-[var(--glass-surface-border)] rounded-full appearance-none cursor-pointer"
               />
             </div>
             <div className="flex justify-between text-[9px] text-[var(--muted)] px-1">
@@ -148,7 +148,7 @@ export function PositionCalculator() {
               type="number"
               value={stopLossPips}
               onChange={(e) => setStopLossPips(e.target.value)}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] mono-num text-lg transition-colors"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] mono-num text-lg transition-colors"
               placeholder="50"
               min="1"
             />
@@ -157,7 +157,7 @@ export function PositionCalculator() {
 
         {/* Results */}
         <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="text-[9px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">Risk Amount</p>
             <p className="mono-num text-xl font-bold text-[var(--danger)]">
               ${calculation.riskAmount.toFixed(2)}
@@ -172,7 +172,7 @@ export function PositionCalculator() {
         </div>
 
         {/* Info */}
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5 text-xs text-[var(--muted)]">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-black/5 text-xs text-[var(--muted)]">
           <span className="material-symbols-outlined text-sm mt-0.5">info</span>
           <p>
             With a {riskPercent}% risk on ${parseFloat(accountBalance.replace(/,/g, '') || '0').toLocaleString()},

@@ -4,13 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, Button } from '@/components/ui'
-import {
-  Video,
-  Calendar,
-  Clock,
-  ExternalLink,
-  Radio
-} from 'lucide-react'
 import { format, formatDistanceToNow, isFuture, addHours } from 'date-fns'
 import type { LiveSession } from '@/types/database'
 
@@ -64,7 +57,7 @@ export default function StudentLiveSessionsPage() {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="h-8 w-48 bg-[var(--card-border)] rounded animate-pulse" />
+        <div className="h-8 w-48 bg-[var(--glass-surface-border)] rounded animate-pulse" />
         <div className="space-y-4">
           {[1, 2].map(i => (
             <Card key={i} className="h-32 animate-pulse" />
@@ -78,7 +71,7 @@ export default function StudentLiveSessionsPage() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <Card className="text-center py-12">
-          <Video size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">videocam</span>
           <h2 className="text-xl font-semibold mb-2">Join a Strategy First</h2>
           <p className="text-[var(--muted)]">
             Enroll in a trading strategy to access live sessions.
@@ -102,7 +95,7 @@ export default function StudentLiveSessionsPage() {
           {liveSessions.map(session => (
             <Card key={session.id} className="border-red-500 bg-red-500/5">
               <div className="flex items-center gap-2 mb-3">
-                <Radio size={18} className="text-red-500 animate-pulse" />
+                <span className="material-symbols-outlined text-lg text-red-500 animate-pulse">radio_button_checked</span>
                 <span className="text-sm font-semibold text-red-500">LIVE NOW</span>
               </div>
 
@@ -119,7 +112,7 @@ export default function StudentLiveSessionsPage() {
               {session.stream_url ? (
                 <a href={session.stream_url} target="_blank" rel="noopener noreferrer">
                   <Button className="w-full sm:w-auto">
-                    <ExternalLink size={18} />
+                    <span className="material-symbols-outlined text-lg">open_in_new</span>
                     Join Live Session
                   </Button>
                 </a>
@@ -137,7 +130,7 @@ export default function StudentLiveSessionsPage() {
 
         {upcomingSessions.length === 0 ? (
           <Card className="text-center py-12">
-            <Calendar size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+            <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">calendar_today</span>
             <h3 className="text-lg font-semibold mb-2">No Upcoming Sessions</h3>
             <p className="text-[var(--muted)]">
               Check back later for scheduled live sessions.
@@ -166,11 +159,11 @@ export default function StudentLiveSessionsPage() {
 
                     <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--muted)]">
                       <span className="flex items-center gap-1">
-                        <Calendar size={14} />
+                        <span className="material-symbols-outlined text-sm">calendar_today</span>
                         {format(new Date(session.scheduled_start), 'EEEE, MMMM d')}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock size={14} />
+                        <span className="material-symbols-outlined text-sm">schedule</span>
                         {format(new Date(session.scheduled_start), 'h:mm a')}
                       </span>
                       <span>{session.scheduled_duration_minutes} minutes</span>
@@ -195,7 +188,7 @@ export default function StudentLiveSessionsPage() {
       </div>
 
       {/* Tips */}
-      <Card className="bg-[var(--card-bg)]">
+      <Card>
         <h3 className="font-semibold mb-2">Session Tips</h3>
         <ul className="text-sm text-[var(--muted)] space-y-1 list-disc list-inside">
           <li>Sessions are scheduled in your local timezone</li>

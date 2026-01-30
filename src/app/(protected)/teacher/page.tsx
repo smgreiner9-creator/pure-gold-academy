@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { TopicsList } from '@/components/teacher/TopicsList'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 export default function TeacherDashboardPage() {
   const { profile } = useAuth()
@@ -77,13 +78,11 @@ export default function TeacherDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          {[1, 2].map(i => (
-            <div key={i} className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-24" />
-          ))}
-        </div>
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-48" />
+      <div className="content-grid">
+        {[1, 2].map(i => (
+          <div key={i} className="p-6 rounded-2xl glass-surface animate-pulse h-24" />
+        ))}
+        <div className="col-span-full p-6 rounded-2xl glass-surface animate-pulse h-48" />
       </div>
     )
   }
@@ -91,60 +90,70 @@ export default function TeacherDashboardPage() {
   // First-time teacher - no topics yet
   if (hasTopics === false) {
     return (
-      <div className="max-w-2xl mx-auto py-12 px-4">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl gold-gradient flex items-center justify-center">
-            <span className="material-symbols-outlined text-4xl text-black">school</span>
+      <>
+        <PageHeader title="Teaching Hub" />
+        <div className="content-grid-narrow">
+          <div className="text-center py-6">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl gold-gradient flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-black">school</span>
+            </div>
+            <h1 className="text-3xl font-bold mb-3">Welcome to Your Teaching Hub</h1>
+            <p className="text-[var(--muted)] text-lg">
+              Create your first topic and start adding lessons.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold mb-3">Welcome to Your Teaching Hub</h1>
-          <p className="text-[var(--muted)] text-lg">
-            Create your first topic and start adding lessons.
+
+          <Link
+            href="/teacher/lessons/new"
+            className="gold-gradient text-black font-bold h-14 px-8 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition-all text-lg w-full"
+          >
+            <span className="material-symbols-outlined text-2xl">add</span>
+            Add Your First Lesson
+          </Link>
+
+          <p className="text-center text-[var(--muted)] text-sm">
+            You&apos;ll create a topic and add your lesson in one simple step
           </p>
         </div>
-
-        <Link
-          href="/teacher/lessons/new"
-          className="gold-gradient text-black font-bold h-14 px-8 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition-all text-lg w-full"
-        >
-          <span className="material-symbols-outlined text-2xl">add</span>
-          Add Your First Lesson
-        </Link>
-
-        <p className="text-center text-[var(--muted)] text-sm mt-4">
-          You&apos;ll create a topic and add your lesson in one simple step
-        </p>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Your Teaching Hub</h1>
-        <p className="text-[var(--muted)] text-sm mt-1">Manage your topics and lessons</p>
-      </div>
+    <>
+      <PageHeader
+        title="Teaching Hub"
+        subtitle="Manage your topics and lessons"
+        action={
+          <Link
+            href="/teacher/lessons/new"
+            className="btn-gold h-9 px-4 rounded-lg flex items-center gap-1.5 text-sm"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            <span className="hidden sm:inline">New Lesson</span>
+          </Link>
+        }
+      />
 
+      <div className="content-grid">
       {/* 2 Stat Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-6 rounded-2xl glass-surface">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-[var(--muted)]">Total Students</span>
             <span className="material-symbols-outlined text-lg text-[var(--gold)]">group</span>
           </div>
           <p className="text-2xl font-bold text-[var(--gold)]">{totalStudents}</p>
         </div>
-        <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-6 rounded-2xl glass-surface">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-[var(--muted)]">Monthly Earnings</span>
             <span className="material-symbols-outlined text-lg text-[var(--success)]">payments</span>
           </div>
           <p className="text-2xl font-bold text-[var(--success)]">${totalEarnings.toFixed(2)}</p>
         </div>
-      </div>
 
       {/* Topics List */}
-      <div>
+      <div className="col-span-full">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Your Topics</h2>
           <Link
@@ -157,5 +166,6 @@ export default function TeacherDashboardPage() {
         <TopicsList />
       </div>
     </div>
+    </>
   )
 }

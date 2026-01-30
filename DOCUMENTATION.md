@@ -37,6 +37,8 @@ Pure Gold Trading Academy is a comprehensive web application for trading educati
 - **Payments**: Stripe
 - **State Management**: Zustand
 - **Forms**: React Hook Form + Zod
+- **Icons**: Material Symbols Outlined (Google)
+- **Design System**: 3-tier glassmorphism (Surface / Elevated / Floating) with frosted noise texture
 
 ### Project Structure
 
@@ -72,7 +74,8 @@ src/
 ### Core Features
 
 1. **User Authentication** - Email/password with student/teacher roles
-2. **Student Dashboard** - Market news, session indicator, position calculator
+2. **Student Dashboard** - Market news, session indicator, position calculator, recent trades with quick-close navigation
+3. **Calendar Heatmap** - Monthly calendar view of trading activity with behavioral insight panel (emotion patterns, streaks, performance analytics)
 3. **Trade Journaling** - Structured entries with screenshots, emotions, rules
 4. **Learning Content** - Video, PDF, image, text, YouTube embeds, TradingView charts
 5. **Trade Calls** - Real-time teacher trade ideas with entry/SL/TPs and analysis
@@ -172,6 +175,24 @@ const { user, profile, isPremium, signIn, signUp, signOut } = useAuth()
 | `notes` | text | No | Trade analysis and reflection |
 | `rules_followed` | array | No | Checklist of trading rules |
 | `screenshot_urls` | array | No | Chart screenshots (max 4) |
+| `chart_data` | jsonb | No | TradingView chart state with annotations (NEW Jan 29) |
+| `pre_trade_mindset` | jsonb | No | Readiness score (1-5) + psychology tags (NEW Jan 29) |
+
+### Interactive Chart (NEW - Jan 29, 2026)
+
+- TradingView `lightweight-charts` v5 widget embedded in journal form Step 2
+- Annotation toolbar: Horizontal Line, Trend Line, Entry, Exit, Stop Loss, Take Profit, Text
+- Chart state serialized as JSON and saved with entry
+- Displayed read-only on journal detail page
+- Color-coded annotations: green (entry), orange (exit), red (SL), blue (TP)
+
+### Pre-Trade Mindset Capture (NEW - Jan 29, 2026)
+
+- Inline bar at top of journal form Step 1 (~60px height)
+- Readiness slider: 5 tappable gold dots (1-5 scale)
+- Quick-tag badges: Revenge, FOMO, Confident, Uncertain, Tired (multi-select toggle)
+- Optional — skippable, never blocking
+- Data feeds into Psychology analytics tab
 
 ### Emotion Types
 
@@ -485,10 +506,23 @@ Single-page form with:
 
 ### Students (`/teacher/students`)
 
-- List all enrolled students
-- Filter by classroom
-- View student statistics
-- Access student journals
+> *Expanded January 29, 2026 — Full Analytics Dashboard*
+
+- **Overview cards**: Total students, average class win rate, average R-multiple, active journalers (last 7 days)
+- **Tabs**: Students list and Class Analytics view
+- **Class Analytics** (`ClassAnalytics` component): SVG win rate trend (12 weeks), R-multiple trend, emotion patterns, rule adherence summary
+- **Student Alerts** (`StudentAlerts` component): Inactive 7+ days, losing streaks (3+), low rule adherence (<40%)
+- **Student list**: Searchable, sortable by name/win rate/avg R/trade count/last active
+- **Student deep-dive** (`/teacher/students/[id]`): 6 tabs — Overview (equity curve + recent trades), Emotions, Rules, Psychology, Journals, Feedback. Reuses all analytics components from Phase 1.
+- **Authorization**: Verifies teacher owns a classroom the student is subscribed to before showing data
+
+### Automated Progress Reports (NEW - Jan 29, 2026)
+
+- **Generate reports**: `/api/reports/generate` POST endpoint computes analytics for a student over a period (weekly/monthly)
+- **Report data**: Total trades, win rate, avg R, streaks, emotion breakdown, rule adherence, strengths, improvement areas, comparison to previous period
+- **Teacher notes**: Editable per-report via PATCH endpoint
+- **Student view**: `/journal/reports` page lists reports grouped by classroom, expandable to full `ProgressReport` component
+- **Report renderer**: Summary cards, strengths (green), improvements (amber), emotion bars, rule progress bars, best/worst trades, teacher notes
 
 ### Journal Review (`/teacher/journals`)
 
@@ -510,24 +544,45 @@ Single-page form with:
 
 ## Community
 
+> *Rewritten January 29, 2026 — Threaded Discussions + Voting + Trade Reviews*
+
 ### Posts
 
-- Create new discussion posts
-- Title and content fields
-- Like/unlike functionality
-- Comment threads
+- Create new discussion posts with title, content, and category
+- Categories: General, Chart Analysis, Strategy, Psychology, Question, Trade Review
+- Upvote/downvote system with score display
+- Threaded comment replies (max 3 levels deep)
+- Sort by Hot (weighted by recency), New (chronological), Top (by score)
+- Search posts by keyword
+- Classroom-scoped: users only see posts from their subscribed classrooms
+- Signal prevention filtering on post/comment creation
+
+### Trade Reviews (NEW - Jan 29, 2026)
+
+- Share journal entries to community with privacy controls
+- Choose what to expose: P&L, emotions, chart data
+- Embedded TradingView chart in read-only mode (if shared)
+- Trade details: instrument, direction, entry/exit, outcome, R-multiple
+- Created via "Share to Community" button on journal detail page
 
 ### Comments
 
-- Nested comments on posts
-- Edit own comments
-- Delete own comments
+- Threaded replies with recursive rendering (3 levels max)
+- Inline reply forms on each comment
+- Upvote/downvote on individual comments
+- Delete own comments (with ownership verification)
 
-### Features
+### Voting
 
-- Sorted by most recent
-- Like count display
-- Author display names
+- New `community_votes` table with unique constraints per user per post/comment
+- Optimistic updates with rollback on error
+- Vote type: +1 (upvote) or -1 (downvote)
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/community/trade-review` | POST | Create trade review post from journal entry |
 
 ---
 
@@ -845,6 +900,60 @@ Added column to `profiles` table:
 Added column to `learn_content` table:
 - `module_id` (uuid, FK -> track_modules)
 
+### Marketplace Tables (NEW - Jan 29, 2026)
+
+#### topic_reviews
+```sql
+- id (uuid, PK)
+- student_id (uuid, FK -> profiles)
+- classroom_id (uuid, FK -> classrooms)
+- rating (integer, 1-5)
+- review_text (text)
+- teacher_response (text)
+- created_at (timestamp)
+-- Unique: one review per student per classroom
+```
+
+### Community Enhancement Tables (NEW - Jan 29, 2026)
+
+#### community_votes
+```sql
+- id (uuid, PK)
+- user_id (uuid, FK -> profiles)
+- post_id (uuid, FK -> community_posts)
+- comment_id (uuid, FK -> community_comments)
+- vote_type (smallint, 1 or -1)
+- created_at (timestamp)
+-- CHECK: exactly one of post_id or comment_id must be set
+-- Unique: one vote per user per post, one vote per user per comment
+```
+
+Added columns to `community_posts`:
+- `category` (varchar, default 'general')
+- `tags` (text[], default '{}')
+- `post_type` (varchar, default 'discussion')
+- `shared_journal_data` (jsonb) — trade review data
+- `journal_entry_id` (uuid) — source journal entry
+
+Added column to `community_comments`:
+- `parent_comment_id` (uuid, self-referencing FK) — for threaded replies
+
+### Progress Reports Table (NEW - Jan 29, 2026)
+
+#### progress_reports
+```sql
+- id (uuid, PK)
+- user_id (uuid, FK -> profiles, CASCADE)
+- classroom_id (uuid, FK -> classrooms, CASCADE)
+- period_start (date)
+- period_end (date)
+- report_data (jsonb) — computed analytics
+- teacher_notes (text)
+- created_at (timestamp)
+- updated_at (timestamp)
+-- Unique: one report per user per classroom per period
+```
+
 ### Additional Tables
 
 - `classroom_rules` - Strategy-level rules
@@ -854,7 +963,7 @@ Added column to `learn_content` table:
 - `content_purchases` - Individual content sales
 - `learn_progress` - Student progress on content
 - `journal_feedback` - Teacher feedback on journal entries
-- `community_comments` - Comments on community posts
+- `community_comments` - Comments on community posts (+ `parent_comment_id` for threading)
 - `watched_instruments` - User tracked symbols
 
 ---
@@ -869,7 +978,138 @@ Added column to `learn_content` table:
 
 ---
 
+### Marketplace & Reviews (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/courses` | GET | Public course catalog listing |
+| `/api/reviews` | GET | Fetch reviews for a classroom |
+| `/api/reviews` | POST | Create a review (auth required) |
+| `/api/reviews` | PATCH | Update own review |
+
+### Community (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/community/trade-review` | POST | Create trade review post from journal entry |
+
+### Progress Reports (NEW - Jan 29, 2026)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/reports/generate` | POST | Generate progress report for a student |
+| `/api/reports/generate` | GET | Fetch reports (teacher or student) |
+| `/api/reports/generate` | PATCH | Update teacher notes on a report |
+
+---
+
 ## Update Log
+
+### January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX
+**Agent:** Claude Opus 4.5
+
+**Calendar Heatmap (`CalendarHeatmap.tsx`) — Complete Rewrite:**
+- Replaced 26-week horizontal GitHub-style heatmap strip with single-month calendar grid (7-column Mon–Sun, `w-10 h-10` cells)
+- Added month navigation (`<` / `>` buttons) with `currentMonth` state
+- Two-column layout: calendar (60%) + behavioral insight panel (40%), stacks vertically on mobile
+- Insight panel shows one prioritized monthly insight (emotion patterns, streaks, best day, instrument focus, win rate, low activity) plus month stats (trades, win rate, total R)
+- Parallel Supabase queries for heatmap data and insight data (with `emotion_before`)
+- Removed broken month header row, `WEEKS` constant, `gridDates` memo, `monthLabels` memo
+
+**Recent Trades (`RecentTrades.tsx`):**
+- Open trade close button now navigates to `/journal/[id]` (detail page) instead of opening `QuickCloseModal`
+- Removed `QuickCloseModal` import, `closingTrade` state, and modal render block
+
+---
+
+### January 29, 2026 — Glass Command Center: Frontend Redesign
+**Agent:** Claude Opus 4.5
+
+Complete visual overhaul transforming the flat dark-card UI into an Apple-inspired frosted glassmorphism system. Inspired by Tradezella's clean simplicity but with Pure Gold's dark gold identity.
+
+**Design System Changes:**
+- Introduced 3-tier glass elevation: Surface (16px blur, `saturate(1.2)`), Elevated (24px blur, `saturate(1.3)`), Floating (36px blur, `saturate(1.4)`)
+- SVG frosted noise texture on all glass panels via `::before` pseudo-element with `mix-blend-mode: overlay`
+- Warmed gold palette: `--gold` from #FFB800 to #F5A623, added `--gold-muted` (#A07818)
+- Added indigo secondary accent: `--accent` (#6366F1) for info badges and secondary CTAs
+- Background gradients intensified (12%→20% gold opacity) with `background-attachment: fixed`
+- Glass border opacity increased across all tiers for sharper panel edges
+- Glass backgrounds made more translucent to let ambient gradients show through
+
+**New CSS Classes:**
+- `.glass-surface`, `.glass-elevated`, `.glass-floating` — 3-tier panel system
+- `.glass-interactive` — hover border glow + translateY lift
+- `.glass-shimmer` — light sweep pseudo-element on hover
+- `.btn-gold`, `.btn-glass`, `.btn-outline` — button hierarchy
+- `.input-field` — standardized glass input with focus ring
+- `.skeleton-glass` — loading shimmer animation
+- `.nav-active` — navigation active state
+
+**New Components:**
+- `Icon.tsx` — Material Symbols wrapper (sm/md/lg/xl sizes)
+- `GlassModal.tsx` — Reusable `glass-floating` modal with AnimatePresence
+
+**Icon Migration:**
+- Replaced ALL Lucide React imports with Material Symbols Outlined spans across 30+ files
+- Removed `lucide-react` from `package.json` entirely
+
+**Codebase Sweep (70+ files):**
+- Replaced inline `bg-[var(--card-bg)] border border-[var(--card-border)]` → `glass-surface`
+- Replaced inline input styling → `input-field`
+- Replaced modal backgrounds → `glass-floating`
+- Replaced cancel buttons → `btn-glass`
+- Replaced active pills `bg-[var(--gold)] text-black` → `glass-elevated text-[var(--gold)]`
+- Replaced all `border-[var(--card-border)]` dividers → `border-[var(--glass-surface-border)]`
+
+**Modified Components:** Card.tsx (added `tier` prop), Button.tsx (added `glass` variant), Sidebar, StatsHeader, MobileNav, Header, and 70+ other files
+**Removed:** `lucide-react` dependency, `.sidebar-3d`, `.mobile-nav-3d` CSS classes, broad attribute selectors
+
+---
+
+### January 29, 2026 ~02:00-03:30 UTC — Strategic Enhancement Plan (4 Phases)
+**Agent:** Claude Opus 4.5
+
+Implemented the full 4-phase strategic enhancement plan to deepen Pure Gold's competitive moat in psychology-first journaling and education marketplace.
+
+**Phase 1: TradingView Charts + Psychology Deepening**
+- Interactive `lightweight-charts` v5 widget in journal form with annotation toolbar
+- Pre-trade mindset capture (readiness 1-5 + psychology tags)
+- Psychology analytics tab with readiness/tag impact analysis
+- Emotion flow Sankey diagram (Before → During → After transitions)
+- Journal form expanded from 3 to 4 steps
+
+**Phase 2: Teacher Marketplace Completion**
+- Public teacher directory (`/teachers`) and profiles (`/teachers/[slug]`) with SEO
+- Course catalog (`/courses`) and detail (`/courses/[id]`) with server rendering
+- Ratings & reviews system with `topic_reviews` table
+- Track record verification badge from trade call data
+- Teacher settings expanded with bio, slug, social links
+
+**Phase 3: Community Enhancement**
+- Threaded discussions (max 3 levels) replacing flat comments
+- Upvote/downvote system with `community_votes` table
+- Post categories, sort (hot/new/top), and search
+- Trade review post type with privacy-controlled journal sharing
+- "Share to Community" button on journal detail page
+
+**Phase 4: Teacher Analytics & Student Insights**
+- Teacher student dashboard with aggregate analytics and alerts
+- Individual student deep-dive (6 tabs reusing Phase 1 analytics)
+- Automated progress reports with `/api/reports/generate`
+- Student reports page at `/journal/reports`
+
+**Code Review Fixes:**
+- N+1 comment count query → batch fetch
+- Teacher student page auth → classroom ownership check
+- Chart annotation duplication → ref tracking + cleanup
+- Community posts → classroom-scoped filtering
+- Reports API → ownership validation
+- FK constraints, vote_type validation, delete ownership, shared utilities
+
+**New Tables:** `topic_reviews`, `community_votes`, `progress_reports`
+**New Columns:** 8 new columns across `journal_entries`, `profiles`, `community_posts`, `community_comments`
+**Migrations:** 6 new SQL files
+**Files Created:** ~40 new files
+**Files Modified:** ~15 existing files
+
+---
 
 ### January 28, 2026 - Teacher Flow Redesign: Topics + Lessons
 **Agent:** Claude Opus 4.5

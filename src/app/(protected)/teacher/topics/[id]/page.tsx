@@ -101,7 +101,7 @@ export default function TopicDetailPage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-6 px-4">
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-64" />
+        <div className="p-6 rounded-2xl glass-surface animate-pulse h-64" />
       </div>
     )
   }
@@ -122,32 +122,32 @@ export default function TopicDetailPage() {
   return (
     <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
       {/* Back link */}
-      <Link href="/teacher/topics" className="text-sm text-[var(--muted)] hover:text-white flex items-center gap-1 transition-colors">
+      <Link href="/teacher/topics" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] flex items-center gap-1 transition-colors">
         <span className="material-symbols-outlined text-lg">arrow_back</span>
         Back to Topics
       </Link>
 
       {/* Topic Header */}
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         {isEditing ? (
           <div className="space-y-4">
             <input
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors font-bold text-lg"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors font-bold text-lg"
             />
             <textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={2}
               placeholder="Description (optional)"
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
             />
             <div className="flex gap-2">
               <button
                 onClick={() => setIsEditing(false)}
-                className="h-9 px-4 rounded-lg border border-[var(--card-border)] text-sm hover:bg-white/5 transition-colors"
+                className="h-9 px-4 rounded-lg btn-glass text-sm transition-colors"
               >
                 Cancel
               </button>
@@ -170,17 +170,17 @@ export default function TopicDetailPage() {
               )}
               <div className="flex items-center gap-3 mt-3">
                 {isFree ? (
-                  <span className="text-[9px] px-2 py-0.5 rounded-lg bg-white/5 text-[var(--muted)] font-bold uppercase">Free</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-lg bg-black/5 text-[var(--muted)] font-bold uppercase">Free</span>
                 ) : (
                   <span className="text-[9px] px-2 py-0.5 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] font-bold">${pricing!.monthly_price.toFixed(2)}/mo</span>
                 )}
                 <span className="text-xs text-[var(--muted)]">{studentCount} {studentCount === 1 ? 'student' : 'students'}</span>
-                <span className="text-xs text-[var(--muted)]">Code: <span className="font-mono text-white">{topic.invite_code}</span></span>
+                <span className="text-xs text-[var(--muted)]">Code: <span className="font-mono text-[var(--foreground)]">{topic.invite_code}</span></span>
               </div>
             </div>
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 rounded-lg hover:bg-white/5 text-[var(--muted)] hover:text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-black/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
             >
               <span className="material-symbols-outlined">edit</span>
             </button>
@@ -201,7 +201,7 @@ export default function TopicDetailPage() {
       </div>
 
       {lessons.length === 0 ? (
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-6 rounded-2xl glass-surface text-center">
           <span className="material-symbols-outlined text-3xl text-[var(--muted)] mb-2 block">school</span>
           <p className="text-sm text-[var(--muted)] mb-4">No lessons yet. Add your first lesson to this topic.</p>
           <Link
@@ -217,7 +217,7 @@ export default function TopicDetailPage() {
           {lessons.map((lesson) => (
             <div
               key={lesson.id}
-              className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] flex items-center gap-4"
+              className="p-4 rounded-2xl glass-surface flex items-center gap-4"
             >
               <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-xl text-[var(--gold)]">
@@ -228,7 +228,7 @@ export default function TopicDetailPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-sm truncate">{lesson.title}</h3>
                   {lesson.status === 'draft' && (
-                    <span className="text-[9px] px-2 py-0.5 rounded-lg bg-white/5 text-[var(--muted)] font-bold uppercase">Draft</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-lg bg-black/5 text-[var(--muted)] font-bold uppercase">Draft</span>
                   )}
                 </div>
                 {lesson.summary && (

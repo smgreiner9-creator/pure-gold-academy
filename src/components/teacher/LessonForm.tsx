@@ -193,7 +193,7 @@ export function LessonForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder='e.g. "Understanding Support & Resistance"'
-          className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+          className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
         />
       </div>
 
@@ -215,7 +215,7 @@ export function LessonForm() {
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
                 contentType === type
                   ? 'border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]'
-                  : 'border-[var(--card-border)] bg-black/20 text-[var(--muted)] hover:border-[var(--gold)]/30 hover:text-white'
+                  : 'border-[var(--glass-surface-border)] bg-black/[0.03] text-[var(--muted)] hover:border-[var(--gold)]/30 hover:text-[var(--foreground)]'
               }`}
             >
               <span className="material-symbols-outlined text-2xl">{icon}</span>
@@ -237,7 +237,7 @@ export function LessonForm() {
             onChange={(e) => setContentText(e.target.value)}
             placeholder="Write your lesson content here..."
             rows={8}
-            className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+            className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
           />
         ) : contentType === 'video' ? (
           <input
@@ -245,7 +245,7 @@ export function LessonForm() {
             value={contentUrl}
             onChange={(e) => setContentUrl(e.target.value)}
             placeholder="Paste YouTube or Vimeo URL..."
-            className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+            className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
           />
         ) : (
           <div className="space-y-2">
@@ -256,7 +256,7 @@ export function LessonForm() {
                 <button
                   type="button"
                   onClick={() => setContentUrl('')}
-                  className="text-[var(--muted)] hover:text-white"
+                  className="text-[var(--muted)] hover:text-[var(--foreground)]"
                 >
                   <span className="material-symbols-outlined text-lg">close</span>
                 </button>
@@ -273,7 +273,7 @@ export function LessonForm() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="w-full h-24 rounded-xl border-2 border-dashed border-[var(--card-border)] hover:border-[var(--gold)]/30 transition-colors flex flex-col items-center justify-center gap-2 text-[var(--muted)] hover:text-white disabled:opacity-50"
+              className="w-full h-24 rounded-xl border-2 border-dashed border-[var(--glass-surface-border)] hover:border-[var(--gold)]/30 transition-colors flex flex-col items-center justify-center gap-2 text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-50"
             >
               {isUploading ? (
                 <>
@@ -295,7 +295,7 @@ export function LessonForm() {
                 value={contentUrl}
                 onChange={(e) => setContentUrl(e.target.value)}
                 placeholder="Or paste TradingView / image URL..."
-                className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
               />
             )}
           </div>
@@ -312,7 +312,7 @@ export function LessonForm() {
           onChange={(e) => setExplanation(e.target.value)}
           placeholder="Explain the lesson, add context, key takeaways, or teaching notes..."
           rows={5}
-          className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+          className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
         />
         <p className="text-[10px] text-[var(--muted)] mt-1">
           Your commentary and teaching notes for this lesson
@@ -354,7 +354,7 @@ export function LessonForm() {
           type="button"
           onClick={() => attachmentInputRef.current?.click()}
           disabled={isUploadingAttachment}
-          className="w-full h-16 rounded-xl border-2 border-dashed border-[var(--card-border)] hover:border-[var(--gold)]/30 transition-colors flex items-center justify-center gap-2 text-[var(--muted)] hover:text-white disabled:opacity-50"
+          className="w-full h-16 rounded-xl border-2 border-dashed border-[var(--glass-surface-border)] hover:border-[var(--gold)]/30 transition-colors flex items-center justify-center gap-2 text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-50"
         >
           {isUploadingAttachment ? (
             <>
@@ -375,7 +375,7 @@ export function LessonForm() {
         <button
           onClick={() => handleSubmit('draft')}
           disabled={isSaving || !canSubmit}
-          className="flex-1 h-12 px-6 rounded-xl border border-[var(--card-border)] font-semibold hover:bg-white/5 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          className="flex-1 h-12 px-6 rounded-xl btn-glass font-semibold hover:bg-black/5 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isSaving ? (
             <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>

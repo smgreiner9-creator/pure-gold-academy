@@ -119,14 +119,14 @@ export function MarketNews() {
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`block p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] border-l-4 ${getSentimentBorder(item.sentiment)} hover:border-[var(--gold)]/50 hover:border-l-4 transition-all group`}
+            className={`block p-4 rounded-xl glass-surface border-l-4 ${getSentimentBorder(item.sentiment)} hover:border-[var(--gold)]/50 hover:border-l-4 transition-all group`}
           >
             <h4 className="text-sm font-medium leading-snug mb-2 group-hover:text-[var(--gold)] transition-colors line-clamp-2">
               {item.title}
             </h4>
             <div className="flex items-center gap-2 text-[10px]">
               <span className="text-[var(--muted)] uppercase tracking-tight">{item.source}</span>
-              <span className="text-[var(--card-border)]">•</span>
+              <span className="text-[var(--glass-surface-border)]">•</span>
               <span className="text-[var(--muted)]">{formatTime(item.publishedAt)}</span>
               {item.sentiment && (
                 <span className={`ml-auto ${getSentimentBadge(item.sentiment)}`}>

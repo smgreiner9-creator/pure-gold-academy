@@ -185,7 +185,7 @@ export default function TeacherJournalDetailPage() {
       case 'win': return { bg: 'bg-[var(--success)]/10', text: 'text-[var(--success)]' }
       case 'loss': return { bg: 'bg-[var(--danger)]/10', text: 'text-[var(--danger)]' }
       case 'breakeven': return { bg: 'bg-[var(--warning)]/10', text: 'text-[var(--warning)]' }
-      default: return { bg: 'bg-white/5', text: 'text-[var(--muted)]' }
+      default: return { bg: 'bg-black/5', text: 'text-[var(--muted)]' }
     }
   }
 
@@ -205,8 +205,8 @@ export default function TeacherJournalDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-40" />
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-60" />
+        <div className="p-6 rounded-2xl glass-surface animate-pulse h-40" />
+        <div className="p-6 rounded-2xl glass-surface animate-pulse h-60" />
       </div>
     )
   }
@@ -214,7 +214,7 @@ export default function TeacherJournalDetailPage() {
   if (!journal) {
     return (
       <div className="max-w-4xl mx-auto">
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-6 rounded-2xl glass-surface text-center">
           <span className="material-symbols-outlined text-4xl text-[var(--muted)] mb-4">edit_note</span>
           <h3 className="text-xl font-bold mb-2">Journal Not Found</h3>
           <p className="text-[var(--muted)] mb-4">This journal entry may have been deleted.</p>
@@ -233,14 +233,14 @@ export default function TeacherJournalDetailPage() {
       {/* Back Button */}
       <Link
         href="/teacher/journals"
-        className="inline-flex items-center gap-1 text-[var(--muted)] hover:text-white transition-colors text-sm"
+        className="inline-flex items-center gap-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm"
       >
         <span className="material-symbols-outlined text-lg">arrow_back</span>
         Back to Journals
       </Link>
 
       {/* Journal Header */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
             {journal.student && (
@@ -348,7 +348,7 @@ export default function TeacherJournalDetailPage() {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="aspect-video relative rounded-xl overflow-hidden border border-[var(--card-border)] hover:border-[var(--gold)]/50 transition-colors"
+                  className="aspect-video relative rounded-xl overflow-hidden border border-[var(--glass-surface-border)] glass-interactive transition-colors"
                 >
                   <Image
                     src={url}
@@ -364,7 +364,7 @@ export default function TeacherJournalDetailPage() {
       </div>
 
       {/* Feedback Section */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <h2 className="font-bold text-lg mb-4">
           Feedback
           {feedback.length > 0 && <span className="text-[var(--muted)] font-normal ml-2">({feedback.length})</span>}
@@ -374,19 +374,19 @@ export default function TeacherJournalDetailPage() {
         {feedback.length > 0 && (
           <div className="space-y-4 mb-6">
             {feedback.map(f => (
-              <div key={f.id} className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+              <div key={f.id} className="p-4 rounded-xl glass-surface">
                 {editingFeedback === f.id ? (
                   <div className="space-y-3">
                     <textarea
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
                       rows={3}
-                      className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+                      className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={() => setEditingFeedback(null)}
-                        className="px-4 py-2 rounded-lg border border-[var(--card-border)] text-sm font-semibold hover:bg-white/5 transition-colors"
+                        className="px-4 py-2 rounded-lg btn-glass text-sm font-semibold transition-colors"
                       >
                         Cancel
                       </button>
@@ -420,7 +420,7 @@ export default function TeacherJournalDetailPage() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => startEditing(f)}
-                            className="p-1.5 rounded-lg hover:bg-white/5 text-[var(--muted)] hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-black/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
                           >
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
@@ -448,7 +448,7 @@ export default function TeacherJournalDetailPage() {
             onChange={(e) => setNewFeedback(e.target.value)}
             placeholder="Write feedback for this trade..."
             rows={3}
-            className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+            className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
           />
           <div className="flex justify-end">
             <button

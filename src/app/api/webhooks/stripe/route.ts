@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
         if (classroomId && connectedAccountId) {
           // This is a classroom subscription update
-          await handleClassroomSubscriptionUpdated(subscription, classroomId)
+          await handleClassroomSubscriptionUpdated(subscription)
         } else {
           // This is a platform subscription update
           const updateData: Record<string, unknown> = { status: subscription.status }
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
         if (classroomId && connectedAccountId) {
           // This is a classroom subscription cancellation
-          await handleClassroomSubscriptionDeleted(subscription, classroomId)
+          await handleClassroomSubscriptionDeleted(subscription)
         } else {
           // This is a platform subscription cancellation
           const { data } = await supabaseAdmin
@@ -199,7 +199,6 @@ async function handleClassroomSubscriptionCreated(
 
 async function handleClassroomSubscriptionUpdated(
   subscription: Stripe.Subscription,
-  _classroomId: string
 ) {
   if (!supabaseAdmin) return
 
@@ -245,7 +244,6 @@ async function handleClassroomSubscriptionUpdated(
 
 async function handleClassroomSubscriptionDeleted(
   subscription: Stripe.Subscription,
-  _classroomId: string
 ) {
   if (!supabaseAdmin) return
 
@@ -263,13 +261,23 @@ async function handleClassroomSubscriptionDeleted(
       .update({ status: 'cancelled' })
       .eq('stripe_subscription_id', subscription.id)
 
-    // Remove student from classroom
-    await supabaseAdmin
-      .from('profiles')
-      .update({ classroom_id: null })
-      .eq('id', subData.student_id)
+    // Only remove student from classroom if they have no other active subscriptions
+    const { data: otherActiveSubs } = await supabaseAdmin
+      .from('classroom_subscriptions')
+      .select('id')
+      .eq('student_id', subData.student_id)
+      .eq('status', 'active')
+      .neq('stripe_subscription_id', subscription.id)
+      .limit(1)
 
-    console.log(`Classroom subscription deleted: student=${subData.student_id}, classroom=${_classroomId}`)
+    if (!otherActiveSubs || otherActiveSubs.length === 0) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ classroom_id: null })
+        .eq('id', subData.student_id)
+    }
+
+    console.log(`Classroom subscription deleted: student=${subData.student_id}`)
   }
 }
 

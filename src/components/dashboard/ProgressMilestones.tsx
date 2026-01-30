@@ -111,12 +111,12 @@ export function ProgressMilestones() {
 
   if (isLoading) {
     return (
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-24" />
+      <div className="p-6 rounded-2xl glass-surface animate-pulse h-24" />
     )
   }
 
   return (
-    <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="p-6 rounded-2xl glass-surface">
       {/* Quick Stats Row */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-sm text-[var(--muted)]">Your Progress</h3>
@@ -131,18 +131,18 @@ export function ProgressMilestones() {
 
       {/* Stats Pills */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5">
           <span className="material-symbols-outlined text-[var(--gold)] text-lg">local_fire_department</span>
           <span className="font-bold">{stats.streak}</span>
           <span className="text-xs text-[var(--muted)]">day streak</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5">
           <span className="material-symbols-outlined text-[var(--gold)] text-lg">trending_up</span>
           <span className="font-bold">{stats.totalTrades}</span>
           <span className="text-xs text-[var(--muted)]">trades</span>
         </div>
         {stats.totalTrades >= 5 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5">
             <span className={`material-symbols-outlined text-lg ${stats.winRate >= 50 ? 'text-[var(--success)]' : 'text-[var(--muted)]'}`}>
               {stats.winRate >= 50 ? 'check_circle' : 'radio_button_unchecked'}
             </span>
@@ -154,7 +154,7 @@ export function ProgressMilestones() {
 
       {/* Next Milestone */}
       {nextMilestone ? (
-        <div className="pt-3 border-t border-[var(--card-border)]">
+        <div className="pt-3 border-t border-[var(--glass-surface-border)]">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[var(--muted)]">{nextMilestone.icon}</span>
@@ -177,7 +177,7 @@ export function ProgressMilestones() {
           <p className="text-xs text-[var(--muted)] mt-1.5">{nextMilestone.description}</p>
         </div>
       ) : (
-        <div className="pt-3 border-t border-[var(--card-border)] text-center">
+        <div className="pt-3 border-t border-[var(--glass-surface-border)] text-center">
           <span className="material-symbols-outlined text-[var(--gold)] text-2xl">emoji_events</span>
           <p className="text-sm font-medium mt-1">All milestones unlocked!</p>
           <p className="text-xs text-[var(--muted)]">You&apos;re a trading journal master</p>

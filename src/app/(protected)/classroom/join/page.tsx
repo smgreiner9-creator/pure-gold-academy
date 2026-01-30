@@ -74,7 +74,7 @@ export default function JoinClassroomPage() {
 
   useEffect(() => {
     if (isInClassroom) {
-      router.push('/dashboard')
+      router.push('/journal')
     }
   }, [isInClassroom, router])
 
@@ -83,7 +83,7 @@ export default function JoinClassroomPage() {
   return (
     <div className="min-h-[60vh] space-y-8">
       <div className="flex items-center justify-center">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface">
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-3xl text-[var(--gold)]">school</span>
@@ -106,7 +106,7 @@ export default function JoinClassroomPage() {
               value={classroomCode}
               onChange={(e) => setClassroomCode(e.target.value)}
               placeholder="Enter invite code (e.g., abc123)"
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors text-center uppercase tracking-widest"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors text-center uppercase tracking-widest"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && classroomCode.trim()) {
                   joinClassroom()
@@ -133,7 +133,7 @@ export default function JoinClassroomPage() {
           </div>
 
           <div className="mt-6 text-center">
-            <Link href="/dashboard" className="text-[var(--muted)] hover:text-white text-sm transition-colors">
+            <Link href="/journal" className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm transition-colors">
               Back to Dashboard
             </Link>
           </div>
@@ -166,9 +166,9 @@ export default function JoinClassroomPage() {
         {showPublic && (
           <>
             {isLoadingPublic ? (
-              <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-28" />
+              <div className="p-6 rounded-2xl glass-surface animate-pulse h-28" />
             ) : publicClassrooms.length === 0 ? (
-              <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-[var(--muted)] text-center">
+              <div className="p-6 rounded-2xl glass-surface text-sm text-[var(--muted)] text-center">
                 No public strategies available yet.
               </div>
             ) : (
@@ -176,7 +176,7 @@ export default function JoinClassroomPage() {
                 {publicClassrooms.map(classroom => (
                   <div
                     key={classroom.id}
-                    className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]"
+                    className="p-6 rounded-2xl glass-surface"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>

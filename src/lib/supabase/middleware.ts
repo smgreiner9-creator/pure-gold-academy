@@ -46,11 +46,11 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Use getSession instead of getUser - reads from cookie, no network call
-  // getUser() makes a network request to Supabase on every request
+  // Use getUser() to verify the JWT with Supabase's servers,
+  // preventing forged session attacks from tampered cookies.
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Protect routes
   const protectedRoutes = ['/dashboard', '/journal', '/learn', '/community', '/teacher', '/settings', '/notifications']
@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   )
 
-  if (isProtectedRoute && !session) {
+  if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     const redirectResponse = NextResponse.redirect(url)
@@ -66,9 +66,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (session && request.nextUrl.pathname.startsWith('/auth')) {
+  if (user && request.nextUrl.pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/journal'
     const redirectResponse = NextResponse.redirect(url)
     return addNoCacheHeaders(redirectResponse)
   }

@@ -3,48 +3,73 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/auth'
 
 interface NavItem {
   href: string
   label: string
   icon: string
-  teacherOnly?: boolean
 }
 
-const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+const tradingTabs: NavItem[] = [
   { href: '/journal', label: 'Journal', icon: 'auto_stories' },
+  { href: '/journal/analytics', label: 'Insights', icon: 'insights' },
   { href: '/learn', label: 'Learn', icon: 'school' },
-  { href: '/community', label: 'Community', icon: 'groups' },
-  { href: '/teacher', label: 'Teacher', icon: 'admin_panel_settings', teacherOnly: true },
+  { href: '/settings', label: 'Profile', icon: 'person' },
+]
+
+const teachingTabs: NavItem[] = [
+  { href: '/teacher', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/teacher/topics', label: 'Topics', icon: 'topic' },
+  { href: '/teacher/students', label: 'Students', icon: 'people' },
+  { href: '/settings', label: 'Profile', icon: 'person' },
 ]
 
 export function MobileNav() {
   const pathname = usePathname()
   const { isTeacher } = useAuth()
+  const { teacherMode } = useAuthStore()
 
-  const filteredNavItems = navItems.filter(item => {
-    if (item.teacherOnly && !isTeacher) return false
-    return true
-  }).slice(0, 5) // Max 5 items for mobile nav
+  const isInTeachingMode = isTeacher && teacherMode === 'teaching'
+  const tabs = isInTeachingMode ? teachingTabs : tradingTabs
+
+  const isActive = (href: string) => {
+    if (href === '/journal') {
+      return pathname === '/journal' || (pathname.startsWith('/journal/') && !pathname.startsWith('/journal/analytics'))
+    }
+    if (href === '/journal/analytics') {
+      return pathname.startsWith('/journal/analytics')
+    }
+    if (href === '/teacher') {
+      return pathname === '/teacher'
+    }
+    if (href === '/settings') {
+      return pathname === '/settings' || pathname.startsWith('/settings/')
+    }
+    return pathname === href || pathname.startsWith(href + '/')
+  }
 
   return (
-    <nav className="mobile-nav-3d fixed bottom-0 left-0 right-0 md:hidden z-50">
-      <div className="flex justify-around items-center h-16 px-2 pb-safe">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname.startsWith(item.href)
+    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 md:hidden z-50 bg-[#F5F5F7] border-t border-black/[0.06]">
+      <div className="flex justify-around items-center h-[60px] px-2 pb-safe">
+        {tabs.map((item) => {
+          const active = isActive(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-0.5 p-2 rounded-lg flex-1 transition-colors ${
-                isActive
+              aria-current={active ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl flex-1 transition-colors ${
+                active
                   ? 'text-[var(--gold)]'
                   : 'text-[var(--muted)] hover:text-[var(--foreground)]'
               }`}
             >
-              <span className="material-symbols-outlined text-2xl">{item.icon}</span>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="material-symbols-outlined text-[22px]">{item.icon}</span>
+              <span className="text-[10px] font-semibold">{item.label}</span>
+              {active && (
+                <span className="w-1 h-1 rounded-full bg-[var(--gold)]" />
+              )}
             </Link>
           )
         })}

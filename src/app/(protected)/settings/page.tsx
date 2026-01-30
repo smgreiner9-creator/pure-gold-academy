@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { PushNotificationSettings } from '@/components/settings/PushNotificationSettings'
 import { StreakBadges } from '@/components/dashboard/StreakBadges'
+import { PageHeader } from '@/components/layout/PageHeader'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -90,11 +91,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-[var(--muted)] text-sm">Manage your account and preferences</p>
-      </div>
+    <>
+      <PageHeader title="Settings" subtitle="Manage your account and preferences" />
+
+      <div className="content-grid-narrow">
 
       {message && (
         <div className={`p-4 rounded-2xl border ${
@@ -112,7 +112,7 @@ export default function SettingsPage() {
       )}
 
       {/* Profile Section */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-xl text-[var(--gold)]">person</span>
@@ -129,7 +129,7 @@ export default function SettingsPage() {
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold ${
               profile?.role === 'teacher'
                 ? 'bg-[var(--gold)]/10 text-[var(--gold)]'
-                : 'bg-white/5 text-white'
+                : 'bg-black/5 text-[var(--foreground)]'
             }`}>
               <span className="material-symbols-outlined text-sm">
                 {profile?.role === 'teacher' ? 'school' : 'person'}
@@ -146,7 +146,7 @@ export default function SettingsPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
             />
           </div>
           <button
@@ -165,7 +165,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Subscription Section */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
@@ -181,7 +181,7 @@ export default function SettingsPage() {
           )}
         </div>
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="font-bold">
               {isPremium ? 'Premium Plan' : 'Free Plan'}
             </p>
@@ -203,7 +203,7 @@ export default function SettingsPage() {
           {isPremium && (
             <Link
               href="/settings/subscription"
-              className="h-12 px-6 rounded-xl border border-[var(--card-border)] flex items-center justify-center gap-2 font-semibold hover:bg-white/5 transition-colors text-sm w-full"
+              className="h-12 px-6 rounded-xl btn-glass flex items-center justify-center gap-2 font-semibold hover:bg-black/5 transition-colors text-sm w-full"
             >
               Manage Subscription
             </Link>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Notifications Section */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-xl text-[var(--gold)]">notifications</span>
@@ -227,7 +227,7 @@ export default function SettingsPage() {
 
       {/* Classroom Section (Students only) */}
       {profile?.role === 'student' && (
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-6 rounded-2xl glass-surface">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-xl text-[var(--gold)]">school</span>
@@ -265,7 +265,7 @@ export default function SettingsPage() {
                     value={classroomCode}
                     onChange={(e) => setClassroomCode(e.target.value)}
                     placeholder="Enter invite code"
-                    className="flex-1 bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                    className="flex-1 input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
                   />
                   <button
                     onClick={joinClassroom}
@@ -285,8 +285,27 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Community Link (for mobile users) */}
+      <div className="p-6 rounded-2xl glass-surface sm:hidden">
+        <Link
+          href="/community"
+          className="flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-xl text-[var(--gold)]">groups</span>
+            </div>
+            <div>
+              <h3 className="font-bold">Community</h3>
+              <p className="text-xs text-[var(--muted)]">Discuss and learn with fellow traders</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-[var(--muted)]">chevron_right</span>
+        </Link>
+      </div>
+
       {/* Sign Out */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <button
           onClick={signOut}
           className="w-full h-12 rounded-xl border border-[var(--danger)]/50 text-[var(--danger)] flex items-center justify-center gap-2 font-bold hover:bg-[var(--danger)]/10 transition-colors text-sm"
@@ -296,5 +315,6 @@ export default function SettingsPage() {
         </button>
       </div>
     </div>
+    </>
   )
 }

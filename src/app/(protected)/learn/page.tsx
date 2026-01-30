@@ -8,20 +8,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { Card, Button } from '@/components/ui'
 import { ContentCard } from '@/components/learn/ContentCard'
 import { TradeCallCard } from '@/components/trade-calls'
-import {
-  BookOpen,
-  TrendingUp,
-  Video,
-  ChevronRight,
-  Lock,
-  CheckCircle,
-  Play,
-  Calendar,
-  Clock,
-  Target,
-  Layers,
-  Radio
-} from 'lucide-react'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { MobileTabBar } from '@/components/layout/MobileTabBar'
 import { format, formatDistanceToNow } from 'date-fns'
 import type {
   LearnContent,
@@ -159,79 +147,67 @@ export default function LearnPage() {
     return prereqProgress?.completed_at !== null
   }
 
+  const learnTabs = [
+    { key: 'overview', label: 'Overview', icon: 'target' },
+    ...(tracks.length > 0 ? [{ key: 'tracks', label: 'Tracks', icon: 'layers' }] : []),
+    { key: 'trade-calls', label: 'Trade Calls', icon: 'trending_up' },
+    { key: 'live', label: 'Live', icon: 'videocam' },
+  ]
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-24 rounded-2xl bg-[var(--card-bg)] animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 rounded-2xl bg-[var(--card-bg)] animate-pulse" />
-          ))}
-        </div>
+      <div className="content-grid">
+        <div className="col-span-full h-24 glass-surface animate-pulse" />
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-32 glass-surface animate-pulse" />
+        ))}
       </div>
     )
   }
 
   if (!profile?.classroom_id) {
     return (
-      <div className="p-12 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
-        <BookOpen size={48} className="mx-auto mb-4 text-[var(--muted)]" />
-        <h2 className="text-xl font-semibold mb-2">Join a Strategy</h2>
-        <p className="text-[var(--muted)] mb-6">Enroll in a trading strategy to access learning content.</p>
-        <Link href="/classroom/join">
-          <Button>Join a Strategy</Button>
-        </Link>
+      <div className="content-grid">
+        <div className="col-span-full glass-surface p-12 text-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-2xl text-[var(--gold)]">school</span>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Join a Classroom</h2>
+          <p className="text-[var(--muted)] text-sm mb-6">Join a classroom to access lessons, trade calls, and learning content from your teacher.</p>
+          <Link
+            href="/classroom/join"
+            className="btn-gold h-10 px-6 rounded-lg inline-flex items-center gap-2 text-sm"
+          >
+            Join a Classroom
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Strategy Name */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp size={24} className="text-[var(--gold)]" />
-            {classroom?.name || 'Learn'}
-          </h1>
-          <p className="text-[var(--muted)]">{classroom?.description || 'Your learning dashboard'}</p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title={classroom?.name || 'Learn'}
+        subtitle={classroom?.description || 'Your learning dashboard'}
+        tabs={learnTabs}
+        activeTab={activeTab}
+        onTabChange={(key) => setActiveTab(key as TabType)}
+      />
 
-      {/* Navigation Tabs */}
-      <div className="flex gap-1 p-1 bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)]">
-        {[
-          { id: 'overview', label: 'Overview', icon: <Target size={16} /> },
-          { id: 'tracks', label: 'Tracks', icon: <Layers size={16} />, show: tracks.length > 0 },
-          { id: 'trade-calls', label: 'Trade Calls', icon: <TrendingUp size={16} /> },
-          { id: 'live', label: 'Live', icon: <Video size={16} /> },
-        ].filter(t => t.show !== false).map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as TabType)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-[var(--gold)] text-black'
-                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-            {tab.id === 'live' && liveSes.length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            )}
-          </button>
-        ))}
-      </div>
+      <div className="content-grid">
+        <div className="col-span-full">
+          <MobileTabBar tabs={learnTabs} activeTab={activeTab} onTabChange={(key) => setActiveTab(key as TabType)} />
+        </div>
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
+        <div className="col-span-full space-y-6">
           {/* Progress Card */}
-          <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Card interactive className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
-                <BookOpen size={24} className="text-[var(--gold)]" />
+                <span className="material-symbols-outlined text-2xl text-[var(--gold)]">auto_stories</span>
               </div>
               <div>
                 <p className="font-bold">Your Progress</p>
@@ -253,10 +229,10 @@ export default function LearnPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Learning Tracks Preview */}
             {tracks.length > 0 && (
-              <Card className="cursor-pointer hover:border-[var(--gold)] transition-colors" onClick={() => setActiveTab('tracks')}>
+              <Card interactive className="cursor-pointer" onClick={() => setActiveTab('tracks')}>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold">Learning Tracks</h3>
-                  <ChevronRight size={18} className="text-[var(--muted)]" />
+                  <span className="material-symbols-outlined text-lg text-[var(--muted)]">chevron_right</span>
                 </div>
                 <p className="text-sm text-[var(--muted)] mb-3">{tracks.length} structured learning paths</p>
                 <div className="flex gap-1">
@@ -270,10 +246,10 @@ export default function LearnPage() {
             )}
 
             {/* Active Trade Calls Preview */}
-            <Card className="cursor-pointer hover:border-[var(--gold)] transition-colors" onClick={() => setActiveTab('trade-calls')}>
+            <Card interactive className="cursor-pointer" onClick={() => setActiveTab('trade-calls')}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Trade Calls</h3>
-                <ChevronRight size={18} className="text-[var(--muted)]" />
+                <span className="material-symbols-outlined text-lg text-[var(--muted)]">chevron_right</span>
               </div>
               <p className="text-sm text-[var(--muted)] mb-3">
                 {activeTradeCalls.length} active {activeTradeCalls.length === 1 ? 'call' : 'calls'}
@@ -291,13 +267,13 @@ export default function LearnPage() {
             </Card>
 
             {/* Live Sessions Preview */}
-            <Card className="cursor-pointer hover:border-[var(--gold)] transition-colors" onClick={() => setActiveTab('live')}>
+            <Card interactive className="cursor-pointer" onClick={() => setActiveTab('live')}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold flex items-center gap-2">
                   Live Sessions
-                  {liveSes.length > 0 && <Radio size={14} className="text-red-500 animate-pulse" />}
+                  {liveSes.length > 0 && <span className="material-symbols-outlined text-sm text-red-500 animate-pulse">radio_button_checked</span>}
                 </h3>
-                <ChevronRight size={18} className="text-[var(--muted)]" />
+                <span className="material-symbols-outlined text-lg text-[var(--muted)]">chevron_right</span>
               </div>
               {liveSes.length > 0 ? (
                 <p className="text-sm text-red-500 font-medium">Live now!</p>
@@ -317,7 +293,7 @@ export default function LearnPage() {
             <Card>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
-                  <Target size={20} className="text-[var(--gold)]" />
+                  <span className="material-symbols-outlined text-xl text-[var(--gold)]">target</span>
                 </div>
                 <div>
                   <h2 className="font-bold">Strategy Rules</h2>
@@ -326,7 +302,7 @@ export default function LearnPage() {
               </div>
               <div className="space-y-2">
                 {rules.map(rule => (
-                  <div key={rule.id} className="p-3 rounded-xl bg-black/30">
+                  <div key={rule.id} className="p-3 rounded-xl bg-black/[0.03]">
                     <p className="font-semibold text-sm">{rule.rule_text}</p>
                     {rule.description && <p className="text-sm text-[var(--muted)]">{rule.description}</p>}
                   </div>
@@ -342,7 +318,7 @@ export default function LearnPage() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2 text-sm"
+                className="input-field rounded-xl px-4 py-2 text-sm"
               >
                 <option value="all">All</option>
                 <option value="not-started">Not Started</option>
@@ -352,7 +328,7 @@ export default function LearnPage() {
             </div>
             {filteredContent.length === 0 ? (
               <Card className="text-center py-8">
-                <BookOpen size={40} className="mx-auto mb-3 text-[var(--muted)]" />
+                <span className="material-symbols-outlined text-4xl mx-auto mb-3 text-[var(--muted)] block">auto_stories</span>
                 <p className="text-[var(--muted)]">
                   {content.length === 0 ? 'No content available yet' : 'No content matches filter'}
                 </p>
@@ -370,7 +346,7 @@ export default function LearnPage() {
 
       {/* TRACKS TAB */}
       {activeTab === 'tracks' && (
-        <div className="space-y-6">
+        <div className="col-span-full space-y-6">
           <div>
             <h2 className="text-xl font-bold mb-2">Learning Tracks</h2>
             <p className="text-[var(--muted)]">Structured paths to master trading concepts</p>
@@ -378,7 +354,7 @@ export default function LearnPage() {
 
           {tracks.length === 0 ? (
             <Card className="text-center py-12">
-              <Layers size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+              <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)] block">layers</span>
               <h3 className="text-lg font-semibold mb-2">No Tracks Available</h3>
               <p className="text-[var(--muted)]">Your teacher hasn&apos;t published any learning tracks yet.</p>
             </Card>
@@ -392,7 +368,8 @@ export default function LearnPage() {
                 return (
                   <Card
                     key={track.id}
-                    className={`relative overflow-hidden ${!unlocked ? 'opacity-60' : 'hover:border-[var(--gold)] cursor-pointer'}`}
+                    interactive={unlocked}
+                    className={`relative overflow-hidden ${!unlocked ? 'opacity-60' : 'cursor-pointer'}`}
                     onClick={() => unlocked && router.push(`/learn/tracks/${track.id}`)}
                   >
                     {/* Progress bar at top */}
@@ -404,7 +381,7 @@ export default function LearnPage() {
 
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center text-lg font-bold">
-                        {unlocked ? index + 1 : <Lock size={20} className="text-[var(--muted)]" />}
+                        {unlocked ? index + 1 : <span className="material-symbols-outlined text-xl text-[var(--muted)]">lock</span>}
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -414,7 +391,7 @@ export default function LearnPage() {
                             {track.difficulty_level}
                           </span>
                           {tp?.completed_at && (
-                            <CheckCircle size={16} className="text-[var(--success)]" />
+                            <span className="material-symbols-outlined text-base text-[var(--success)]">check_circle</span>
                           )}
                         </div>
                         {track.description && (
@@ -423,7 +400,7 @@ export default function LearnPage() {
                         <div className="flex items-center gap-4 text-sm text-[var(--muted)]">
                           {track.estimated_hours && (
                             <span className="flex items-center gap-1">
-                              <Clock size={14} />
+                              <span className="material-symbols-outlined text-sm">schedule</span>
                               {track.estimated_hours} hours
                             </span>
                           )}
@@ -434,7 +411,7 @@ export default function LearnPage() {
                       </div>
 
                       {unlocked && (
-                        <ChevronRight size={20} className="text-[var(--muted)]" />
+                        <span className="material-symbols-outlined text-xl text-[var(--muted)]">chevron_right</span>
                       )}
                     </div>
 
@@ -453,16 +430,16 @@ export default function LearnPage() {
 
       {/* TRADE CALLS TAB */}
       {activeTab === 'trade-calls' && (
-        <div className="space-y-6">
+        <div className="col-span-full space-y-6">
           {/* Active Calls */}
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <Target size={20} className="text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-xl text-[var(--gold)]">target</span>
               Active Trade Calls
             </h2>
             {activeTradeCalls.length === 0 ? (
               <Card className="text-center py-8">
-                <TrendingUp size={40} className="mx-auto mb-3 text-[var(--muted)]" />
+                <span className="material-symbols-outlined text-4xl mx-auto mb-3 text-[var(--muted)] block">trending_up</span>
                 <p className="text-[var(--muted)]">No active trade calls right now</p>
               </Card>
             ) : (
@@ -501,14 +478,14 @@ export default function LearnPage() {
 
       {/* LIVE TAB */}
       {activeTab === 'live' && (
-        <div className="space-y-6">
+        <div className="col-span-full space-y-6">
           {/* Live Now */}
           {liveSes.length > 0 && (
             <div className="space-y-4">
               {liveSes.map(session => (
                 <Card key={session.id} className="border-red-500 bg-red-500/5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Radio size={18} className="text-red-500 animate-pulse" />
+                    <span className="material-symbols-outlined text-lg text-red-500 animate-pulse">radio_button_checked</span>
                     <span className="text-sm font-semibold text-red-500">LIVE NOW</span>
                   </div>
                   <h2 className="text-xl font-bold mb-2">{session.title}</h2>
@@ -516,7 +493,7 @@ export default function LearnPage() {
                   {session.stream_url ? (
                     <a href={session.stream_url} target="_blank" rel="noopener noreferrer">
                       <Button>
-                        <Play size={18} />
+                        <span className="material-symbols-outlined text-lg">play_arrow</span>
                         Join Session
                       </Button>
                     </a>
@@ -533,7 +510,7 @@ export default function LearnPage() {
             <h2 className="text-xl font-bold">Upcoming Sessions</h2>
             {upcomingSes.length === 0 ? (
               <Card className="text-center py-12">
-                <Calendar size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+                <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)] block">calendar_today</span>
                 <h3 className="text-lg font-semibold mb-2">No Upcoming Sessions</h3>
                 <p className="text-[var(--muted)]">Check back later for scheduled live streams.</p>
               </Card>
@@ -548,11 +525,11 @@ export default function LearnPage() {
                       )}
                       <div className="flex items-center gap-4 text-sm text-[var(--muted)]">
                         <span className="flex items-center gap-1">
-                          <Calendar size={14} />
+                          <span className="material-symbols-outlined text-sm">calendar_today</span>
                           {format(new Date(session.scheduled_start), 'EEEE, MMM d')}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock size={14} />
+                          <span className="material-symbols-outlined text-sm">schedule</span>
                           {format(new Date(session.scheduled_start), 'h:mm a')}
                         </span>
                       </div>
@@ -569,12 +546,13 @@ export default function LearnPage() {
           </div>
 
           <Link href="/learn/live">
-            <Button variant="outline" className="w-full">
+            <Button variant="glass" className="w-full">
               View All Sessions
             </Button>
           </Link>
         </div>
       )}
     </div>
+    </>
   )
 }

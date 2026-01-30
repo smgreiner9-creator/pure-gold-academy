@@ -43,7 +43,7 @@ export function InstrumentPerformance({ entries, expanded = false }: InstrumentP
 
   if (instrumentStats.length === 0) {
     return (
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-surface p-6">
         <h3 className="font-bold text-lg mb-4">Instrument Performance</h3>
         <p className="text-[var(--muted)] text-center py-8">
           No closed trades to analyze by instrument.
@@ -53,7 +53,7 @@ export function InstrumentPerformance({ entries, expanded = false }: InstrumentP
   }
 
   return (
-    <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="glass-surface p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-bold text-lg">Instrument Performance</h3>
         <span className="material-symbols-outlined text-[var(--gold)]">candlestick_chart</span>
@@ -86,7 +86,7 @@ export function InstrumentPerformance({ entries, expanded = false }: InstrumentP
         {instrumentStats.slice(0, expanded ? undefined : 5).map(({ instrument, total, wins, losses, winRate, totalPnl, avgR }) => (
           <div
             key={instrument}
-            className="p-4 rounded-xl bg-black/40 border border-[var(--card-border)]"
+            className="glass-surface p-4"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">

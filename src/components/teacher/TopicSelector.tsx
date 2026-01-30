@@ -184,7 +184,7 @@ export function TopicSelector({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors flex items-center justify-between text-left"
+        className="w-full input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors flex items-center justify-between text-left"
       >
         {loading ? (
           <span className="text-[var(--muted)]">Loading...</span>
@@ -203,7 +203,7 @@ export function TopicSelector({
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full glass-floating rounded-xl shadow-lg overflow-hidden">
           {topics.length === 0 && !loading ? (
             <div className="px-4 py-3 text-sm text-[var(--muted)]">
               No topics yet
@@ -215,8 +215,8 @@ export function TopicSelector({
                   key={topic.id}
                   type="button"
                   onClick={() => handleSelectTopic(topic.id)}
-                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-white/5 transition-colors ${
-                    topic.id === selectedTopicId ? 'bg-white/10' : ''
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-black/5 transition-colors ${
+                    topic.id === selectedTopicId ? 'bg-black/[0.06]' : ''
                   }`}
                 >
                   <span className="truncate">{topic.name}</span>
@@ -232,7 +232,7 @@ export function TopicSelector({
           <button
             type="button"
             onClick={handleNewTopicClick}
-            className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-white/5 transition-colors border-t border-[var(--card-border)] text-[var(--gold)]"
+            className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-black/5 transition-colors border-t border-[var(--glass-surface-border)] text-[var(--gold)]"
           >
             <span className="material-symbols-outlined text-lg">add</span>
             New Topic
@@ -242,7 +242,7 @@ export function TopicSelector({
 
       {/* Inline new topic form */}
       {showNewForm && (
-        <div className="mt-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 space-y-4">
+        <div className="mt-3 glass-floating rounded-xl p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold flex items-center gap-2">
               <span className="material-symbols-outlined text-[var(--gold)] text-lg">add_circle</span>
@@ -251,7 +251,7 @@ export function TopicSelector({
             <button
               type="button"
               onClick={handleCancelNew}
-              className="text-[var(--muted)] hover:text-white transition-colors"
+              className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
             >
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
@@ -267,7 +267,7 @@ export function TopicSelector({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. ICT Fundamentals"
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
             />
           </div>
 
@@ -281,7 +281,7 @@ export function TopicSelector({
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="Brief description of this topic..."
               rows={2}
-              className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
+              className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none"
             />
           </div>
 
@@ -297,7 +297,7 @@ export function TopicSelector({
                 className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors border ${
                   pricingType === 'free'
                     ? 'bg-[var(--success)]/20 border-[var(--success)] text-[var(--success)]'
-                    : 'bg-black/40 border-[var(--card-border)] text-[var(--muted)] hover:border-[var(--gold)]'
+                    : 'border-[var(--glass-surface-border)] bg-black/[0.03] text-[var(--muted)] hover:border-[var(--gold)]'
                 }`}
               >
                 Free
@@ -308,7 +308,7 @@ export function TopicSelector({
                 className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors border ${
                   pricingType === 'paid'
                     ? 'bg-[var(--gold)]/20 border-[var(--gold)] text-[var(--gold)]'
-                    : 'bg-black/40 border-[var(--card-border)] text-[var(--muted)] hover:border-[var(--gold)]'
+                    : 'border-[var(--glass-surface-border)] bg-black/[0.03] text-[var(--muted)] hover:border-[var(--gold)]'
                 }`}
               >
                 Paid
@@ -329,7 +329,7 @@ export function TopicSelector({
                   min={1}
                   value={monthlyPrice}
                   onChange={(e) => setMonthlyPrice(Number(e.target.value))}
-                  className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+                  className="w-full input-field rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
                 />
               </div>
             </div>
@@ -345,7 +345,7 @@ export function TopicSelector({
             <button
               type="button"
               onClick={handleCancelNew}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-[var(--card-border)] text-[var(--muted)] hover:text-white transition-colors"
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold btn-glass text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
             >
               Cancel
             </button>

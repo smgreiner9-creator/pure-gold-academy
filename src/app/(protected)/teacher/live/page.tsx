@@ -5,18 +5,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, Button, Input, Textarea, Select } from '@/components/ui'
-import {
-  Plus,
-  Video,
-  Calendar,
-  Clock,
-  Play,
-  Square,
-  Pencil,
-  Trash2,
-  ExternalLink,
-  Radio
-} from 'lucide-react'
 import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns'
 import type { LiveSession, Classroom, LiveSessionStatus } from '@/types/database'
 
@@ -189,7 +177,7 @@ export default function TeacherLiveSessionsPage() {
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto p-6 space-y-6">
-        <div className="h-8 w-48 bg-[var(--card-border)] rounded animate-pulse" />
+        <div className="h-8 w-48 bg-[var(--glass-surface-border)] rounded animate-pulse" />
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
             <Card key={i} className="h-24 animate-pulse" />
@@ -203,7 +191,7 @@ export default function TeacherLiveSessionsPage() {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <Card className="text-center py-12">
-          <Video size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">videocam</span>
           <h2 className="text-xl font-semibold mb-2">Create a Strategy First</h2>
           <p className="text-[var(--muted)] mb-4">
             You need to create a trading strategy before scheduling live sessions.
@@ -237,7 +225,7 @@ export default function TeacherLiveSessionsPage() {
             </Select>
           )}
           <Button onClick={() => setShowCreateForm(true)}>
-            <Plus size={18} />
+            <span className="material-symbols-outlined text-lg">add</span>
             Schedule Session
           </Button>
         </div>
@@ -326,7 +314,7 @@ export default function TeacherLiveSessionsPage() {
       {liveSessions.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Radio size={18} className="text-red-500 animate-pulse" />
+            <span className="material-symbols-outlined text-lg text-red-500 animate-pulse">radio_button_checked</span>
             Live Now
           </h2>
           {liveSessions.map(session => (
@@ -340,7 +328,7 @@ export default function TeacherLiveSessionsPage() {
                   {session.stream_url && (
                     <a href={session.stream_url} target="_blank" rel="noopener noreferrer">
                       <Button variant="outline" size="sm">
-                        <ExternalLink size={14} />
+                        <span className="material-symbols-outlined text-sm">open_in_new</span>
                         Open Stream
                       </Button>
                     </a>
@@ -350,7 +338,7 @@ export default function TeacherLiveSessionsPage() {
                     size="sm"
                     onClick={() => handleStatusChange(session.id, 'ended')}
                   >
-                    <Square size={14} />
+                    <span className="material-symbols-outlined text-sm">stop</span>
                     End Session
                   </Button>
                 </div>
@@ -365,10 +353,10 @@ export default function TeacherLiveSessionsPage() {
         <h2 className="text-lg font-semibold">Upcoming Sessions</h2>
         {upcomingSessions.length === 0 ? (
           <Card className="text-center py-8">
-            <Calendar size={40} className="mx-auto mb-3 text-[var(--muted)]" />
+            <span className="material-symbols-outlined text-4xl mx-auto mb-3 text-[var(--muted)]">calendar_today</span>
             <p className="text-[var(--muted)] mb-3">No upcoming sessions scheduled</p>
             <Button size="sm" onClick={() => setShowCreateForm(true)}>
-              <Plus size={16} />
+              <span className="material-symbols-outlined text-base">add</span>
               Schedule Session
             </Button>
           </Card>
@@ -388,11 +376,11 @@ export default function TeacherLiveSessionsPage() {
                   )}
                   <div className="flex items-center gap-4 text-sm text-[var(--muted)]">
                     <span className="flex items-center gap-1">
-                      <Calendar size={14} />
+                      <span className="material-symbols-outlined text-sm">calendar_today</span>
                       {format(new Date(session.scheduled_start), 'MMM d, yyyy')}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={14} />
+                      <span className="material-symbols-outlined text-sm">schedule</span>
                       {format(new Date(session.scheduled_start), 'h:mm a')}
                     </span>
                     <span>{session.scheduled_duration_minutes} min</span>
@@ -405,13 +393,13 @@ export default function TeacherLiveSessionsPage() {
                     onClick={() => handleStatusChange(session.id, 'live')}
                     title="Go Live"
                   >
-                    <Play size={16} className="text-[var(--success)]" />
+                    <span className="material-symbols-outlined text-base text-[var(--success)]">play_arrow</span>
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(session)}>
-                    <Pencil size={14} />
+                    <span className="material-symbols-outlined text-sm">edit</span>
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(session.id)}>
-                    <Trash2 size={14} className="text-[var(--danger)]" />
+                    <span className="material-symbols-outlined text-sm text-[var(--danger)]">delete</span>
                   </Button>
                 </div>
               </div>

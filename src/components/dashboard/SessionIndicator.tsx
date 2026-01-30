@@ -103,7 +103,7 @@ export function SessionIndicator() {
   return (
     <div className="space-y-4">
       {/* Active Session Banner */}
-      <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-4 rounded-2xl glass-surface">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">Market Sessions</h3>
           <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function SessionIndicator() {
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5">
               <span className="w-2 h-2 rounded-full bg-[var(--muted)]" />
               <span className="text-sm font-medium text-[var(--muted)]">Markets Quiet</span>
             </div>
@@ -204,7 +204,7 @@ export function SessionIndicator() {
                 className={`p-3 rounded-xl border transition-all ${
                   active
                     ? 'border-[var(--gold)]/30 bg-[var(--gold)]/5'
-                    : 'border-[var(--card-border)] bg-black/20'
+                    : 'border-[var(--glass-surface-border)] bg-black/[0.03]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -212,7 +212,7 @@ export function SessionIndicator() {
                     <span className={`material-symbols-outlined text-sm ${active ? session.color : 'text-[var(--muted)]'}`}>
                       {session.icon}
                     </span>
-                    <span className={`text-xs font-bold ${active ? 'text-white' : 'text-[var(--muted)]'}`}>
+                    <span className={`text-xs font-bold ${active ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
                       {session.name}
                     </span>
                   </div>
@@ -248,11 +248,11 @@ export function SessionIndicator() {
       <div className={`p-4 rounded-2xl border transition-all ${
         isPrimeTime
           ? 'border-[var(--gold)]/30 bg-[var(--gold)]/5'
-          : 'border-[var(--card-border)] bg-[var(--card-bg)]'
+          : 'border-[var(--glass-surface-border)] bg-black/[0.03]'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isPrimeTime ? 'bg-[var(--gold)]/20' : 'bg-white/5'}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isPrimeTime ? 'bg-[var(--gold)]/20' : 'bg-black/5'}`}>
               <span className={`material-symbols-outlined ${isPrimeTime ? 'text-[var(--gold)]' : 'text-[var(--muted)]'}`}>
                 {isPrimeTime ? 'bolt' : 'schedule'}
               </span>

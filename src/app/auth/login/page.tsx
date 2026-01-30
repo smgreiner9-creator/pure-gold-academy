@@ -25,7 +25,7 @@ export default function LoginPage() {
       router.refresh()
       // Small delay to ensure cookies are propagated before navigation
       await new Promise(resolve => setTimeout(resolve, 100))
-      router.push('/dashboard')
+      router.push('/journal')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in')
       setIsLoading(false)

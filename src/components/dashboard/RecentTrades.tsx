@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonTradeItem } from '@/components/ui/Skeleton'
-import { QuickCloseModal } from './QuickCloseModal'
 import type { TradeDirection, TradeOutcome } from '@/types/database'
 
 interface RecentTrade {
@@ -24,7 +23,6 @@ export function RecentTrades() {
   const { profile, isLoading: authLoading } = useAuth()
   const [trades, setTrades] = useState<RecentTrade[]>([])
   const [isFetching, setIsFetching] = useState(false)
-  const [closingTrade, setClosingTrade] = useState<RecentTrade | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -66,7 +64,7 @@ export function RecentTrades() {
       case 'breakeven':
         return { icon: 'remove_circle', color: 'text-[var(--warning)]', bg: 'bg-[var(--warning)]/10' }
       default:
-        return { icon: 'pending', color: 'text-[var(--muted)]', bg: 'bg-white/5' }
+        return { icon: 'pending', color: 'text-[var(--muted)]', bg: 'bg-black/5' }
     }
   }
 
@@ -93,7 +91,7 @@ export function RecentTrades() {
 
   if (trades.length === 0) {
     return (
-      <div className="p-8 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+      <div className="p-8 rounded-xl glass-surface text-center">
         <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-xl text-[var(--gold)]">history</span>
         </div>
@@ -133,7 +131,7 @@ export function RecentTrades() {
             <Link
               key={trade.id}
               href={`/journal/${trade.id}`}
-              className="block p-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-all group"
+              className="block p-3 rounded-xl glass-surface hover:border-[var(--gold)]/30 transition-all group"
             >
               <div className="flex items-center gap-3">
                 {/* Outcome Icon */}
@@ -160,19 +158,16 @@ export function RecentTrades() {
 
                 {/* R Multiple or Outcome with Close Button */}
                 <div className="text-right flex items-center gap-2">
-                  {/* Close button for open trades */}
+                  {/* Close button for open trades — navigates to detail page */}
                   {trade.outcome === null && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        setClosingTrade(trade)
-                      }}
+                    <Link
+                      href={`/journal/${trade.id}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-8 h-8 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] flex items-center justify-center hover:bg-[var(--gold)]/20 transition-colors"
                       title="Close trade"
                     >
                       <span className="material-symbols-outlined text-sm">check_circle</span>
-                    </button>
+                    </Link>
                   )}
                   {trade.r_multiple !== null ? (
                     <span className={`mono-num text-sm font-bold ${
@@ -194,7 +189,7 @@ export function RecentTrades() {
 
       {/* Quick Stats */}
       {trades.length > 0 && (
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--card-border)]">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--glass-surface-border)]">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <span className="material-symbols-outlined text-sm text-[var(--success)]">check_circle</span>
@@ -209,21 +204,6 @@ export function RecentTrades() {
         </div>
       )}
 
-      {/* Quick Close Modal */}
-      {closingTrade && (
-        <QuickCloseModal
-          isOpen={!!closingTrade}
-          onClose={() => setClosingTrade(null)}
-          trade={{
-            id: closingTrade.id,
-            instrument: closingTrade.instrument,
-            direction: closingTrade.direction,
-            entry_price: closingTrade.entry_price,
-            stop_loss: closingTrade.stop_loss,
-            position_size: closingTrade.position_size,
-          }}
-        />
-      )}
     </div>
   )
 }

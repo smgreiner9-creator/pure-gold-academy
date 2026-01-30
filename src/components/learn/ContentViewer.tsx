@@ -1,13 +1,20 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import DOMPurify from 'dompurify'
 import { Card, Button } from '@/components/ui'
-import { ArrowLeft, CheckCircle, ExternalLink } from 'lucide-react'
+
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { LearnContent } from '@/types/database'
+
+const ALLOWED_IFRAME_HOSTS = [
+  'youtube.com',
+  'www.youtube.com',
+  'youtu.be',
+]
 
 interface ContentViewerProps {
   content: LearnContent
@@ -18,7 +25,7 @@ export function ContentViewer({ content }: ContentViewerProps) {
   const { profile, isPremium } = useAuth()
   const [isCompleted, setIsCompleted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const checkProgress = useCallback(async () => {
     if (!profile?.id) return
@@ -100,12 +107,20 @@ export function ContentViewer({ content }: ContentViewerProps) {
 
   const renderContent = () => {
     switch (content.content_type) {
-      case 'video':
+      case 'video': {
+        const isValidYouTube = (() => {
+          try {
+            if (!content.content_url) return false
+            const url = new URL(content.content_url)
+            return ALLOWED_IFRAME_HOSTS.includes(url.hostname)
+          } catch { return false }
+        })()
+
         return (
           <div className="aspect-video rounded-lg overflow-hidden bg-black">
-            {content.content_url?.includes('youtube.com') || content.content_url?.includes('youtu.be') ? (
+            {isValidYouTube ? (
               <iframe
-                src={content.content_url.replace('watch?v=', 'embed/')}
+                src={content.content_url!.replace('watch?v=', 'embed/')}
                 className="w-full h-full"
                 allowFullScreen
               />
@@ -118,13 +133,29 @@ export function ContentViewer({ content }: ContentViewerProps) {
             )}
           </div>
         )
+      }
 
-      case 'pdf':
+      case 'pdf': {
+        const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+          ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+          : null
+        const isPdfUrlValid = (() => {
+          try {
+            if (!content.content_url) return false
+            const url = new URL(content.content_url)
+            return supabaseHost ? url.hostname === supabaseHost : false
+          } catch { return false }
+        })()
+
+        if (!isPdfUrlValid) {
+          return <p className="text-[var(--muted)]">Invalid PDF source.</p>
+        }
+
         return (
           <div className="space-y-4">
             <iframe
               src={content.content_url || ''}
-              className="w-full h-[70vh] rounded-lg border border-[var(--card-border)]"
+              className="w-full h-[70vh] rounded-lg border border-[var(--glass-surface-border)]"
             />
             <a
               href={content.content_url || ''}
@@ -132,17 +163,18 @@ export function ContentViewer({ content }: ContentViewerProps) {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-[var(--gold)] hover:underline"
             >
-              <ExternalLink size={16} />
+              <span className="material-symbols-outlined text-base">open_in_new</span>
               Open in new tab
             </a>
           </div>
         )
+      }
 
       case 'image':
         return (
           <div className="space-y-4">
             {content.content_url && (
-              <div className="relative w-full overflow-hidden rounded-lg border border-[var(--card-border)]">
+              <div className="relative w-full overflow-hidden rounded-lg border border-[var(--glass-surface-border)]">
                 <Image
                   src={content.content_url}
                   alt={content.title}
@@ -154,7 +186,7 @@ export function ContentViewer({ content }: ContentViewerProps) {
               </div>
             )}
             {content.explanation && (
-              <div className="p-4 rounded-lg border border-[var(--card-border)] bg-black/30">
+              <div className="p-4 rounded-lg border border-[var(--glass-surface-border)] bg-black/30">
                 <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2">
                   Explanation
                 </p>
@@ -169,7 +201,7 @@ export function ContentViewer({ content }: ContentViewerProps) {
           <div className="prose prose-invert max-w-none">
             <div
               className="whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: content.content_text || '' }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.content_text || '') }}
             />
           </div>
         )
@@ -184,17 +216,17 @@ export function ContentViewer({ content }: ContentViewerProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft size={18} />
+          <span className="material-symbols-outlined text-lg">arrow_back</span>
           Back
         </Button>
         {isCompleted ? (
           <span className="flex items-center gap-2 text-[var(--success)]">
-            <CheckCircle size={18} />
+            <span className="material-symbols-outlined text-lg">check_circle</span>
             Completed
           </span>
         ) : (
           <Button onClick={markComplete} isLoading={isLoading}>
-            <CheckCircle size={18} />
+            <span className="material-symbols-outlined text-lg">check_circle</span>
             Mark as Complete
           </Button>
         )}

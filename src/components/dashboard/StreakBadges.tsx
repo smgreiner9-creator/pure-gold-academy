@@ -146,11 +146,11 @@ export function StreakBadges() {
 
   if (isLoading) {
     return (
-      <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse">
-        <div className="h-4 bg-white/5 rounded w-32 mb-4" />
+      <div className="p-4 rounded-2xl glass-surface animate-pulse">
+        <div className="h-4 bg-black/5 rounded w-32 mb-4" />
         <div className="grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-16 bg-white/5 rounded-xl" />
+            <div key={i} className="h-16 bg-black/5 rounded-xl" />
           ))}
         </div>
       </div>
@@ -158,7 +158,7 @@ export function StreakBadges() {
   }
 
   return (
-    <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="p-4 rounded-2xl glass-surface">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
           Achievements
@@ -191,7 +191,7 @@ export function StreakBadges() {
             className={`relative p-3 rounded-xl text-center transition-all ${
               achievement.unlocked
                 ? 'bg-[var(--gold)]/10 border border-[var(--gold)]/30'
-                : 'bg-black/20 border border-[var(--card-border)] opacity-50'
+                : 'glass-surface opacity-50'
             }`}
             title={`${achievement.title}: ${achievement.description}`}
           >

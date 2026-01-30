@@ -124,7 +124,7 @@ export function WatchedInstruments() {
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+            <div key={i} className="p-4 rounded-xl glass-surface">
               <div className="flex items-center gap-4">
                 <Skeleton className="w-10 h-10 rounded-lg" />
                 <div className="flex-1">
@@ -175,7 +175,7 @@ export function WatchedInstruments() {
           return (
             <div
               key={symbol}
-              className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] flex items-center gap-4 group cursor-pointer hover:border-[var(--gold)]/50 transition-all"
+              className="p-4 rounded-xl glass-surface flex items-center gap-4 group cursor-pointer hover:border-[var(--gold)]/50 transition-all"
             >
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                 isPositive ? 'bg-[var(--success)]/10 text-[var(--success)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'
@@ -211,12 +211,12 @@ export function WatchedInstruments() {
       {/* Add Instrument Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl w-full max-w-sm p-6">
+          <div className="glass-floating rounded-2xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Add Instrument</h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-[var(--muted)] hover:text-white"
+                className="text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -228,7 +228,7 @@ export function WatchedInstruments() {
                   <button
                     key={instrument.value}
                     onClick={() => addInstrument(instrument.value)}
-                    className="w-full p-3 text-left rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-[var(--card-border)]"
+                    className="w-full p-3 text-left rounded-xl hover:bg-black/5 transition-colors border border-transparent hover:border-[var(--glass-surface-border)]"
                   >
                     {instrument.label}
                   </button>

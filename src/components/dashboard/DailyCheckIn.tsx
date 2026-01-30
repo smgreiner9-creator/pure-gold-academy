@@ -96,14 +96,14 @@ export function DailyCheckIn() {
 
   if (isLoading) {
     return (
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-28" />
+      <div className="p-6 rounded-2xl glass-surface animate-pulse h-28" />
     )
   }
 
   // Already traded today
   if (streakData.hasTradedToday) {
     return (
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[var(--success)]/10 flex items-center justify-center">
@@ -121,7 +121,7 @@ export function DailyCheckIn() {
           </div>
           <button
             onClick={() => setShowQuickTrade(true)}
-            className="h-10 px-4 rounded-lg border border-[var(--card-border)] text-sm font-semibold hover:bg-white/5 transition-colors flex items-center gap-2"
+            className="h-10 px-4 rounded-lg btn-glass text-sm font-semibold hover:bg-black/5 transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             Log Another
@@ -136,7 +136,7 @@ export function DailyCheckIn() {
   // Checked in (rest day)
   if (streakData.hasCheckedInToday && !streakData.hasTradedToday) {
     return (
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
@@ -168,7 +168,7 @@ export function DailyCheckIn() {
 
   // Not checked in yet
   return (
-    <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="p-6 rounded-2xl glass-surface">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
@@ -195,7 +195,7 @@ export function DailyCheckIn() {
           <button
             onClick={handleNoTradeToday}
             disabled={isSubmitting}
-            className="h-10 px-5 rounded-lg border border-[var(--card-border)] text-sm font-semibold hover:bg-white/5 transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="h-10 px-5 rounded-lg btn-glass text-sm font-semibold hover:bg-black/5 transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isSubmitting ? (
               <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>

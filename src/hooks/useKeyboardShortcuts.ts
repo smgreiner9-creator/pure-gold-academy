@@ -69,7 +69,7 @@ export function useKeyboardShortcuts(config: ShortcutConfig = {}) {
       case 'd':
         // Go to dashboard
         event.preventDefault()
-        router.push('/dashboard')
+        router.push('/journal')
         break
 
       case 'l':
@@ -99,7 +99,7 @@ export const KEYBOARD_SHORTCUTS = [
   { key: 'J', description: 'Go to journal' },
   { key: 'C', description: 'Focus calculator' },
   { key: 'Q', description: 'Quick trade entry' },
-  { key: 'D', description: 'Go to dashboard' },
+  { key: 'D', description: 'Go to journal' },
   { key: 'L', description: 'Go to learn' },
   { key: '?', description: 'Show shortcuts' },
 ]

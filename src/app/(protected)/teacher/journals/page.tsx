@@ -163,7 +163,7 @@ export default function TeacherJournalsPage() {
       case 'win': return 'text-[var(--success)] bg-[var(--success)]/10'
       case 'loss': return 'text-[var(--danger)] bg-[var(--danger)]/10'
       case 'breakeven': return 'text-[var(--warning)] bg-[var(--warning)]/10'
-      default: return 'text-[var(--muted)] bg-white/5'
+      default: return 'text-[var(--muted)] bg-black/5'
     }
   }
 
@@ -171,7 +171,7 @@ export default function TeacherJournalsPage() {
     return (
       <div className="space-y-4 max-w-4xl mx-auto">
         {[1, 2, 3].map(i => (
-          <div key={i} className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-24" />
+          <div key={i} className="p-6 rounded-2xl glass-surface animate-pulse h-24" />
         ))}
       </div>
     )
@@ -188,7 +188,7 @@ export default function TeacherJournalsPage() {
         <select
           value={selectedClassroom}
           onChange={(e) => setSelectedClassroom(e.target.value)}
-          className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
+          className="input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors"
         >
           <option value="all">All Classrooms</option>
           {classrooms.map(c => (
@@ -198,7 +198,7 @@ export default function TeacherJournalsPage() {
       </div>
 
       {journals.length === 0 ? (
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--gold)]">edit_note</span>
           </div>
@@ -212,7 +212,7 @@ export default function TeacherJournalsPage() {
           {journals.map(journal => (
             <div
               key={journal.id}
-              className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-colors"
+              className="p-6 rounded-2xl glass-surface glass-interactive transition-colors"
             >
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -259,7 +259,7 @@ export default function TeacherJournalsPage() {
                   </p>
                 )}
 
-                <div className="flex items-center justify-between pt-3 border-t border-[var(--card-border)]">
+                <div className="flex items-center justify-between pt-3 border-t border-[var(--glass-surface-border)]">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
                       <span className="material-symbols-outlined text-sm">chat</span>
@@ -274,7 +274,7 @@ export default function TeacherJournalsPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedJournal(selectedJournal === journal.id ? null : journal.id)}
-                      className="h-9 px-4 rounded-lg border border-[var(--card-border)] flex items-center gap-2 font-semibold hover:bg-white/5 transition-colors text-sm"
+                      className="h-9 px-4 rounded-lg btn-glass flex items-center gap-2 font-semibold hover:bg-black/5 transition-colors text-sm"
                     >
                       <span className="material-symbols-outlined text-sm">chat</span>
                       Feedback
@@ -290,13 +290,13 @@ export default function TeacherJournalsPage() {
 
                 {/* Feedback Form */}
                 {selectedJournal === journal.id && (
-                  <div className="pt-3 border-t border-[var(--card-border)]">
+                  <div className="pt-3 border-t border-[var(--glass-surface-border)]">
                     <textarea
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
                       placeholder="Write your feedback for this trade..."
                       rows={3}
-                      className="w-full bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none mb-3"
+                      className="w-full input-field rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--gold)] text-sm transition-colors resize-none mb-3"
                     />
                     <div className="flex justify-end">
                       <button
@@ -323,7 +323,7 @@ export default function TeacherJournalsPage() {
             <button
               onClick={() => loadJournals(true)}
               disabled={loadingMore}
-              className="w-full py-3 rounded-xl border border-[var(--card-border)] text-[var(--muted)] hover:text-white hover:border-[var(--gold)]/30 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl border border-[var(--glass-surface-border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:border-[var(--gold)]/30 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
             >
               {loadingMore ? (
                 <>

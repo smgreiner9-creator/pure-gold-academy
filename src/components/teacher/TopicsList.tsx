@@ -73,10 +73,10 @@ export function TopicsList() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse"
+            className="p-4 rounded-2xl glass-surface animate-pulse"
           >
-            <div className="h-4 w-1/3 bg-white/10 rounded mb-2" />
-            <div className="h-3 w-1/4 bg-white/5 rounded" />
+            <div className="h-4 w-1/3 bg-black/[0.06] rounded mb-2" />
+            <div className="h-3 w-1/4 bg-black/5 rounded" />
           </div>
         ))}
       </div>
@@ -85,7 +85,7 @@ export function TopicsList() {
 
   if (topics.length === 0) {
     return (
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+      <div className="p-6 rounded-2xl glass-surface text-center">
         <span className="material-symbols-outlined text-3xl text-[var(--muted)] mb-2 block">
           school
         </span>
@@ -108,7 +108,7 @@ export function TopicsList() {
           <Link
             key={classroom.id}
             href={`/teacher/topics/${classroom.id}`}
-            className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-all cursor-pointer flex items-center justify-between gap-3"
+            className="p-4 rounded-2xl glass-surface glass-interactive transition-all cursor-pointer flex items-center justify-between gap-3"
           >
             <div className="min-w-0 flex-1">
               <p className="font-bold text-sm truncate">{classroom.name}</p>
@@ -119,7 +119,7 @@ export function TopicsList() {
 
             <div className="flex items-center gap-2 shrink-0">
               {isFree ? (
-                <span className="text-[9px] px-2 py-0.5 rounded-lg bg-white/5 text-[var(--muted)] font-bold uppercase">
+                <span className="text-[9px] px-2 py-0.5 rounded-lg bg-black/5 text-[var(--muted)] font-bold uppercase">
                   Free
                 </span>
               ) : (

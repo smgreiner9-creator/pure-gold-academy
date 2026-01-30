@@ -235,10 +235,10 @@ export default function EarningsPage() {
   if (isLoading || stripeLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-40" />
+        <div className="p-6 rounded-2xl glass-surface animate-pulse h-40" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse h-24" />
+            <div key={i} className="p-4 rounded-2xl glass-surface animate-pulse h-24" />
           ))}
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function EarningsPage() {
   if (!isConnected || !canAcceptPayments) {
     return (
       <div className="max-w-4xl mx-auto">
-        <div className="p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--warning)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--warning)]">link_off</span>
           </div>
@@ -273,7 +273,7 @@ export default function EarningsPage() {
       {/* Back Link */}
       <Link
         href="/teacher"
-        className="inline-flex items-center gap-1 text-[var(--muted)] hover:text-white transition-colors text-sm"
+        className="inline-flex items-center gap-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm"
       >
         <span className="material-symbols-outlined text-lg">arrow_back</span>
         Back to Dashboard
@@ -287,19 +287,19 @@ export default function EarningsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-4 rounded-2xl glass-surface">
           <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Total Earnings</p>
           <p className="text-2xl font-bold text-[var(--gold)]">${data?.totalEarnings.toFixed(2) || '0.00'}</p>
         </div>
-        <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-4 rounded-2xl glass-surface">
           <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">This Month</p>
           <p className="text-2xl font-bold text-[var(--success)]">${data?.thisMonthEarnings.toFixed(2) || '0.00'}</p>
         </div>
-        <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-4 rounded-2xl glass-surface">
           <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Active Subscribers</p>
           <p className="text-2xl font-bold">{data?.activeSubscribers || 0}</p>
         </div>
-        <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-4 rounded-2xl glass-surface">
           <p className="text-xs text-[var(--muted)] uppercase tracking-wider mb-1">Content Purchases</p>
           <p className="text-2xl font-bold">{data?.totalPurchases || 0}</p>
         </div>
@@ -307,7 +307,7 @@ export default function EarningsPage() {
 
       {/* Earnings by Classroom */}
       {data?.earningsByClassroom && data.earningsByClassroom.length > 0 && (
-        <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+        <div className="p-6 rounded-2xl glass-surface">
           <h2 className="font-bold text-lg mb-4">Revenue by Classroom</h2>
           <div className="space-y-3">
             {data.earningsByClassroom.map(({ classroom, totalEarnings, subscriberCount }) => (
@@ -335,7 +335,7 @@ export default function EarningsPage() {
       )}
 
       {/* Recent Transactions */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <h2 className="font-bold text-lg mb-4">Recent Transactions</h2>
         {data?.recentTransactions && data.recentTransactions.length > 0 ? (
           <div className="space-y-3">
@@ -385,7 +385,7 @@ export default function EarningsPage() {
       </div>
 
       {/* Info Card */}
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <span className="material-symbols-outlined text-[var(--gold)]">info</span>
           Fee Breakdown

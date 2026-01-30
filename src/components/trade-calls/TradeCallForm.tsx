@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Card, Button, Input, Textarea, Select } from '@/components/ui'
-import { TrendingUp, TrendingDown, X, Link as LinkIcon } from 'lucide-react'
 import { TradeCall, TradeCallStatus } from '@/types/database'
 
 interface TradeCallFormProps {
@@ -232,10 +231,10 @@ export function TradeCallForm({
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-all ${
                 formData.direction === 'long'
                   ? 'border-[var(--success)] bg-[var(--success)]/10 text-[var(--success)]'
-                  : 'border-[var(--card-border)] hover:border-[var(--success)]/50'
+                  : 'border-[var(--glass-surface-border)] hover:border-[var(--success)]/50'
               }`}
             >
-              <TrendingUp size={20} />
+              <span className="material-symbols-outlined text-xl">trending_up</span>
               <span className="font-semibold">Long</span>
             </button>
             <button
@@ -244,10 +243,10 @@ export function TradeCallForm({
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border-2 transition-all ${
                 formData.direction === 'short'
                   ? 'border-[var(--danger)] bg-[var(--danger)]/10 text-[var(--danger)]'
-                  : 'border-[var(--card-border)] hover:border-[var(--danger)]/50'
+                  : 'border-[var(--glass-surface-border)] hover:border-[var(--danger)]/50'
               }`}
             >
-              <TrendingDown size={20} />
+              <span className="material-symbols-outlined text-xl">trending_down</span>
               <span className="font-semibold">Short</span>
             </button>
           </div>
@@ -311,7 +310,7 @@ export function TradeCallForm({
 
         {/* R:R Display */}
         {riskReward !== null && (
-          <div className="flex items-center gap-2 p-3 bg-[var(--card-bg)] rounded-lg">
+          <div className="flex items-center gap-2 p-3 glass-surface rounded-lg">
             <span className="text-sm text-[var(--muted)]">Risk:Reward</span>
             <span className={`font-mono font-bold ${riskReward >= 2 ? 'text-[var(--success)]' : riskReward >= 1 ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>
               1:{riskReward.toFixed(2)}
@@ -329,7 +328,7 @@ export function TradeCallForm({
         </button>
 
         {showAdvanced && (
-          <div className="space-y-4 p-4 border border-[var(--card-border)] rounded-lg">
+          <div className="space-y-4 p-4 border border-[var(--glass-surface-border)] rounded-lg">
             {/* Additional TPs */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -370,7 +369,7 @@ export function TradeCallForm({
             {/* Chart URL */}
             <div>
               <label className="block text-sm font-medium mb-1">
-                <LinkIcon size={14} className="inline mr-1" />
+                <span className="material-symbols-outlined text-sm inline mr-1">link</span>
                 TradingView Chart URL
               </label>
               <Input

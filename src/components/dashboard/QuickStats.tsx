@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card } from '@/components/ui'
-import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { calculateStreak } from '@/lib/streakUtils'
@@ -79,25 +78,25 @@ export function QuickStats() {
     {
       label: 'Total Trades',
       value: stats.totalTrades.toString(),
-      icon: <Target size={20} />,
+      icon: <span className="material-symbols-outlined text-xl">target</span>,
       color: 'text-[var(--gold)]',
     },
     {
       label: 'Win Rate',
       value: `${stats.winRate.toFixed(1)}%`,
-      icon: stats.winRate >= 50 ? <TrendingUp size={20} /> : <TrendingDown size={20} />,
+      icon: stats.winRate >= 50 ? <span className="material-symbols-outlined text-xl">trending_up</span> : <span className="material-symbols-outlined text-xl">trending_down</span>,
       color: stats.winRate >= 50 ? 'text-[var(--success)]' : 'text-[var(--danger)]',
     },
     {
       label: 'Avg R-Multiple',
       value: stats.avgRMultiple.toFixed(2),
-      icon: <TrendingUp size={20} />,
+      icon: <span className="material-symbols-outlined text-xl">trending_up</span>,
       color: stats.avgRMultiple >= 1 ? 'text-[var(--success)]' : 'text-[var(--warning)]',
     },
     {
       label: 'Journal Streak',
       value: `${stats.journalStreak} days`,
-      icon: <Calendar size={20} />,
+      icon: <span className="material-symbols-outlined text-xl">calendar_today</span>,
       color: 'text-[var(--gold)]',
     },
   ]
@@ -107,8 +106,8 @@ export function QuickStats() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
-            <div className="h-4 bg-[var(--card-border)] rounded w-1/2 mb-2" />
-            <div className="h-8 bg-[var(--card-border)] rounded w-3/4" />
+            <div className="h-4 bg-[var(--glass-surface-border)] rounded w-1/2 mb-2" />
+            <div className="h-8 bg-[var(--glass-surface-border)] rounded w-3/4" />
           </Card>
         ))}
       </div>

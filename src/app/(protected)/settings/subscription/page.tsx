@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, Button } from '@/components/ui'
-import { Crown, Check, CreditCard, ArrowLeft } from 'lucide-react'
+
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -80,7 +80,7 @@ export default function SubscriptionPage() {
       <div className="flex items-center gap-4">
         <Link href="/settings">
           <Button variant="ghost" size="sm">
-            <ArrowLeft size={18} />
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
           </Button>
         </Link>
         <div>
@@ -92,14 +92,14 @@ export default function SubscriptionPage() {
       {isPremium ? (
         <Card className="text-center py-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gold)] flex items-center justify-center">
-            <Crown size={32} className="text-black" />
+            <span className="material-symbols-outlined text-3xl text-black">workspace_premium</span>
           </div>
           <h2 className="text-2xl font-bold mb-2">You&apos;re on Premium!</h2>
           <p className="text-[var(--muted)] mb-6">
             Enjoy all the premium features
           </p>
           <Button variant="outline" onClick={handleManageSubscription} isLoading={isLoading}>
-            <CreditCard size={18} />
+            <span className="material-symbols-outlined text-lg">credit_card</span>
             Manage Billing
           </Button>
         </Card>
@@ -114,7 +114,7 @@ export default function SubscriptionPage() {
             <ul className="space-y-3 mb-6">
               {features.free.map((feature) => (
                 <li key={feature} className="flex items-center gap-2">
-                  <Check size={16} className="text-[var(--success)]" />
+                  <span className="material-symbols-outlined text-base text-[var(--success)]">check</span>
                   <span className="text-sm">{feature}</span>
                 </li>
               ))}
@@ -132,7 +132,7 @@ export default function SubscriptionPage() {
               </span>
             </div>
             <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-              <Crown size={20} className="text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-xl text-[var(--gold)]">workspace_premium</span>
               Premium
             </h3>
             <p className="text-3xl font-bold mb-4">
@@ -141,7 +141,7 @@ export default function SubscriptionPage() {
             <ul className="space-y-3 mb-6">
               {features.premium.map((feature) => (
                 <li key={feature} className="flex items-center gap-2">
-                  <Check size={16} className="text-[var(--gold)]" />
+                  <span className="material-symbols-outlined text-base text-[var(--gold)]">check</span>
                   <span className="text-sm">{feature}</span>
                 </li>
               ))}

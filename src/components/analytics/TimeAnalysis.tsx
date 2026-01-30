@@ -72,7 +72,7 @@ export function TimeAnalysis({ entries }: TimeAnalysisProps) {
 
   if (entries.filter((e) => e.outcome !== null).length === 0) {
     return (
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-surface p-6">
         <h3 className="font-bold text-lg mb-4">Time Analysis</h3>
         <p className="text-[var(--muted)] text-center py-8">
           No closed trades to analyze by time.
@@ -84,7 +84,7 @@ export function TimeAnalysis({ entries }: TimeAnalysisProps) {
   return (
     <div className="space-y-6">
       {/* Day of Week Analysis */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-surface p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-bold text-lg">Performance by Day</h3>
           <span className="material-symbols-outlined text-[var(--gold)]">calendar_today</span>
@@ -114,7 +114,7 @@ export function TimeAnalysis({ entries }: TimeAnalysisProps) {
               className={`p-3 rounded-xl text-center ${
                 total === 0
                   ? 'bg-black/20 opacity-50'
-                  : 'bg-black/40 border border-[var(--card-border)]'
+                  : 'glass-surface'
               }`}
             >
               <p className="text-[10px] font-bold text-[var(--muted)] uppercase mb-2">
@@ -139,7 +139,7 @@ export function TimeAnalysis({ entries }: TimeAnalysisProps) {
       </div>
 
       {/* Monthly Performance */}
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-surface p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-bold text-lg">Monthly Performance</h3>
           <span className="material-symbols-outlined text-[var(--gold)]">trending_up</span>
@@ -150,7 +150,7 @@ export function TimeAnalysis({ entries }: TimeAnalysisProps) {
             {monthlyStats.map(({ month, label, total, wins, winRate, totalPnl }) => (
               <div
                 key={month}
-                className="p-4 rounded-xl bg-black/40 border border-[var(--card-border)]"
+                className="p-4 rounded-xl glass-surface"
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{label}</span>

@@ -6,15 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, Button, Select } from '@/components/ui'
 import { TradeCallCard, TradeCallForm, type TradeCallFormData } from '@/components/trade-calls'
-import {
-  Plus,
-  Filter,
-  TrendingUp,
-  Target,
-  CheckCircle2,
-  XCircle,
-  BarChart3
-} from 'lucide-react'
 import type { TradeCall, Classroom } from '@/types/database'
 
 interface PerformanceStats {
@@ -163,12 +154,12 @@ export default function TeacherTradeCallsPage() {
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto p-6 space-y-6">
-        <div className="h-8 w-48 bg-[var(--card-border)] rounded animate-pulse" />
+        <div className="h-8 w-48 bg-[var(--glass-surface-border)] rounded animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <Card key={i} className="animate-pulse">
-              <div className="h-4 w-20 bg-[var(--card-border)] rounded mb-2" />
-              <div className="h-8 w-16 bg-[var(--card-border)] rounded" />
+              <div className="h-4 w-20 bg-[var(--glass-surface-border)] rounded mb-2" />
+              <div className="h-8 w-16 bg-[var(--glass-surface-border)] rounded" />
             </Card>
           ))}
         </div>
@@ -186,7 +177,7 @@ export default function TeacherTradeCallsPage() {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <Card className="text-center py-12">
-          <Target size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">target</span>
           <h2 className="text-xl font-semibold mb-2">Create a Strategy First</h2>
           <p className="text-[var(--muted)] mb-4">
             You need to create a trading strategy before you can post trade calls.
@@ -209,7 +200,7 @@ export default function TeacherTradeCallsPage() {
         </div>
         <Link href="/teacher/trade-calls/new">
           <Button>
-            <Plus size={18} />
+            <span className="material-symbols-outlined text-lg">add</span>
             New Trade Call
           </Button>
         </Link>
@@ -223,28 +214,28 @@ export default function TeacherTradeCallsPage() {
         </Card>
         <Card>
           <div className="flex items-center gap-2 mb-1">
-            <Target size={14} className="text-[var(--gold)]" />
+            <span className="material-symbols-outlined text-sm text-[var(--gold)]">target</span>
             <p className="text-xs text-[var(--muted)]">Active</p>
           </div>
           <p className="text-2xl font-bold text-[var(--gold)]">{stats.activeCalls}</p>
         </Card>
         <Card>
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 size={14} className="text-[var(--success)]" />
+            <span className="material-symbols-outlined text-sm text-[var(--success)]">check_circle</span>
             <p className="text-xs text-[var(--muted)]">Winning</p>
           </div>
           <p className="text-2xl font-bold text-[var(--success)]">{stats.winningCalls}</p>
         </Card>
         <Card>
           <div className="flex items-center gap-2 mb-1">
-            <XCircle size={14} className="text-[var(--danger)]" />
+            <span className="material-symbols-outlined text-sm text-[var(--danger)]">cancel</span>
             <p className="text-xs text-[var(--muted)]">Losing</p>
           </div>
           <p className="text-2xl font-bold text-[var(--danger)]">{stats.losingCalls}</p>
         </Card>
         <Card>
           <div className="flex items-center gap-2 mb-1">
-            <BarChart3 size={14} className="text-[var(--foreground)]" />
+            <span className="material-symbols-outlined text-sm text-[var(--foreground)]">bar_chart</span>
             <p className="text-xs text-[var(--muted)]">Win Rate</p>
           </div>
           <p className={`text-2xl font-bold ${stats.winRate >= 50 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
@@ -262,7 +253,7 @@ export default function TeacherTradeCallsPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-base text-[var(--muted)]">filter_list</span>
           <span className="text-sm text-[var(--muted)]">Filter:</span>
         </div>
         <Select
@@ -304,7 +295,7 @@ export default function TeacherTradeCallsPage() {
       {/* Trade Calls List */}
       {tradeCalls.length === 0 ? (
         <Card className="text-center py-12">
-          <TrendingUp size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+          <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">trending_up</span>
           <h2 className="text-xl font-semibold mb-2">No Trade Calls Yet</h2>
           <p className="text-[var(--muted)] mb-4">
             Post your first trade call to share with your students.

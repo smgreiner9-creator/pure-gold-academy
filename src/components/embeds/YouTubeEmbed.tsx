@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Play } from 'lucide-react'
 import { getYouTubeEmbedUrl, getYouTubeThumbnail, extractYouTubeId } from '@/lib/embedUtils'
 
 interface YouTubeEmbedProps {
@@ -17,7 +16,7 @@ export function YouTubeEmbed({ url, title, autoplay = false, className = '' }: Y
 
   if (!videoId) {
     return (
-      <div className={`bg-[var(--card-bg)] rounded-lg p-4 text-center ${className}`}>
+      <div className={`glass-surface rounded-lg p-4 text-center ${className}`}>
         <p className="text-[var(--muted)]">Invalid YouTube URL</p>
       </div>
     )
@@ -42,7 +41,7 @@ export function YouTubeEmbed({ url, title, autoplay = false, className = '' }: Y
         {/* Play button overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Play size={32} className="text-white ml-1" fill="white" />
+            <span className="material-symbols-outlined text-3xl text-white ml-1">play_arrow</span>
           </div>
         </div>
 

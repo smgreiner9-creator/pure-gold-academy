@@ -68,7 +68,7 @@ export default function JoinSuccessPage() {
 
       // Auto-redirect after 3 seconds
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/journal')
       }, 3000)
     } catch (error) {
       console.error('Error processing join:', error)
@@ -86,7 +86,7 @@ export default function JoinSuccessPage() {
   if (isProcessing) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--gold)] animate-spin">progress_activity</span>
           </div>
@@ -100,14 +100,14 @@ export default function JoinSuccessPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--danger)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--danger)]">error</span>
           </div>
           <h1 className="text-xl font-bold mb-2">Something Went Wrong</h1>
           <p className="text-[var(--muted)] text-sm mb-6">{error}</p>
           <Link
-            href="/dashboard"
+            href="/journal"
             className="gold-gradient text-black font-bold h-11 px-6 rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
           >
             Go to Dashboard
@@ -119,7 +119,7 @@ export default function JoinSuccessPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+      <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[var(--success)]/10 flex items-center justify-center">
           <span className="material-symbols-outlined text-3xl text-[var(--success)]">check_circle</span>
         </div>
@@ -129,7 +129,7 @@ export default function JoinSuccessPage() {
         </p>
 
         <Link
-          href="/dashboard"
+          href="/journal"
           className="gold-gradient text-black font-bold h-12 px-8 rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all"
         >
           <span className="material-symbols-outlined">dashboard</span>

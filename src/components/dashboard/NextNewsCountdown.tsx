@@ -121,16 +121,16 @@ export function NextNewsCountdown() {
 
   if (isLoading) {
     return (
-      <div className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse">
-        <div className="h-4 bg-white/5 rounded w-1/2 mb-2" />
-        <div className="h-6 bg-white/5 rounded w-3/4" />
+      <div className="p-4 rounded-xl glass-surface animate-pulse">
+        <div className="h-4 bg-black/5 rounded w-1/2 mb-2" />
+        <div className="h-6 bg-black/5 rounded w-3/4" />
       </div>
     )
   }
 
   if (!nextEvent) {
     return (
-      <div className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-4 rounded-xl glass-surface">
         <div className="flex items-center gap-2 text-[var(--muted)]">
           <span className="material-symbols-outlined text-lg">event_available</span>
           <span className="text-sm">No high-impact news today</span>
@@ -145,7 +145,7 @@ export function NextNewsCountdown() {
     <div className={`p-4 rounded-xl border ${
       isUrgent
         ? 'border-[var(--danger)]/50 bg-[var(--danger)]/5'
-        : 'border-[var(--card-border)] bg-[var(--card-bg)]'
+        : 'border-[var(--glass-surface-border)] bg-black/[0.03]'
     }`}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">

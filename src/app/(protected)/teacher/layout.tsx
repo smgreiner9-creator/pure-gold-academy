@@ -16,7 +16,7 @@ export default function TeacherLayout({
   useEffect(() => {
     // Wait for auth to load before checking
     if (!isLoading && profile && !isTeacher) {
-      router.push('/dashboard')
+      router.push('/journal')
     }
   }, [profile, isLoading, isTeacher, router])
 
@@ -47,7 +47,7 @@ export default function TeacherLayout({
             <span className="material-symbols-outlined text-3xl text-[var(--danger)]">lock</span>
           </div>
           <h2 className="text-xl font-bold mb-2">Teacher Access Only</h2>
-          <p className="text-[var(--muted)] text-sm">Redirecting to dashboard...</p>
+          <p className="text-[var(--muted)] text-sm">Redirecting...</p>
         </div>
       </div>
     )

@@ -185,7 +185,7 @@ export function JournalStats() {
   return (
     <div className="space-y-4">
       {/* Primary Stats */}
-      <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="p-6 rounded-2xl glass-surface">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">Performance Overview</h3>
           <button
@@ -201,7 +201,7 @@ export function JournalStats() {
 
         {/* Key Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider mb-1">Win Rate</p>
             <p className={`text-2xl font-bold mono-num ${stats.winRate >= 50 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
               {stats.winRate.toFixed(1)}%
@@ -209,7 +209,7 @@ export function JournalStats() {
             <p className="text-[10px] text-[var(--muted)]">{stats.wins}W / {stats.losses}L / {stats.breakeven}BE</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider mb-1">Total R</p>
             <p className={`text-2xl font-bold mono-num ${stats.totalR >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
               {stats.totalR >= 0 ? '+' : ''}{stats.totalR.toFixed(1)}R
@@ -217,13 +217,13 @@ export function JournalStats() {
             <p className="text-[10px] text-[var(--muted)]">Avg: {stats.avgR >= 0 ? '+' : ''}{stats.avgR.toFixed(2)}R</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider mb-1">Total Trades</p>
             <p className="text-2xl font-bold text-[var(--gold)] mono-num">{stats.totalTrades}</p>
             <p className="text-[10px] text-[var(--muted)]">{closedTrades} closed</p>
           </div>
 
-          <div className="p-4 rounded-xl bg-black/20 border border-[var(--card-border)]">
+          <div className="p-4 rounded-xl glass-surface">
             <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider mb-1">Win Streak</p>
             <p className="text-2xl font-bold text-[var(--gold)] mono-num">{stats.currentStreak}</p>
             <p className="text-[10px] text-[var(--muted)]">Best: {stats.longestStreak}</p>
@@ -269,7 +269,7 @@ export function JournalStats() {
       {isExpanded && (
         <div className="grid md:grid-cols-2 gap-4">
           {/* Best/Worst R */}
-          <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+          <div className="p-6 rounded-2xl glass-surface">
             <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">R-Multiple Range</h3>
             <div className="flex items-center justify-between">
               <div className="text-center">
@@ -303,7 +303,7 @@ export function JournalStats() {
 
           {/* Emotion Analysis */}
           {stats.emotionStats.length > 0 && (
-            <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+            <div className="p-6 rounded-2xl glass-surface">
               <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">Emotion Analysis</h3>
               <div className="space-y-2">
                 {stats.emotionStats.slice(0, 4).map(({ emotion, trades, winRate }) => (
@@ -332,11 +332,11 @@ export function JournalStats() {
 
           {/* Top Instruments */}
           {stats.instrumentStats.length > 0 && (
-            <div className="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] md:col-span-2">
+            <div className="p-6 rounded-2xl glass-surface md:col-span-2">
               <h3 className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">Top Instruments</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stats.instrumentStats.map(({ instrument, trades, winRate, totalR }) => (
-                  <div key={instrument} className="p-3 rounded-xl bg-black/20 border border-[var(--card-border)]">
+                  <div key={instrument} className="p-3 rounded-xl glass-surface">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold">{instrument}</span>
                       <span className={`text-sm font-bold mono-num ${totalR >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>

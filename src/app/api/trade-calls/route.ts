@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         teacher:profiles!trade_calls_teacher_id_fkey(id, display_name, avatar_url)
-      `)
+      `, { count: 'exact' })
       .order('published_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -63,12 +63,12 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching trade calls:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch trade calls' }, { status: 500 })
     }
 
     return NextResponse.json({
       trade_calls: tradeCalls || [],
-      total: count || tradeCalls?.length || 0
+      total: count ?? tradeCalls?.length ?? 0
     })
   } catch (error) {
     console.error('Trade calls GET error:', error)
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('Error creating trade call:', insertError)
-      return NextResponse.json({ error: insertError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create trade call' }, { status: 500 })
     }
 
     return NextResponse.json({ trade_call: tradeCall }, { status: 201 })
@@ -199,11 +199,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, ...updates } = body
+    const { id, ...rawUpdates } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Trade call ID is required' }, { status: 400 })
     }
+
+    // Whitelist allowed update fields to prevent arbitrary column updates
+    const allowedFields = [
+      'status', 'result_pips', 'close_price', 'analysis_text', 'chart_url',
+      'entry_price', 'stop_loss', 'take_profit_1', 'take_profit_2', 'take_profit_3',
+      'timeframe', 'instrument', 'direction', 'risk_reward_ratio',
+    ]
+    const updates: Record<string, unknown> = Object.fromEntries(
+      Object.entries(rawUpdates).filter(([key]) => allowedFields.includes(key))
+    )
 
     // Verify teacher owns this trade call
     const { data: existingCall } = await supabase
@@ -231,7 +241,7 @@ export async function PATCH(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating trade call:', updateError)
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to update trade call' }, { status: 500 })
     }
 
     return NextResponse.json({ trade_call: updatedCall })
@@ -278,7 +288,7 @@ export async function DELETE(request: NextRequest) {
 
     if (deleteError) {
       console.error('Error deleting trade call:', deleteError)
-      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to delete trade call' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

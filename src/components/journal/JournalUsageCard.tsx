@@ -9,9 +9,9 @@ export function JournalUsageCard() {
 
   if (isLoading) {
     return (
-      <div className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] animate-pulse">
-        <div className="h-4 bg-white/5 rounded w-1/2 mb-2" />
-        <div className="h-2 bg-white/5 rounded w-full" />
+      <div className="p-4 rounded-xl glass-surface animate-pulse">
+        <div className="h-4 bg-black/5 rounded w-1/2 mb-2" />
+        <div className="h-2 bg-black/5 rounded w-full" />
       </div>
     )
   }
@@ -62,8 +62,8 @@ export function JournalUsageCard() {
 
   // Free users with usage - show progress
   const isNearLimit = remaining <= 3
-  const borderColor = isNearLimit ? 'border-[var(--warning)]/30' : 'border-[var(--card-border)]'
-  const bgColor = isNearLimit ? 'bg-[var(--warning)]/5' : 'bg-[var(--card-bg)]'
+  const borderColor = isNearLimit ? 'border-[var(--warning)]/30' : 'border-[var(--glass-surface-border)]'
+  const bgColor = isNearLimit ? 'bg-[var(--warning)]/5' : 'bg-black/[0.03]'
 
   return (
     <div className={`p-4 rounded-xl border ${borderColor} ${bgColor}`}>

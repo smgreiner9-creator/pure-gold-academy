@@ -6,11 +6,16 @@ A journaling-first trading education platform for active day and swing traders. 
 
 ### For Students
 - **Trade Journaling** - Log every trade with structured fields including entry/exit prices, position size, R-multiple, emotions (before, during, after), rule adherence checklist, and screenshot uploads
-- **Home Dashboard** - Market news feed, trading session indicator showing active sessions and prime time, position size calculator, and tracked instruments
+- **Home Dashboard** - Market news feed, trading session indicator showing active sessions and prime time, position size calculator, tracked instruments, and recent trades with quick-close navigation
+- **Calendar Heatmap** - Monthly calendar view of trading activity with behavioral insight panel showing emotion patterns, streaks, and performance analytics
 - **Learn Section** - Structured curriculum tracks with modules, progress tracking, and embedded YouTube/TradingView content
 - **Trade Calls Feed** - View teacher's real-time trade calls with entry/exit levels, copy to journal
 - **Live Sessions** - Join scheduled live trading streams from teachers
-- **Community** - Discussion area with signal-prevention system to maintain educational focus
+- **Community** - Threaded discussions with upvote/downvote, categories (Chart Analysis, Strategy, Psychology, Question, Trade Review), sort by hot/new/top, and trade review sharing with privacy controls
+- **Interactive Charts** - TradingView `lightweight-charts` widget in journal with 7 annotation tools (entry, exit, SL, TP, trend lines, text)
+- **Pre-Trade Psychology** - Readiness score (1-5) and quick-tag capture (FOMO, Revenge, Confident, etc.) before each trade
+- **Psychology Analytics** - Insights into how mental state correlates with trade outcomes
+- **Progress Reports** - Teacher-generated analytics reports with strengths, improvements, emotion breakdown, and personalized notes
 - **Notifications** - Real-time alerts for teacher feedback, community responses, and system updates
 - **Public Strategies** - Discover and join public strategies from the marketplace listing
 
@@ -20,7 +25,11 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Trade Calls** - Post real-time trade ideas with instrument, direction, entry, SL, TPs, analysis, and TradingView charts
 - **Live Sessions** - Schedule and manage live trading streams with YouTube/Twitch/Zoom integration
 - **Minimal Dashboard** - Student count, earnings overview, and topic list with floating "Add Lesson" button
-- **Student Analytics** - View student performance, journal activity, and progress metrics
+- **Student Analytics Dashboard** - Class-wide win rate trends, R-multiple charts, emotion patterns, rule adherence, student alerts (inactive, losing streaks), individual student deep-dive with 6 analytics tabs
+- **Progress Reports** - Generate weekly/monthly reports per student with computed analytics, strengths/weaknesses, and teacher notes
+- **Public Profile** - Customizable teacher profile with bio, social links, and URL slug at `/teachers/[slug]`
+- **Track Record Badge** - Verified win rate and stats from trade call history (auto-computed, 10+ calls required)
+- **Course Marketplace** - Public course catalog at `/courses` with ratings, reviews, and SEO
 - **Journal Review** - Browse and provide feedback on student trade journals
 
 ### Subscription Tiers
@@ -34,11 +43,11 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth
 - **Storage**: Supabase Storage (screenshots, content files)
-- **Styling**: Tailwind CSS 4 with custom Black & Gold theme
+- **Styling**: Tailwind CSS 4 with 3-tier glassmorphism design system
 - **Animation**: Framer Motion (scroll-triggered reveals, parallax, stagger)
 - **State Management**: Zustand
 - **Forms**: React Hook Form + Zod validation
-- **Icons**: Lucide React
+- **Icons**: Material Symbols Outlined (Google)
 - **Fonts**: Urbanist (primary), JetBrains Mono (monospace)
 
 ## Getting Started
@@ -97,7 +106,7 @@ src/
 │   │   ├── learn/         # Educational content
 │   │   │   ├── live/      # Live sessions view
 │   │   │   └── tracks/    # Curriculum track detail
-│   │   ├── community/     # Discussion area
+│   │   ├── community/     # Threaded discussions + voting
 │   │   ├── classroom/     # Classroom join flow
 │   │   ├── notifications/ # Notifications
 │   │   ├── settings/      # User settings
@@ -119,9 +128,13 @@ src/
 │   ├── layout/            # Layout components (Sidebar, Header)
 │   ├── dashboard/         # Dashboard widgets
 │   ├── journal/           # Journal components
-│   ├── analytics/         # Analytics charts
+│   ├── analytics/         # Analytics charts (EquityCurve, EmotionCorrelation, EmotionFlow, PsychologyAnalysis, etc.)
+│   ├── charts/            # TradingView chart widget + annotation toolbar
+│   ├── community/         # ThreadedComment, VoteButton, PostFilters, TradeReviewPost
 │   ├── learn/             # Learn section components
-│   ├── teacher/           # Teacher components (LessonForm, TopicSelector, TopicsList, TeacherFAB)
+│   ├── marketplace/       # CourseCard, CourseFilters, ReviewCard, ReviewForm
+│   ├── reports/           # ProgressReport renderer
+│   ├── teacher/           # LessonForm, TopicSelector, TopicsList, TeacherFAB, ClassAnalytics, StudentAlerts, TeacherProfileCard, TrackRecordBadge
 │   ├── trade-calls/       # Trade call card & form
 │   └── embeds/            # YouTube & TradingView embeds
 ├── hooks/                 # Custom React hooks
@@ -159,9 +172,16 @@ The application uses the following main tables:
 - `session_attendees` - Tracks student attendance at live sessions
 
 ### Community & Notifications
-- `community_posts` - Discussion posts
-- `community_comments` - Comments on posts
+- `community_posts` - Discussion posts with categories, tags, post types, trade review data
+- `community_comments` - Threaded comments (parent_comment_id for replies)
+- `community_votes` - Upvote/downvote on posts and comments (NEW Jan 29)
 - `notifications` - User notifications
+
+### Marketplace (NEW - Jan 29, 2026)
+- `topic_reviews` - Student ratings and reviews for classrooms (1-5 stars + text)
+
+### Progress Reports (NEW - Jan 29, 2026)
+- `progress_reports` - Teacher-generated student analytics reports with computed data
 
 ### Payments & Subscriptions
 - `subscriptions` - Stripe subscription data
@@ -207,29 +227,48 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 ## Visual Theme
 
-The app uses a "Liquid Gold" aesthetic — deep glassmorphism, animated gold particles, and a dark obsidian background.
+The app uses a **Glass Command Center** aesthetic — Apple-inspired frosted glassmorphism with a 3-tier elevation system, selective gold accents, and a warm dark background with ambient color gradients.
 
-### Colors
+### Design System
+
+#### 3-Tier Glass Elevation
+| Tier | Class | Blur | Use Case |
+|------|-------|------|----------|
+| Surface | `.glass-surface` | 16px + saturate | Base panels, sidebar, cards at rest |
+| Elevated | `.glass-elevated` | 24px + saturate | Active nav, interactive cards, hovered items |
+| Floating | `.glass-floating` | 36px + saturate | Modals, dropdowns, popovers |
+
+All glass panels include an SVG frosted noise texture overlay (`mix-blend-mode: overlay`) for a tactile, Apple-style frosted feel.
+
+#### Colors
 | Variable | Value | Purpose |
 |----------|-------|---------|
 | `--background` | `#050505` | Page background |
 | `--foreground` | `#F8FAFC` | Primary text |
-| `--gold` | `#FFB800` | Brand accent |
-| `--gold-light` | `#FFD54F` | Gold hover state |
-| `--gold-dark` | `#E5A500` | Gold pressed state |
-| `--card-bg` | `#0F0F0F` | Card backgrounds |
-| `--glass-bg` | `rgba(15,15,15,0.6)` | Glassmorphism fill |
-| `--glass-border` | `rgba(255,184,0,0.12)` | Glass border |
+| `--gold` | `#F5A623` | Brand accent (warmer gold) |
+| `--gold-light` | `#FFCC4D` | Gold hover/highlight |
+| `--gold-dark` | `#D4911E` | Gold pressed state |
+| `--gold-muted` | `#A07818` | Subtle gold accents |
+| `--accent` | `#6366F1` | Indigo secondary accent |
 | `--success` | `#22C55E` | Positive/win |
 | `--danger` | `#EF4444` | Negative/loss |
 
-### CSS Utilities
-- `.glass` / `.glass-hover` — Glassmorphism panels with backdrop blur
-- `.gold-shimmer-text` — Animated gold gradient sweep on text
-- `.mesh-bg` — Drifting radial gradient background
-- `.particle` / `.particle-field` — Floating gold particle effect
-- `.animated-border` — Rotating conic-gradient border (premium card)
-- `.typing-cursor` — Blinking gold cursor for auto-type effect
+#### Gold Usage Rules
+- **Gold IS for:** Primary CTA buttons (`btn-gold`), active nav text, achievements, positive numbers, logo
+- **Gold is NOT for:** Card backgrounds, every hover state, tab backgrounds, section headers
+
+#### CSS Utility Classes
+- `.glass-surface` / `.glass-elevated` / `.glass-floating` — 3-tier glassmorphism panels with frosted noise
+- `.glass-interactive` — Hover border glow + lift animation
+- `.glass-shimmer` — Light sweep effect on hover
+- `.btn-gold` — Primary gold gradient CTA button
+- `.btn-glass` — Secondary glass button with blur
+- `.btn-outline` — Tertiary outline button
+- `.input-field` — Glass input with blur and gold focus ring
+- `.gold-shimmer-text` — Animated gold gradient sweep on text (landing page)
+- `.mesh-bg` — Drifting radial gradient background (landing page)
+- `.particle` / `.particle-field` — Floating gold particle effect (landing page)
+- `.animated-border` — Rotating conic-gradient border (landing page)
 
 ### Accessibility
 - `prefers-reduced-motion: reduce` disables all animations and hides particles
@@ -256,6 +295,37 @@ npm start
 ## Updates
 
 See [CHANGELOG.md](./CHANGELOG.md) for full history.
+
+- **2026-01-29** - **Calendar Heatmap Redesign + Recent Trades UX** (Claude Opus 4.5)
+  - Replaced 26-week horizontal GitHub-style heatmap with single-month calendar grid (Mon–Sun, 7 columns) with `<`/`>` month navigation
+  - Two-column layout: calendar (60%) + behavioral insight panel (40%) showing monthly emotion patterns, streaks, best day, instrument focus
+  - Insight panel includes month stats row (trades count, win rate, total R)
+  - Open trades in Recent Trades card now navigate to detail page instead of opening a close modal
+  - Removed broken month header row, unused `QuickCloseModal` references
+
+- **2026-01-29** - **Glass Command Center: Frontend Redesign** (Claude Opus 4.5)
+  - Complete visual overhaul from flat dark cards to Apple-inspired frosted glassmorphism
+  - 3-tier glass elevation system: Surface (16px blur), Elevated (24px blur), Floating (36px blur)
+  - SVG frosted noise texture on all glass panels with `mix-blend-mode: overlay`
+  - Warmer gold palette (#F5A623 replacing #FFB800) with restrained usage rules
+  - Indigo secondary accent (#6366F1) for informational badges and secondary CTAs
+  - `saturate()` filter on all backdrop-filter for Apple-style color amplification
+  - Warm ambient background gradients (gold + indigo radials) with `background-attachment: fixed`
+  - New CSS classes: `.glass-surface`, `.glass-elevated`, `.glass-floating`, `.glass-interactive`, `.glass-shimmer`, `.btn-gold`, `.btn-glass`, `.btn-outline`, `.input-field`, `.skeleton-glass`, `.nav-active`
+  - New components: `Icon.tsx` (Material Symbols wrapper), `GlassModal.tsx` (reusable modal)
+  - Replaced ALL Lucide React icons with Material Symbols Outlined across 30+ files
+  - Swept 70+ files replacing inline `card-bg`/`card-border` with glass utility classes
+  - Removed `lucide-react` dependency entirely from project
+  - Build passes clean with zero Lucide imports and zero card-bg/card-border outside variable definitions
+
+- **2026-01-29 ~02:00-03:30 UTC** - **Strategic Enhancement Plan: 4-Phase Implementation** (Claude Opus 4.5)
+  - **Phase 1**: Interactive TradingView charts in journal (annotation tools, chart state as JSON), pre-trade mindset capture (readiness 1-5 + psychology tags), Psychology analytics tab, emotion flow Sankey diagram
+  - **Phase 2**: Public teacher directory + profiles (`/teachers`, `/teachers/[slug]`), course catalog + detail (`/courses`, `/courses/[id]`), ratings & reviews system, track record verification badge, teacher profile editing
+  - **Phase 3**: Threaded discussions (3 levels deep), upvote/downvote system, post categories + sort + search, trade review post type with privacy-controlled journal sharing, "Share to Community" button
+  - **Phase 4**: Teacher student analytics dashboard (class-wide trends, alerts), individual student deep-dive (6 tabs), automated progress reports (`/api/reports/generate`), student reports page (`/journal/reports`)
+  - **Code review fixes**: N+1 queries, auth checks, annotation duplication, classroom isolation, FK constraints, vote validation, delete ownership, shared utilities
+  - **New tables**: `topic_reviews`, `community_votes`, `progress_reports`
+  - **6 new migrations**, ~40 new files, ~15 modified files
 
 - **2026-01-28** - **Landing Page Redesign: "Liquid Gold"** (Claude Opus 4.5)
   - Complete rewrite of `page.tsx` as `"use client"` with Framer Motion animations

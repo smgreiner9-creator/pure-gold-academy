@@ -58,7 +58,7 @@ export function ForexFactoryNews() {
       case 'holiday':
         return 'bg-blue-500'
       default:
-        return 'bg-[var(--card-border)]'
+        return 'bg-[var(--glass-surface-border)]'
     }
   }
 
@@ -150,7 +150,7 @@ export function ForexFactoryNews() {
 
   if (error && events.length === 0) {
     return (
-      <div className="p-6 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+      <div className="p-6 rounded-xl glass-surface text-center">
         <span className="material-symbols-outlined text-3xl text-[var(--danger)] mb-2 block">error</span>
         <p className="text-sm text-[var(--muted)]">{error}</p>
         <button
@@ -213,7 +213,7 @@ export function ForexFactoryNews() {
               {dateEvents.map((event, idx) => (
                 <div
                   key={`${dateKey}-${idx}`}
-                  className="p-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/30 transition-all"
+                  className="p-3 rounded-xl glass-surface hover:border-[var(--gold)]/30 transition-all"
                 >
                   <div className="flex items-start gap-3">
                     {/* Impact Indicator */}
@@ -232,7 +232,7 @@ export function ForexFactoryNews() {
                           <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold ${
                             event.impact === 'High' ? 'bg-[var(--danger)]/20 text-[var(--danger)]' :
                             event.impact === 'Medium' ? 'bg-[var(--warning)]/20 text-[var(--warning)]' :
-                            'bg-white/5 text-[var(--muted)]'
+                            'bg-black/5 text-[var(--muted)]'
                           }`}>
                             {event.impact}
                           </span>
@@ -247,12 +247,12 @@ export function ForexFactoryNews() {
                         <div className="flex items-center gap-3 mt-1.5 text-[10px]">
                           {event.forecast && (
                             <span className="text-[var(--muted)]">
-                              Forecast: <span className="text-white font-medium">{event.forecast}</span>
+                              Forecast: <span className="text-[var(--foreground)] font-medium">{event.forecast}</span>
                             </span>
                           )}
                           {event.previous && (
                             <span className="text-[var(--muted)]">
-                              Prev: <span className="text-white/60">{event.previous}</span>
+                              Prev: <span className="text-[var(--foreground)]/60">{event.previous}</span>
                             </span>
                           )}
                         </div>
@@ -267,14 +267,14 @@ export function ForexFactoryNews() {
       </div>
 
       {events.length === 0 && (
-        <div className="p-6 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-6 rounded-xl glass-surface text-center">
           <span className="material-symbols-outlined text-3xl text-[var(--muted)] mb-2 block">event_busy</span>
           <p className="text-sm text-[var(--muted)]">No upcoming events</p>
         </div>
       )}
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--card-border)]">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--glass-surface-border)]">
         <span className="text-[10px] text-[var(--muted)] uppercase tracking-wider">Impact:</span>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-[var(--danger)]" />

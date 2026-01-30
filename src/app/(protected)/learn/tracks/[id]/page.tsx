@@ -6,17 +6,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, Button } from '@/components/ui'
-import {
-  ArrowLeft,
-  BookOpen,
-  Clock,
-  ChevronDown,
-  ChevronRight,
-  CheckCircle,
-  Lock,
-  Play,
-  Layers
-} from 'lucide-react'
 import type {
   CurriculumTrack,
   TrackModule,
@@ -213,11 +202,11 @@ export default function TrackDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-[var(--card-border)] rounded animate-pulse" />
-        <div className="h-32 bg-[var(--card-bg)] rounded-2xl animate-pulse" />
+        <div className="h-8 w-48 bg-[var(--glass-surface-border)] rounded animate-pulse" />
+        <div className="h-32 glass-surface rounded-2xl animate-pulse" />
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-[var(--card-bg)] rounded-2xl animate-pulse" />
+            <div key={i} className="h-20 glass-surface rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -227,7 +216,7 @@ export default function TrackDetailPage() {
   if (!track) {
     return (
       <div className="text-center py-12">
-        <Layers size={48} className="mx-auto mb-4 text-[var(--muted)]" />
+        <span className="material-symbols-outlined text-5xl mx-auto mb-4 text-[var(--muted)]">layers</span>
         <h2 className="text-xl font-semibold mb-2">Track Not Found</h2>
         <p className="text-[var(--muted)] mb-4">This learning track doesn&apos;t exist or you don&apos;t have access.</p>
         <Link href="/learn">
@@ -241,7 +230,7 @@ export default function TrackDetailPage() {
     <div className="space-y-6">
       {/* Back Navigation */}
       <Link href="/learn" className="inline-flex items-center gap-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
-        <ArrowLeft size={18} />
+        <span className="material-symbols-outlined text-lg">arrow_back</span>
         <span>Back to Learn</span>
       </Link>
 
@@ -254,7 +243,7 @@ export default function TrackDetailPage() {
               {track.difficulty_level}
             </span>
             {trackProgress?.completed_at && (
-              <CheckCircle size={20} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-xl text-[var(--success)]">check_circle</span>
             )}
           </div>
           {track.description && (
@@ -262,16 +251,16 @@ export default function TrackDetailPage() {
           )}
           <div className="flex items-center gap-4 text-sm text-[var(--muted)]">
             <span className="flex items-center gap-1">
-              <BookOpen size={16} />
+              <span className="material-symbols-outlined text-base">auto_stories</span>
               {modules.length} {modules.length === 1 ? 'module' : 'modules'}
             </span>
             <span className="flex items-center gap-1">
-              <Layers size={16} />
+              <span className="material-symbols-outlined text-base">layers</span>
               {totalContent} {totalContent === 1 ? 'lesson' : 'lessons'}
             </span>
             {track.estimated_hours && (
               <span className="flex items-center gap-1">
-                <Clock size={16} />
+                <span className="material-symbols-outlined text-base">schedule</span>
                 ~{track.estimated_hours} hours
               </span>
             )}
@@ -297,13 +286,13 @@ export default function TrackDetailPage() {
           {nextContent ? (
             <Link href={`/learn/${nextContent.content.id}`}>
               <Button className="w-full">
-                <Play size={16} />
+                <span className="material-symbols-outlined text-base">play_arrow</span>
                 {completedContent === 0 ? 'Start Learning' : 'Continue Learning'}
               </Button>
             </Link>
           ) : totalContent > 0 ? (
             <div className="flex items-center justify-center gap-2 py-2 text-[var(--success)]">
-              <CheckCircle size={18} />
+              <span className="material-symbols-outlined text-lg">check_circle</span>
               <span className="font-medium">Track Completed!</span>
             </div>
           ) : (
@@ -318,7 +307,7 @@ export default function TrackDetailPage() {
 
         {modules.length === 0 ? (
           <Card className="text-center py-8">
-            <BookOpen size={40} className="mx-auto mb-3 text-[var(--muted)]" />
+            <span className="material-symbols-outlined text-4xl mx-auto mb-3 text-[var(--muted)]">auto_stories</span>
             <p className="text-[var(--muted)]">No modules have been added to this track yet.</p>
           </Card>
         ) : (
@@ -341,7 +330,7 @@ export default function TrackDetailPage() {
                       ? 'bg-[var(--success)]/10 text-[var(--success)]'
                       : 'bg-[var(--gold)]/10 text-[var(--gold)]'
                   }`}>
-                    {isComplete ? <CheckCircle size={18} /> : index + 1}
+                    {isComplete ? <span className="material-symbols-outlined text-lg">check_circle</span> : index + 1}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -358,15 +347,15 @@ export default function TrackDetailPage() {
                   </div>
 
                   {isExpanded ? (
-                    <ChevronDown size={20} className="text-[var(--muted)]" />
+                    <span className="material-symbols-outlined text-xl text-[var(--muted)]">expand_more</span>
                   ) : (
-                    <ChevronRight size={20} className="text-[var(--muted)]" />
+                    <span className="material-symbols-outlined text-xl text-[var(--muted)]">chevron_right</span>
                   )}
                 </button>
 
                 {/* Module Content */}
                 {isExpanded && module.content.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-[var(--card-border)] space-y-3">
+                  <div className="mt-4 pt-4 border-t border-[var(--glass-surface-border)] space-y-3">
                     {module.content.map((content, contentIndex) => {
                       const progress = contentProgress[content.id]
                       const isContentComplete = progress?.completed
@@ -385,12 +374,12 @@ export default function TrackDetailPage() {
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${
                             isContentComplete
                               ? 'bg-[var(--success)]/10 text-[var(--success)]'
-                              : 'bg-white/5 text-[var(--muted)]'
+                              : 'bg-black/5 text-[var(--muted)]'
                           }`}>
                             {isLocked ? (
-                              <Lock size={14} />
+                              <span className="material-symbols-outlined text-sm">lock</span>
                             ) : isContentComplete ? (
-                              <CheckCircle size={14} />
+                              <span className="material-symbols-outlined text-sm">check_circle</span>
                             ) : (
                               contentIndex + 1
                             )}
@@ -417,7 +406,7 @@ export default function TrackDetailPage() {
                             </div>
                           )}
 
-                          <ChevronRight size={16} className="text-[var(--muted)]" />
+                          <span className="material-symbols-outlined text-base text-[var(--muted)]">chevron_right</span>
                         </Link>
                       )
                     })}
@@ -425,7 +414,7 @@ export default function TrackDetailPage() {
                 )}
 
                 {isExpanded && module.content.length === 0 && (
-                  <div className="mt-4 pt-4 border-t border-[var(--card-border)] text-center py-4">
+                  <div className="mt-4 pt-4 border-t border-[var(--glass-surface-border)] text-center py-4">
                     <p className="text-sm text-[var(--muted)]">No lessons in this module yet.</p>
                   </div>
                 )}

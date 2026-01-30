@@ -18,6 +18,17 @@ export type LiveSessionStatus = 'scheduled' | 'live' | 'ended' | 'cancelled'
 export type PricingType = 'free' | 'paid'
 export type LessonContentType = 'video' | 'chart' | 'pdf' | 'text'
 export type LessonStatus = 'draft' | 'published'
+export type JournalEntryStatus = 'draft' | 'published'
+
+export interface OnboardingState {
+  trades_logged: number
+  first_trade_at: string | null
+  insights_unlocked: boolean
+  community_unlocked: boolean
+  completed_at: string | null
+  instruments?: string[]
+  trading_rules?: string[]
+}
 export type ClassroomSubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'past_due'
 export type PurchaseStatus = 'pending' | 'completed' | 'refunded' | 'failed'
 
@@ -35,6 +46,10 @@ export interface Database {
           subscription_tier: SubscriptionTier
           classroom_id: string | null
           current_track_id: string | null
+          bio: string | null
+          social_links: Json | null
+          slug: string | null
+          onboarding_state: Json | null
           created_at: string
           updated_at: string
         }
@@ -48,6 +63,10 @@ export interface Database {
           subscription_tier?: SubscriptionTier
           classroom_id?: string | null
           current_track_id?: string | null
+          bio?: string | null
+          social_links?: Json | null
+          slug?: string | null
+          onboarding_state?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -61,6 +80,10 @@ export interface Database {
           subscription_tier?: SubscriptionTier
           classroom_id?: string | null
           current_track_id?: string | null
+          bio?: string | null
+          social_links?: Json | null
+          slug?: string | null
+          onboarding_state?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -150,9 +173,13 @@ export interface Database {
           rules_followed: Json
           notes: string | null
           screenshot_urls: string[]
+          chart_data: Json | null
+          pre_trade_mindset: Json | null
           trade_date: string
           entry_time: string | null
           exit_time: string | null
+          status: JournalEntryStatus
+          trade_call_id: string | null
           created_at: string
           updated_at: string
         }
@@ -176,9 +203,13 @@ export interface Database {
           rules_followed?: Json
           notes?: string | null
           screenshot_urls?: string[]
+          chart_data?: Json | null
+          pre_trade_mindset?: Json | null
           trade_date: string
           entry_time?: string | null
           exit_time?: string | null
+          status?: JournalEntryStatus
+          trade_call_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -202,9 +233,13 @@ export interface Database {
           rules_followed?: Json
           notes?: string | null
           screenshot_urls?: string[]
+          chart_data?: Json | null
+          pre_trade_mindset?: Json | null
           trade_date?: string
           entry_time?: string | null
           exit_time?: string | null
+          status?: JournalEntryStatus
+          trade_call_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -332,6 +367,7 @@ export interface Database {
           is_premium: boolean
           is_individually_priced: boolean
           price: number
+          insight_tags: string[]
           created_at: string
           updated_at: string
         }
@@ -351,6 +387,7 @@ export interface Database {
           is_premium?: boolean
           is_individually_priced?: boolean
           price?: number
+          insight_tags?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -370,6 +407,7 @@ export interface Database {
           is_premium?: boolean
           is_individually_priced?: boolean
           price?: number
+          insight_tags?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -412,6 +450,11 @@ export interface Database {
           user_id: string
           title: string
           content: string
+          category: string
+          tags: string[]
+          post_type: string
+          shared_journal_data: Json | null
+          journal_entry_id: string | null
           created_at: string
           updated_at: string
         }
@@ -421,6 +464,11 @@ export interface Database {
           user_id: string
           title: string
           content: string
+          category?: string
+          tags?: string[]
+          post_type?: string
+          shared_journal_data?: Json | null
+          journal_entry_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -430,6 +478,11 @@ export interface Database {
           user_id?: string
           title?: string
           content?: string
+          category?: string
+          tags?: string[]
+          post_type?: string
+          shared_journal_data?: Json | null
+          journal_entry_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -441,6 +494,7 @@ export interface Database {
           post_id: string
           user_id: string
           content: string
+          parent_comment_id: string | null
           created_at: string
         }
         Insert: {
@@ -448,6 +502,7 @@ export interface Database {
           post_id: string
           user_id: string
           content: string
+          parent_comment_id?: string | null
           created_at?: string
         }
         Update: {
@@ -455,6 +510,34 @@ export interface Database {
           post_id?: string
           user_id?: string
           content?: string
+          parent_comment_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      community_votes: {
+        Row: {
+          id: string
+          user_id: string
+          post_id: string | null
+          comment_id: string | null
+          vote_type: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          post_id?: string | null
+          comment_id?: string | null
+          vote_type: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          post_id?: string | null
+          comment_id?: string | null
+          vote_type?: number
           created_at?: string
         }
         Relationships: []
@@ -1017,6 +1100,99 @@ export interface Database {
         }
         Relationships: []
       }
+      topic_reviews: {
+        Row: {
+          id: string
+          student_id: string
+          classroom_id: string
+          rating: number
+          review_text: string | null
+          teacher_response: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          classroom_id: string
+          rating: number
+          review_text?: string | null
+          teacher_response?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          classroom_id?: string
+          rating?: number
+          review_text?: string | null
+          teacher_response?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      progress_reports: {
+        Row: {
+          id: string
+          user_id: string
+          classroom_id: string
+          period_start: string
+          period_end: string
+          report_data: Json
+          teacher_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          classroom_id: string
+          period_start: string
+          period_end: string
+          report_data?: Json
+          teacher_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          classroom_id?: string
+          period_start?: string
+          period_end?: string
+          report_data?: Json
+          teacher_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      weekly_digests: {
+        Row: {
+          id: string
+          user_id: string
+          week_start: string
+          week_end: string
+          digest_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          week_start: string
+          week_end: string
+          digest_data: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          week_start?: string
+          week_end?: string
+          digest_data?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1055,6 +1231,7 @@ export type LearnContent = Database['public']['Tables']['learn_content']['Row']
 export type LearnProgress = Database['public']['Tables']['learn_progress']['Row']
 export type CommunityPost = Database['public']['Tables']['community_posts']['Row']
 export type CommunityComment = Database['public']['Tables']['community_comments']['Row']
+export type CommunityVote = Database['public']['Tables']['community_votes']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type Subscription = Database['public']['Tables']['subscriptions']['Row']
 export type WatchedInstrument = Database['public']['Tables']['watched_instruments']['Row']
@@ -1106,4 +1283,44 @@ export type Topic = Classroom
 // Extended lesson type with topic info
 export type LessonWithTopic = Lesson & {
   classroom?: Classroom
+}
+
+// Topic Reviews
+export type TopicReview = Database['public']['Tables']['topic_reviews']['Row']
+
+// Progress Reports
+export type ProgressReport = Database['public']['Tables']['progress_reports']['Row']
+
+// Report data shape
+export interface RecommendedContent {
+  id: string
+  title: string
+  content_type: ContentType
+}
+
+export interface ProgressReportData {
+  totalTrades: number
+  winRate: number
+  avgRMultiple: number
+  bestTrade: { instrument: string; rMultiple: number; pnl: number } | null
+  worstTrade: { instrument: string; rMultiple: number; pnl: number } | null
+  emotionBreakdown: {
+    before: Record<string, number>
+    during: Record<string, number>
+    after: Record<string, number>
+  }
+  rulesFollowed: { rule: string; count: number; total: number }[]
+  improvementAreas: string[]
+  strengths: string[]
+  streaks: { currentWin: number; currentLoss: number; bestWin: number }
+  comparedToPrevious: { winRateChange: number; avgRChange: number } | null
+  recommendedContent?: RecommendedContent[]
+}
+
+// Extended teacher profile with public data
+export type TeacherPublicProfile = Profile & {
+  classrooms?: Classroom[]
+  review_count?: number
+  avg_rating?: number
+  student_count?: number
 }

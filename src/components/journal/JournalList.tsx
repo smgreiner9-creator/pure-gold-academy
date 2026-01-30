@@ -156,7 +156,7 @@ export function JournalList() {
       case 'breakeven':
         return 'text-[var(--warning)] bg-[var(--warning)]/10'
       default:
-        return 'text-[var(--muted)] bg-white/5'
+        return 'text-[var(--muted)] bg-black/5'
     }
   }
 
@@ -173,12 +173,12 @@ export function JournalList() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="p-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 rounded-2xl glass-surface flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-3">
           <select
             value={filter.outcome}
             onChange={(e) => setFilter(prev => ({ ...prev, outcome: e.target.value }))}
-            className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
+            className="input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
           >
             <option value="">All Outcomes</option>
             <option value="win">Wins</option>
@@ -188,7 +188,7 @@ export function JournalList() {
           <select
             value={filter.dateRange}
             onChange={(e) => setFilter(prev => ({ ...prev, dateRange: e.target.value }))}
-            className="bg-black/40 border border-[var(--card-border)] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
+            className="input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -201,7 +201,7 @@ export function JournalList() {
         <button
           onClick={handleExport}
           disabled={entries.length === 0}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-black/40 text-sm font-medium hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-glass text-sm font-medium hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="material-symbols-outlined text-lg">download</span>
           Export CSV
@@ -210,7 +210,7 @@ export function JournalList() {
 
       {/* Entries List */}
       {entries.length === 0 ? (
-        <div className="p-12 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] text-center">
+        <div className="p-12 rounded-2xl glass-surface text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--gold)]/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-3xl text-[var(--gold)]">edit_note</span>
           </div>
@@ -229,7 +229,7 @@ export function JournalList() {
             <Link
               key={entry.id}
               href={`/journal/${entry.id}`}
-              className="block p-4 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] hover:border-[var(--gold)]/50 transition-all"
+              className="block p-4 rounded-xl glass-surface hover:border-[var(--gold)]/50 transition-all"
             >
               {/* Line 1: Outcome, Instrument, Direction, Date, R-Multiple or Close button */}
               <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -273,7 +273,7 @@ export function JournalList() {
                       e.stopPropagation()
                       deleteEntry(entry.id)
                     }}
-                    className="w-7 h-7 rounded-lg border border-[var(--card-border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors"
+                    className="w-7 h-7 rounded-lg border border-[var(--glass-surface-border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-colors"
                   >
                     <span className="material-symbols-outlined text-sm">delete</span>
                   </button>

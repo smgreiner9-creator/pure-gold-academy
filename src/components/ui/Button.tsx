@@ -3,7 +3,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'gold' | 'outline' | 'ghost' | 'danger'
+  variant?: 'gold' | 'glass' | 'outline' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   isLoading?: boolean
 }
@@ -13,16 +13,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
     const variants = {
-      gold: 'bg-[var(--gold)] text-black hover:bg-[var(--gold-light)]',
-      outline: 'bg-transparent border border-[var(--gold)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black',
-      ghost: 'bg-transparent text-[var(--foreground)] hover:bg-[var(--card-bg)]',
+      gold: 'btn-gold',
+      glass: 'btn-glass',
+      outline: 'btn-outline',
+      ghost: 'bg-transparent text-[var(--foreground)] hover:bg-black/5',
       danger: 'bg-[var(--danger)] text-white hover:opacity-90',
     }
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2.5 text-base',
-      lg: 'px-6 py-3 text-lg',
+      sm: 'px-4 py-2 text-sm',
+      md: 'px-5 py-2.5 text-base',
+      lg: 'px-7 py-3.5 text-lg',
     }
 
     return (

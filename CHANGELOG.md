@@ -8,6 +8,126 @@ All notable changes to Pure Gold Academy are documented in this file.
 
 ---
 
+## 2026-01-29 — Calendar Heatmap Redesign + Recent Trades UX
+
+### Changed
+- **Calendar Heatmap** — replaced 26-week horizontal GitHub-style heatmap strip with a **single-month calendar grid** (7-column Mon–Sun layout) and month navigation (`<` / `>` buttons). Two-column layout: calendar (60%) + behavioral insight panel (40%), stacking vertically on mobile.
+- **Behavioral insight panel** — right-side `glass-elevated` card showing the most relevant monthly insight (negative emotion patterns, streaks, best day of week, instrument focus, win rate, or low activity fallback) plus month stats row (trades count, win rate, total R).
+- **Recent Trades close button** — open trades now show a close button (`check_circle` icon) that navigates to the trade detail page (`/journal/[id]`) instead of opening the `QuickCloseModal`. Removed `QuickCloseModal` import, state, and render block from `RecentTrades.tsx`.
+
+### Removed
+- **26-week heatmap grid** — `WEEKS` constant, `gridDates` memo, `monthLabels` memo, and broken `absolute-ish` month header row all removed from `CalendarHeatmap.tsx`
+- **`QuickCloseModal`** reference in `RecentTrades.tsx` — component import and associated state removed
+
+---
+
+## 2026-01-29 — Glass Command Center: Frontend Redesign
+
+### Added
+- **3-tier glass elevation system** — Surface (16px blur), Elevated (24px blur), Floating (36px blur) with CSS utility classes `.glass-surface`, `.glass-elevated`, `.glass-floating`
+- **SVG frosted noise texture** on all glass panels via `::before` pseudo-element with `mix-blend-mode: overlay` — creates Apple-style tactile frosted glass feel
+- **`saturate()` filter** on all `backdrop-filter` declarations (1.2x surface, 1.3x elevated, 1.4x floating) for color amplification through glass
+- **Warm ambient background gradients** — gold radials at 20%/10%/8% opacity + subtle indigo accent gradient, with `background-attachment: fixed` so blur always has color to catch
+- **New CSS utility classes:** `.glass-interactive` (hover glow + lift), `.glass-shimmer` (light sweep), `.btn-gold` (primary CTA), `.btn-glass` (secondary), `.btn-outline` (tertiary), `.input-field` (glass input with focus ring), `.skeleton-glass` (loading shimmer), `.nav-active` (navigation highlight)
+- **`Icon.tsx` component** — Material Symbols wrapper with size scale (sm/md/lg/xl)
+- **`GlassModal.tsx` component** — Reusable modal with `glass-floating` tier, backdrop blur, AnimatePresence, Escape handler
+- **Indigo secondary accent** (`--accent: #6366F1`) for informational badges and secondary CTAs
+- **Gold usage rules** — gold restricted to primary CTAs, active nav text, achievements, positive numbers, and logo only
+
+### Changed
+- **Gold palette warmed** — `--gold` changed from `#FFB800` to `#F5A623`, all gold variants updated
+- **Glass border opacity increased** — Surface 6%→9%, Elevated 10%→13%, Floating 14%→18% for sharper panel edges
+- **Glass backgrounds more translucent** — Surface opacity 0.65→0.55, Elevated 0.72→0.62, Floating 0.80→0.72 to let ambient gradients show through
+- **Body background** — gradient intensity increased from 12%→20% gold opacity, added indigo accent gradient
+- **All Lucide React icons replaced** with Material Symbols Outlined across 30+ component files
+- **70+ files swept** — all inline `bg-[var(--card-bg)] border border-[var(--card-border)]` replaced with glass utility classes
+- **Active pills/tabs** — changed from `bg-[var(--gold)] text-black` to `glass-elevated text-[var(--gold)]`
+- **Inputs** — standardized to `.input-field` class with backdrop blur and gold focus ring
+- **Modals** — standardized to `.glass-floating` tier
+- **Buttons** — cancel/secondary buttons standardized to `.btn-glass`
+- **Card.tsx** — added `tier` prop (`'surface' | 'elevated' | 'floating'`), `interactive` boolean, `shimmer` boolean
+- **Button.tsx** — added `'glass'` variant
+- **Sidebar** — `sidebar-3d` replaced with `glass-surface`, active nav uses glass pill
+- **StatsHeader** — simplified, glass-surface styling
+- **MobileNav** — `mobile-nav-3d` replaced with `glass-surface`, glass-floating menu sheet
+
+### Removed
+- **`lucide-react` dependency** — fully removed from `package.json` and `node_modules`
+- **Old CSS classes** — `.sidebar-3d`, `.mobile-nav-3d`, broad `[class*="border-[var(--card-border)]"]` attribute selectors
+- **Old card system** — inline `bg-[var(--card-bg)]` / `border-[var(--card-border)]` patterns replaced with glass tiers
+
+---
+
+
+## 2026-01-29 ~02:00 UTC — Strategic Enhancement Plan: 4-Phase Implementation
+
+### Added
+
+**Phase 1: TradingView Charts + Psychology Deepening**
+- **TradingView chart widget** in journal entry form — interactive `lightweight-charts` v5 chart with annotation toolbar (horizontal line, trend line, entry, exit, SL, TP, text). Chart state serialized as JSON and saved with entry. Displayed read-only on journal detail page.
+- **Pre-trade mindset capture** — inline readiness slider (5 tappable gold dots) and quick-tag badges (Revenge, FOMO, Confident, Uncertain, Tired) at top of journal form Step 1. Data stored as `pre_trade_mindset JSONB`.
+- **Psychology analytics tab** — new "Psychology" tab in Advanced Analytics showing readiness score impact, mindset tag impact, readiness trend SVG line chart, and combined patterns.
+- **Emotion flow Sankey diagram** — SVG-based Before → During → After emotion transition visualization with cubic bezier paths colored by outcome. Insight cards for worst loss-rate and best win-rate paths.
+- **New files:** `TradingViewChart.tsx`, `ChartAnnotationToolbar.tsx`, `chartUtils.ts`, `MindsetCapture.tsx`, `PsychologyAnalysis.tsx`, `EmotionFlow.tsx`
+- **New dependency:** `lightweight-charts` (TradingView's free charting library)
+- **Migration:** `20260128_phase1a_chart_data.sql`, `20260128_phase1b_mindset.sql`
+
+**Phase 2: Teacher Marketplace Completion**
+- **Public teacher directory** at `/teachers` — server-rendered with SEO metadata, search/filter, teacher cards with avatar, bio, star rating, verification badge, and topic counts.
+- **Public teacher profiles** at `/teachers/[slug]` — bio, social links (Twitter/YouTube/Discord), track record badge (verified win rate from trade call data), classrooms grid, reviews section.
+- **Teacher profile editing** in `/teacher/settings` — bio textarea (500 chars), URL slug with preview, social links inputs, save to Supabase.
+- **Course catalog** at `/courses` — server-rendered public page with client-side filtering (market, price, sort). Course cards with logo, teacher info, lesson count, rating, price badge.
+- **Course detail** at `/courses/[id]` — lesson list with content-type icons, pricing sidebar with CTA, teacher section, student reviews.
+- **Ratings & reviews system** — `ReviewForm` (star selector + text), `ReviewCard` (avatar, stars, teacher response), `/api/reviews` (GET/POST/PATCH with auth and duplicate handling).
+- **Track record verification badge** — displays verified trade call stats (total calls, win rate, avg return) when teacher has 10+ closed calls.
+- **New files:** `TeacherProfileCard.tsx`, `TrackRecordBadge.tsx`, `TeacherDirectoryClient.tsx`, `TeacherProfileClient.tsx`, `CourseCard.tsx`, `CourseFilters.tsx`, `CourseCatalogClient.tsx`, `ReviewCard.tsx`, `ReviewForm.tsx`, `/api/courses/route.ts`, `/api/reviews/route.ts`
+- **New table:** `topic_reviews` with RLS policies
+- **Migration:** `20260128_phase2a_teacher_profiles.sql`
+
+**Phase 3: Community Enhancement**
+- **Threaded discussions** — recursive `ThreadedComment` component (max 3 levels deep) with indentation and left border. Inline reply forms. `parent_comment_id` on `community_comments`.
+- **Voting system** — `VoteButton` component with upvote/downvote arrows, gold/red active states. New `community_votes` table with unique constraints. Optimistic vote updates with rollback.
+- **Post categories & filtering** — `PostFilters` component with category pills (Chart Analysis, Strategy, Psychology, Question, Trade Review, General), sort by Hot/New/Top, search input.
+- **Trade review post type** — share journal entries to community with privacy controls (show P&L, emotions, chart). `TradeReviewPost` component renders trade details with embedded TradingView chart in read-only mode.
+- **"Share to Community" button** on journal detail page — modal with privacy toggles, title, analysis textarea. Creates post with `post_type: 'trade_review'`.
+- **New files:** `ThreadedComment.tsx`, `VoteButton.tsx`, `PostFilters.tsx`, `TradeReviewPost.tsx`, `communityUtils.ts`, `/api/community/trade-review/route.ts`
+- **New table:** `community_votes`
+- **Migrations:** `20260128_phase3a_community.sql`, `20260128_phase3b_trade_reviews.sql`
+
+**Phase 4: Teacher Analytics & Student Insights**
+- **Teacher student analytics dashboard** — expanded `/teacher/students` with overview cards (total students, avg win rate, avg R, active journalers), ClassAnalytics component (SVG win rate trend, R-multiple trend, emotion patterns, rule adherence), StudentAlerts (inactive 7+ days, losing streaks, low rule adherence).
+- **Individual student deep-dive** at `/teacher/students/[id]` — 6 tabs (Overview with equity curve + recent trades, Emotions, Rules, Psychology, Journals, Feedback). Reuses all Phase 1 analytics components.
+- **Automated progress reports** — `/api/reports/generate` (POST to generate, GET to fetch, PATCH for teacher notes). Computes win rate, avg R, streaks, emotion breakdown, rule adherence, strengths/weaknesses, comparison to previous period. Upserts into `progress_reports` table.
+- **Progress report renderer** — `ProgressReport` component with summary cards, strengths (green), improvement areas (amber), emotion breakdown bars, rule adherence progress bars, best/worst trade summaries, editable teacher notes.
+- **Student reports page** at `/journal/reports` — grouped by classroom, expandable report cards with period stats.
+- **New files:** `ClassAnalytics.tsx`, `StudentAlerts.tsx`, `ProgressReport.tsx`, `/api/reports/generate/route.ts`, `/journal/reports/page.tsx`
+- **New table:** `progress_reports` with RLS policies
+- **Migration:** `20260128_phase4b_progress_reports.sql`
+
+### Changed
+- **Journal entry form** — expanded from 3-step to 4-step flow (Step 1: Trade Details + Mindset, Step 2: Chart Your Trade, Step 3: Review, Step 4: Notes)
+- **Journal detail page** — added Trade Chart section (read-only TradingView), Pre-Trade Mindset section (readiness dots + tag pills), Share to Community button
+- **Analytics page** — added Psychology tab with `PsychologyAnalysis` component
+- **Emotion correlation** — replaced placeholder with `EmotionFlow` Sankey diagram in expanded view
+- **Community pages** — complete rewrite with threaded comments, voting, categories, classroom-scoped posts
+- **Teacher students page** — major rewrite into full analytics dashboard with tabs
+- **Teacher student detail** — expanded from basic overview to 6-tab deep-dive
+- **Teacher settings** — added Public Profile editing section (bio, slug, social links)
+- **Database types** — added `chart_data`, `pre_trade_mindset` on journal_entries; `bio`, `social_links`, `slug` on profiles; `category`, `tags`, `post_type`, `shared_journal_data`, `journal_entry_id` on community_posts; `parent_comment_id` on community_comments; new tables: `community_votes`, `topic_reviews`, `progress_reports`
+
+### Fixed (Code Review — 2026-01-29 ~03:30 UTC)
+- **N+1 query** in community feed — replaced per-post comment count queries with single batch fetch
+- **Missing auth check** on teacher student detail — added classroom ownership verification before loading student data
+- **Chart annotation duplication** — track price line refs and remove before re-adding in useEffect
+- **Community tenant isolation** — posts now filtered by user's subscribed classroom IDs
+- **Reports API auth** — added classroom ownership validation in GET handler
+- **FK constraints** — added `REFERENCES ... ON DELETE CASCADE` to `progress_reports` migration
+- **Unsafe vote_type cast** — replaced `as 1 | -1` with runtime validation
+- **Delete ownership** — added `.eq('user_id', profile.id)` defense-in-depth on comment/post deletes
+- **Duplicate utilities** — extracted `formatDate`, `getCategoryColor`, `getCategoryLabel` to `communityUtils.ts`
+
+---
+
 ## 2026-01-28 — Landing Page Redesign: "Liquid Gold"
 
 ### Added

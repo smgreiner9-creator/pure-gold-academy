@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, BellOff, Loader2 } from 'lucide-react'
+
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { Card, Button } from '@/components/ui'
 
@@ -12,7 +12,7 @@ export function PushNotificationSettings() {
       <Card>
         <div className="flex items-start gap-4">
           <div className="p-3 rounded-lg bg-[var(--muted)]/10">
-            <BellOff size={24} className="text-[var(--muted)]" />
+            <span className="material-symbols-outlined text-2xl text-[var(--muted)]">notifications_off</span>
           </div>
           <div>
             <h3 className="font-semibold mb-1">Push Notifications</h3>
@@ -31,9 +31,9 @@ export function PushNotificationSettings() {
         <div className="flex items-start gap-4">
           <div className={`p-3 rounded-lg ${isSubscribed ? 'bg-[var(--success)]/10' : 'bg-[var(--gold)]/10'}`}>
             {isSubscribed ? (
-              <Bell size={24} className="text-[var(--success)]" />
+              <span className="material-symbols-outlined text-2xl text-[var(--success)]">notifications</span>
             ) : (
-              <BellOff size={24} className="text-[var(--gold)]" />
+              <span className="material-symbols-outlined text-2xl text-[var(--gold)]">notifications_off</span>
             )}
           </div>
           <div>
@@ -54,7 +54,7 @@ export function PushNotificationSettings() {
           size="sm"
         >
           {isLoading ? (
-            <Loader2 size={16} className="animate-spin" />
+            <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
           ) : isSubscribed ? (
             'Disable'
           ) : (

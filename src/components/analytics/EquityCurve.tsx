@@ -86,7 +86,7 @@ export function EquityCurve({ entries }: EquityCurveProps) {
 
   if (!chartData || chartData.points.length < 2) {
     return (
-      <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+      <div className="glass-elevated p-6">
         <h3 className="font-bold text-lg mb-4">Equity Curve</h3>
         <p className="text-[var(--muted)] text-center py-8">
           Need at least 2 closed trades with P&L data to show the equity curve.
@@ -112,7 +112,7 @@ export function EquityCurve({ entries }: EquityCurveProps) {
   const zeroY = height - padding - ((0 - chartData.min) / chartData.range) * (height - padding * 2)
 
   return (
-    <div className="p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="glass-elevated p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-bold text-lg">Equity Curve</h3>
         <span className={`text-xl font-bold mono-num ${stats.totalPnl >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
@@ -133,7 +133,7 @@ export function EquityCurve({ entries }: EquityCurveProps) {
             y1={zeroY}
             x2={width - padding}
             y2={zeroY}
-            stroke="var(--card-border)"
+            stroke="var(--glass-surface-border)"
             strokeWidth="0.2"
             strokeDasharray="1,1"
           />
@@ -182,25 +182,25 @@ export function EquityCurve({ entries }: EquityCurveProps) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-3 rounded-xl bg-black/40">
+        <div className="p-3 rounded-xl glass-surface">
           <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">Win Rate</p>
           <p className={`text-lg font-bold mono-num ${stats.winRate >= 50 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
             {stats.winRate.toFixed(1)}%
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-black/40">
+        <div className="p-3 rounded-xl glass-surface">
           <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">Profit Factor</p>
           <p className={`text-lg font-bold mono-num ${stats.profitFactor >= 1 ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
             {stats.profitFactor.toFixed(2)}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-black/40">
+        <div className="p-3 rounded-xl glass-surface">
           <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">Avg Win</p>
           <p className="text-lg font-bold mono-num text-[var(--success)]">
             ${stats.avgWin.toFixed(2)}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-black/40">
+        <div className="p-3 rounded-xl glass-surface">
           <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">Max Drawdown</p>
           <p className="text-lg font-bold mono-num text-[var(--danger)]">
             -${stats.maxDrawdown.toFixed(2)}
