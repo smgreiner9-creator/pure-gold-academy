@@ -53,7 +53,9 @@ export function useAuth() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event)
+        // Skip INITIAL_SESSION — initAuth() already handles initial load
+        // This prevents a duplicate profile fetch on every page load
+        if (event === 'INITIAL_SESSION') return
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           setUser(session?.user ?? null)
@@ -95,8 +97,13 @@ export function useAuth() {
     initializingRef.current = true
 
     const initAuth = async () => {
-      try {
+      // Only show loading spinner if there's no cached user (initial load)
+      // On revalidation, keep existing data visible (background refresh)
+      const hasExistingData = useAuthStore.getState().user !== null
+      if (!hasExistingData) {
         setIsLoading(true)
+      }
+      try {
 
         // First check if there's a session (doesn't throw if missing)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -110,7 +117,6 @@ export function useAuth() {
 
         // If no session, user is not logged in
         if (!session) {
-          console.log('No active session')
           setUser(null)
           setProfile(null)
           return
@@ -118,7 +124,6 @@ export function useAuth() {
 
         // Session exists, get user data
         const authUser = session.user
-        console.log('Auth user:', authUser?.id, authUser?.email)
         setUser(authUser)
 
         if (authUser) {
@@ -131,7 +136,6 @@ export function useAuth() {
           if (profileError) {
             console.error('Profile fetch error:', profileError)
           }
-          console.log('Profile data:', profileData)
           setProfile(profileData)
         }
       } catch (error) {
@@ -139,7 +143,9 @@ export function useAuth() {
         setUser(null)
         setProfile(null)
       } finally {
-        setIsLoading(false)
+        if (!hasExistingData) {
+          setIsLoading(false)
+        }
         markInitialized()
         initializingRef.current = false
       }
