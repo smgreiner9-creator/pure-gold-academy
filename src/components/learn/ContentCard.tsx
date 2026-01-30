@@ -7,11 +7,15 @@ interface ContentCardProps {
   content: LearnContent
   progress?: LearnProgress
   isPremiumUser: boolean
+  hasClassroomAccess?: boolean
 }
 
-export function ContentCard({ content, progress, isPremiumUser }: ContentCardProps) {
-  const isLocked = content.is_premium && !isPremiumUser
+export function ContentCard({ content, progress, isPremiumUser, hasClassroomAccess = true }: ContentCardProps) {
   const isCompleted = progress?.completed
+  const isIndividuallyPriced = content.is_individually_priced && content.price && content.price > 0
+
+  // Content is locked if user doesn't have classroom access and hasn't purchased it
+  const isLocked = !hasClassroomAccess && (content.is_premium || isIndividuallyPriced) && !isPremiumUser
 
   const getIcon = () => {
     switch (content.content_type) {
@@ -44,7 +48,7 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
   }
 
   return (
-    <Link href={isLocked ? '/settings/subscription' : `/learn/${content.id}`}>
+    <Link href={isLocked ? '#' : `/learn/${content.id}`}>
       <div
         className={`glass-surface glass-interactive p-6 h-full ${
           isLocked ? 'opacity-75' : ''
@@ -54,6 +58,8 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
             isCompleted
               ? 'bg-[var(--success)]/10 text-[var(--success)]'
+              : isLocked
+              ? 'bg-[var(--muted)]/10 text-[var(--muted)]'
               : 'bg-[var(--gold)]/10 text-[var(--gold)]'
           }`}>
             <span className="material-symbols-outlined text-2xl">
@@ -62,13 +68,23 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-black/5 text-[var(--muted)]">
                 {getTypeLabel()}
               </span>
-              {content.is_premium && (
+              {isIndividuallyPriced && isLocked && (
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)]">
+                  ${content.price}
+                </span>
+              )}
+              {content.is_premium && !isIndividuallyPriced && (
                 <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)]">
                   Premium
+                </span>
+              )}
+              {isCompleted && (
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-[var(--success)]/10 text-[var(--success)]">
+                  Completed
                 </span>
               )}
             </div>
@@ -76,6 +92,15 @@ export function ContentCard({ content, progress, isPremiumUser }: ContentCardPro
             <h3 className="font-bold mb-1 truncate">{content.title}</h3>
             {content.description && (
               <p className="text-sm text-[var(--muted)] line-clamp-2">{content.description}</p>
+            )}
+
+            {isLocked && (
+              <p className="text-xs text-[var(--muted)] mt-2">
+                {isIndividuallyPriced
+                  ? 'Subscribe to classroom for access, or individual purchases coming soon'
+                  : 'Subscribe to this classroom to access'
+                }
+              </p>
             )}
 
             {progress && !isCompleted && progress.progress_percent > 0 && (

@@ -1,89 +1,93 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function JoinSuccessPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { profile } = useAuth()
-  const [isProcessing, setIsProcessing] = useState(true)
+  const [status, setStatus] = useState<'polling' | 'active' | 'failed'>('polling')
   const [classroomName, setClassroomName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const supabase = useMemo(() => createClient(), [])
+  const abortedRef = useRef(false)
 
   const classroomId = searchParams.get('classroom_id')
   const sessionId = searchParams.get('session_id')
 
-  const processJoin = useCallback(async () => {
-    if (!profile?.id || !classroomId) return
-
-    try {
-      // Get classroom info
-      const { data: classroom } = await supabase
-        .from('classrooms')
-        .select('id, name')
-        .eq('id', classroomId)
-        .single()
-
-      if (!classroom) {
-        setError('Classroom not found')
-        setIsProcessing(false)
-        return
-      }
-
-      setClassroomName(classroom.name)
-
-      // Update student's classroom_id
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ classroom_id: classroomId })
-        .eq('id', profile.id)
-
-      if (updateError) throw updateError
-
-      // Create classroom subscription record
-      // Note: The webhook will also create this, but we create it here for immediate access
-      const { error: subError } = await supabase
-        .from('classroom_subscriptions')
-        .upsert({
-          student_id: profile.id,
-          classroom_id: classroomId,
-          stripe_subscription_id: sessionId || null,
-          status: 'active',
-          current_period_start: new Date().toISOString(),
-        }, {
-          onConflict: 'student_id,classroom_id'
-        })
-
-      if (subError) {
-        console.error('Error creating subscription record:', subError)
-        // Continue anyway - webhook will handle this
-      }
-
-      setIsProcessing(false)
-
-      // Auto-redirect after 3 seconds
-      setTimeout(() => {
-        router.push('/journal')
-      }, 3000)
-    } catch (error) {
-      console.error('Error processing join:', error)
-      setError('Failed to complete enrollment. Please contact support.')
-      setIsProcessing(false)
-    }
-  }, [classroomId, profile?.id, router, sessionId, supabase])
-
   useEffect(() => {
-    if (profile?.id && classroomId) {
-      processJoin()
+    if (!classroomId || !sessionId) {
+      setStatus('failed')
+      setError('Invalid enrollment link. Missing required parameters.')
+      return
     }
-  }, [profile?.id, classroomId, processJoin])
 
-  if (isProcessing) {
+    if (!profile?.id) return
+
+    abortedRef.current = false
+    let pollCount = 0
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    const poll = async () => {
+      if (abortedRef.current) return
+
+      try {
+        const res = await fetch(
+          `/api/stripe/connect/verify-session?session_id=${encodeURIComponent(sessionId)}&classroom_id=${encodeURIComponent(classroomId)}`
+        )
+        if (abortedRef.current) return
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          setStatus('failed')
+          setError(data.error || 'Verification failed')
+          return
+        }
+
+        if (data.status === 'active') {
+          setClassroomName(data.classroom_name)
+          setStatus('active')
+          setTimeout(() => {
+            router.push('/journal')
+          }, 3000)
+          return
+        }
+
+        if (data.status === 'failed') {
+          setStatus('failed')
+          setError(data.error || 'Payment verification failed')
+          return
+        }
+
+        // Still pending — poll again if under limit
+        pollCount++
+        if (pollCount >= 20) {
+          setStatus('failed')
+          setError('Enrollment is taking longer than expected. Your payment was received — please refresh the page or contact support if access is not granted shortly.')
+          return
+        }
+
+        timer = setTimeout(poll, 2000)
+      } catch {
+        if (!abortedRef.current) {
+          setStatus('failed')
+          setError('Network error. Please check your connection and refresh the page.')
+        }
+      }
+    }
+
+    poll()
+
+    return () => {
+      abortedRef.current = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [profile?.id, classroomId, sessionId, router])
+
+  if (status === 'polling') {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
@@ -91,13 +95,13 @@ export default function JoinSuccessPage() {
             <span className="material-symbols-outlined text-3xl text-[var(--gold)] animate-spin">progress_activity</span>
           </div>
           <h1 className="text-xl font-bold mb-2">Processing Your Enrollment</h1>
-          <p className="text-[var(--muted)] text-sm">Please wait while we set up your access...</p>
+          <p className="text-[var(--muted)] text-sm">Confirming your payment and setting up access...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
+  if (status === 'failed') {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">
@@ -106,12 +110,17 @@ export default function JoinSuccessPage() {
           </div>
           <h1 className="text-xl font-bold mb-2">Something Went Wrong</h1>
           <p className="text-[var(--muted)] text-sm mb-6">{error}</p>
-          <Link
-            href="/journal"
-            className="gold-gradient text-black font-bold h-11 px-6 rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
-          >
-            Go to Dashboard
-          </Link>
+          <div className="space-y-3">
+            <Link
+              href="/journal"
+              className="gold-gradient text-black font-bold h-11 px-6 rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all text-sm"
+            >
+              Go to Dashboard
+            </Link>
+            <p className="text-xs text-[var(--muted)]">
+              Need help? Contact support at support@puregold.academy
+            </p>
+          </div>
         </div>
       </div>
     )

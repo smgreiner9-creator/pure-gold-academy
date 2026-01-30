@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { calculatePnl } from '@/lib/pnlCalculator'
 import type { JournalEntry, ProgressReportData, Json } from '@/types/database'
 
 function calculateStreaks(entries: JournalEntry[]): ProgressReportData['streaks'] {
@@ -135,8 +136,24 @@ function generateReportData(
     ? Math.round((rMultiples.reduce((a, b) => a + b, 0) / rMultiples.length) * 100) / 100
     : 0
 
+  // Recalculate P&L for accuracy using pip-based calculator
+  const entriesWithAccuratePnl = entries.map(e => {
+    if (e.entry_price != null && e.exit_price != null && e.position_size != null) {
+      const result = calculatePnl({
+        instrument: e.instrument,
+        direction: e.direction as 'long' | 'short',
+        entryPrice: e.entry_price,
+        exitPrice: e.exit_price,
+        positionSize: e.position_size,
+        stopLoss: e.stop_loss,
+      })
+      return { ...e, pnl: result.pnl, r_multiple: result.rMultiple ?? e.r_multiple }
+    }
+    return e
+  })
+
   // Best and worst trade
-  const withR = entries.filter(e => e.r_multiple !== null)
+  const withR = entriesWithAccuratePnl.filter(e => e.r_multiple !== null)
   const sorted = [...withR].sort((a, b) => (b.r_multiple ?? 0) - (a.r_multiple ?? 0))
   const bestTrade = sorted.length > 0
     ? { instrument: sorted[0].instrument, rMultiple: sorted[0].r_multiple ?? 0, pnl: sorted[0].pnl ?? 0 }
@@ -273,7 +290,7 @@ export async function POST(request: NextRequest) {
     // Calculate period dates
     const now = new Date()
     let periodStart: Date
-    let periodEnd: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const periodEnd: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
     if (period === 'weekly') {
       periodStart = new Date(periodEnd)

@@ -461,87 +461,97 @@ export function CalendarHeatmap() {
         </div>
       </div>
 
-      {/* Day Detail Panel */}
+      {/* Day Detail Popout */}
       <AnimatePresence>
         {selectedDate && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="glass-elevated p-4 border-[var(--gold)]/20">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-bold">
-                  {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </h4>
-                <button
-                  onClick={() => { setSelectedDate(null); setDayEntries([]) }}
-                  className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">close</span>
-                </button>
-              </div>
-
-              {loadingEntries ? (
-                <div className="flex items-center gap-2 py-4 text-[var(--muted)] text-sm">
-                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                  Loading...
-                </div>
-              ) : dayEntries.length === 0 ? (
-                <div className="py-4 text-center">
-                  <p className="text-sm text-[var(--muted)] mb-3">No trades on this day</p>
-                  <Link
-                    href={`/journal/new?date=${selectedDate}`}
-                    className="text-xs text-[var(--gold)] hover:underline"
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 bg-black/40 z-40"
+              onClick={() => { setSelectedDate(null); setDayEntries([]) }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md"
+            >
+              <div className="glass-elevated p-5 rounded-2xl shadow-xl border border-[var(--glass-surface-border)]">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-bold">
+                    {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </h4>
+                  <button
+                    onClick={() => { setSelectedDate(null); setDayEntries([]) }}
+                    className="p-1 rounded-lg hover:bg-black/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
                   >
-                    Log a trade for this day
-                  </Link>
+                    <span className="material-symbols-outlined text-lg">close</span>
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {dayEntries.map((entry) => (
+
+                {loadingEntries ? (
+                  <div className="flex items-center gap-2 py-6 justify-center text-[var(--muted)] text-sm">
+                    <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                    Loading...
+                  </div>
+                ) : dayEntries.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-sm text-[var(--muted)] mb-3">No trades on this day</p>
                     <Link
-                      key={entry.id}
-                      href={`/journal/${entry.id}`}
-                      className="flex items-center justify-between p-3 rounded-xl border border-[var(--glass-surface-border)] hover:border-[var(--gold)]/30 transition-all"
+                      href={`/journal/new?date=${selectedDate}`}
+                      className="text-xs text-[var(--gold)] hover:underline"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          entry.outcome === 'win' ? 'text-[var(--success)] bg-[var(--success)]/10' :
-                          entry.outcome === 'loss' ? 'text-[var(--danger)] bg-[var(--danger)]/10' :
-                          'text-[var(--muted)] bg-black/5'
-                        }`}>
-                          {entry.outcome || 'Open'}
-                        </span>
-                        <span className="text-sm font-bold">{entry.instrument}</span>
-                        <span className={`text-xs font-semibold ${
-                          entry.direction === 'long' ? 'text-[var(--success)]' : 'text-[var(--danger)]'
-                        }`}>
-                          {entry.direction.toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {entry.r_multiple !== null && (
-                          <span className={`mono-num text-sm font-bold ${
-                            entry.r_multiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
-                          }`}>
-                            {entry.r_multiple >= 0 ? '+' : ''}{entry.r_multiple.toFixed(1)}R
-                          </span>
-                        )}
-                        <span className="material-symbols-outlined text-[var(--muted)] text-sm">chevron_right</span>
-                      </div>
+                      Log a trade for this day
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
+                    {dayEntries.map((entry) => (
+                      <Link
+                        key={entry.id}
+                        href={entry.outcome ? `/journal/${entry.id}` : `/journal/${entry.id}/edit`}
+                        className="flex items-center justify-between p-3 rounded-xl border border-[var(--glass-surface-border)] hover:border-[var(--gold)]/30 transition-all"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            entry.outcome === 'win' ? 'text-[var(--success)] bg-[var(--success)]/10' :
+                            entry.outcome === 'loss' ? 'text-[var(--danger)] bg-[var(--danger)]/10' :
+                            'text-[var(--muted)] bg-black/5'
+                          }`}>
+                            {entry.outcome || 'Open'}
+                          </span>
+                          <span className="text-sm font-bold">{entry.instrument}</span>
+                          <span className={`text-xs font-semibold ${
+                            entry.direction === 'long' ? 'text-[var(--success)]' : 'text-[var(--danger)]'
+                          }`}>
+                            {entry.direction.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {entry.r_multiple !== null && (
+                            <span className={`mono-num text-sm font-bold ${
+                              entry.r_multiple >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
+                            }`}>
+                              {entry.r_multiple >= 0 ? '+' : ''}{entry.r_multiple.toFixed(1)}R
+                            </span>
+                          )}
+                          <span className="material-symbols-outlined text-[var(--muted)] text-sm">chevron_right</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

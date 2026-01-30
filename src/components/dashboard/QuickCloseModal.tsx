@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { calculatePnl } from '@/lib/pnlCalculator'
 import type { TradeDirection, TradeOutcome } from '@/types/database'
 
 interface QuickCloseModalProps {
@@ -66,25 +67,16 @@ export function QuickCloseModal({ isOpen, onClose, trade }: QuickCloseModalProps
     const exit = parseFloat(exitPrice)
     if (isNaN(exit)) return { rMultiple: null, pnl: null }
 
-    let rMultiple: number | null = null
-    let pnl: number | null = null
+    const result = calculatePnl({
+      instrument: trade.instrument,
+      direction: trade.direction,
+      entryPrice: trade.entry_price,
+      exitPrice: exit,
+      positionSize: trade.position_size,
+      stopLoss: trade.stop_loss,
+    })
 
-    // R-multiple calculation (if stop loss exists and differs from entry)
-    if (trade.stop_loss !== null && Math.abs(trade.stop_loss - trade.entry_price) > 0.0001) {
-      const risk = Math.abs(trade.entry_price - trade.stop_loss)
-      const reward = trade.direction === 'long'
-        ? exit - trade.entry_price
-        : trade.entry_price - exit
-      rMultiple = parseFloat((reward / risk).toFixed(2))
-    }
-
-    // P&L calculation
-    const priceDiff = trade.direction === 'long'
-      ? exit - trade.entry_price
-      : trade.entry_price - exit
-    pnl = parseFloat((priceDiff * trade.position_size * 100).toFixed(2))
-
-    return { rMultiple, pnl }
+    return { rMultiple: result.rMultiple, pnl: result.pnl }
   }, [exitPrice, trade])
 
   // Update outcome when detected (unless user is overriding)

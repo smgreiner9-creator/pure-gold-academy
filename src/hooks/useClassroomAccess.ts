@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from './useAuth'
+import { useActiveClassroomStore } from '@/store/activeClassroom'
 import type { ClassroomSubscription, ClassroomPricing } from '@/types/database'
 
 interface ClassroomAccessState {
@@ -25,6 +26,49 @@ export function useClassroomAccess(classroomId: string | null) {
     error: null,
   })
   const supabase = useMemo(() => createClient(), [])
+
+  const {
+    activeClassroomId,
+    subscribedClassrooms,
+    setActiveClassroom,
+    setSubscribedClassrooms,
+  } = useActiveClassroomStore()
+
+  // Load all subscriptions into the store
+  const loadSubscriptions = useCallback(async () => {
+    if (!profile?.id) return
+
+    try {
+      const { data: subs } = await supabase
+        .from('classroom_subscriptions')
+        .select('classroom_id, classrooms(id, name)')
+        .eq('student_id', profile.id)
+        .eq('status', 'active')
+
+      if (subs && subs.length > 0) {
+        const classrooms = subs.map(s => {
+          const classroom = s.classrooms as unknown as { id: string; name: string } | null
+          return {
+            id: s.classroom_id,
+            name: classroom?.name || 'Classroom',
+          }
+        })
+        setSubscribedClassrooms(classrooms)
+
+        // Auto-select: prefer persisted, then profile.classroom_id, then first subscription
+        if (!activeClassroomId || !classrooms.find(c => c.id === activeClassroomId)) {
+          const preferred = profile.classroom_id && classrooms.find(c => c.id === profile.classroom_id)
+            ? profile.classroom_id
+            : classrooms[0].id
+          setActiveClassroom(preferred)
+        }
+      } else {
+        setSubscribedClassrooms([])
+      }
+    } catch (error) {
+      console.error('Error loading subscriptions:', error)
+    }
+  }, [profile, supabase, activeClassroomId, setActiveClassroom, setSubscribedClassrooms])
 
   const checkAccess = useCallback(async () => {
     if (!profile?.id || !classroomId) return
@@ -82,18 +126,29 @@ export function useClassroomAccess(classroomId: string | null) {
   }, [profile, classroomId, supabase])
 
   useEffect(() => {
+    if (profile?.id) {
+      queueMicrotask(loadSubscriptions)
+    }
+  }, [profile?.id, loadSubscriptions])
+
+  useEffect(() => {
     if (profile?.id && classroomId) {
-      // Use queueMicrotask to defer execution and satisfy React 19 compiler
       queueMicrotask(checkAccess)
     }
   }, [profile, classroomId, checkAccess])
 
-  // Compute effective loading state - if we don't have required data, we're not loading
   const effectiveLoading = !!(profile?.id && classroomId) && state.isLoading
 
   return {
     ...state,
     isLoading: effectiveLoading,
-    refresh: checkAccess,
+    activeClassroomId,
+    subscribedClassrooms,
+    setActiveClassroom,
+    hasClassroom: subscribedClassrooms.length > 0,
+    refresh: () => {
+      loadSubscriptions()
+      checkAccess()
+    },
   }
 }

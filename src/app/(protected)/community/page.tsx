@@ -8,6 +8,7 @@ import PostFilters, { CATEGORIES } from '@/components/community/PostFilters'
 import VoteButton from '@/components/community/VoteButton'
 import { formatDate, getCategoryColor, getCategoryLabel } from '@/lib/communityUtils'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { useActiveClassroomStore } from '@/store/activeClassroom'
 import type { CommunityPost, Profile } from '@/types/database'
 
 type PostWithMeta = CommunityPost & {
@@ -19,15 +20,24 @@ type PostWithMeta = CommunityPost & {
 
 export default function CommunityPage() {
   const { profile } = useAuth()
+  const { activeClassroomId, subscribedClassrooms } = useActiveClassroomStore()
   const [posts, setPosts] = useState<PostWithMeta[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showNewPostModal, setShowNewPostModal] = useState(false)
   const [newPost, setNewPost] = useState({ title: '', content: '', category: 'general' })
+  const [postClassroomId, setPostClassroomId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [activeCategory, setActiveCategory] = useState('all')
   const [activeSort, setActiveSort] = useState('hot')
   const [searchQuery, setSearchQuery] = useState('')
   const supabase = useMemo(() => createClient(), [])
+
+  // Default post classroom to active classroom
+  useEffect(() => {
+    if (activeClassroomId && !postClassroomId) {
+      setPostClassroomId(activeClassroomId)
+    }
+  }, [activeClassroomId, postClassroomId])
 
   const loadPosts = useCallback(async () => {
     if (!profile?.id) return
@@ -130,7 +140,7 @@ export default function CommunityPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [profile?.id, supabase])
+  }, [profile?.id, profile?.classroom_id, supabase])
 
   useEffect(() => {
     if (profile?.id) {
@@ -198,7 +208,8 @@ export default function CommunityPage() {
   )
 
   const createPost = async () => {
-    if (!profile?.id || !profile?.classroom_id || !newPost.title.trim() || !newPost.content.trim()) return
+    const targetClassroomId = postClassroomId || activeClassroomId || profile?.classroom_id
+    if (!profile?.id || !targetClassroomId || !newPost.title.trim() || !newPost.content.trim()) return
 
     const signalPatterns = /buy now|sell now|entry:|tp:|sl:|take profit:|stop loss:|signal|🚀.*buy|📉.*sell/i
     if (signalPatterns.test(newPost.content) || signalPatterns.test(newPost.title)) {
@@ -211,7 +222,7 @@ export default function CommunityPage() {
       const { data, error } = await supabase
         .from('community_posts')
         .insert({
-          classroom_id: profile.classroom_id,
+          classroom_id: targetClassroomId,
           user_id: profile.id,
           title: newPost.title.trim(),
           content: newPost.content.trim(),
@@ -292,7 +303,7 @@ export default function CommunityPage() {
     )
   }
 
-  const canPost = !!profile?.classroom_id
+  const canPost = subscribedClassrooms.length > 0 || !!profile?.classroom_id
 
   return (
     <>
@@ -445,6 +456,24 @@ export default function CommunityPage() {
               </button>
             </div>
             <div className="space-y-4">
+              {/* Classroom picker (only when user has 2+ classrooms) */}
+              {subscribedClassrooms.length >= 2 && (
+                <div>
+                  <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
+                    Post to Classroom
+                  </label>
+                  <select
+                    value={postClassroomId || ''}
+                    onChange={(e) => setPostClassroomId(e.target.value)}
+                    className="input-field w-full text-sm rounded-lg"
+                  >
+                    {subscribedClassrooms.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2 block">
                   Category

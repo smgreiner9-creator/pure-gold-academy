@@ -45,10 +45,27 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Students see trade calls from their enrolled classroom
-      if (!profile.classroom_id) {
+      const studentClassroomId = classroomId || profile.classroom_id
+      if (!studentClassroomId) {
         return NextResponse.json({ trade_calls: [], total: 0 })
       }
-      query = query.eq('classroom_id', profile.classroom_id)
+
+      // If a specific classroom_id was requested, validate the student has access
+      if (classroomId && classroomId !== profile.classroom_id) {
+        const { data: sub } = await supabase
+          .from('classroom_subscriptions')
+          .select('id')
+          .eq('student_id', profile.id)
+          .eq('classroom_id', classroomId)
+          .eq('status', 'active')
+          .single()
+
+        if (!sub) {
+          return NextResponse.json({ trade_calls: [], total: 0 })
+        }
+      }
+
+      query = query.eq('classroom_id', studentClassroomId)
     }
 
     if (status) {
@@ -207,7 +224,8 @@ export async function PATCH(request: NextRequest) {
 
     // Whitelist allowed update fields to prevent arbitrary column updates
     const allowedFields = [
-      'status', 'result_pips', 'close_price', 'analysis_text', 'chart_url',
+      'status', 'result_pips', 'actual_exit_price', 'close_notes', 'result_percent',
+      'analysis_text', 'chart_url',
       'entry_price', 'stop_loss', 'take_profit_1', 'take_profit_2', 'take_profit_3',
       'timeframe', 'instrument', 'direction', 'risk_reward_ratio',
     ]
@@ -218,7 +236,7 @@ export async function PATCH(request: NextRequest) {
     // Verify teacher owns this trade call
     const { data: existingCall } = await supabase
       .from('trade_calls')
-      .select('id, teacher_id')
+      .select('id, teacher_id, entry_price, stop_loss, direction')
       .eq('id', id)
       .eq('teacher_id', profile.id)
       .single()
@@ -227,9 +245,32 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Trade call not found or unauthorized' }, { status: 404 })
     }
 
-    // If closing, add closed_at timestamp
+    // If closing, add closed_at timestamp and compute metrics
     if (updates.status && updates.status !== 'active') {
       updates.closed_at = new Date().toISOString()
+
+      const actualExit = updates.actual_exit_price as number | undefined
+      if (actualExit != null && existingCall.entry_price != null) {
+        const entryPrice = existingCall.entry_price as number
+        const direction = existingCall.direction as string
+        const priceDiff = direction === 'long'
+          ? actualExit - entryPrice
+          : entryPrice - actualExit
+
+        // Compute result_pips if not already provided
+        if (updates.result_pips == null) {
+          updates.result_pips = parseFloat(priceDiff.toFixed(5))
+        }
+
+        // Compute result_percent as R-multiple percentage
+        const stopLoss = existingCall.stop_loss as number | null
+        if (stopLoss != null && updates.result_percent == null) {
+          const risk = Math.abs(entryPrice - stopLoss)
+          if (risk > 0) {
+            updates.result_percent = parseFloat(((priceDiff / risk) * 100).toFixed(2))
+          }
+        }
+      }
     }
 
     const { data: updatedCall, error: updateError } = await supabase

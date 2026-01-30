@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import type { OnboardingState } from '@/types/database'
+import { PROGRESSIVE_LEVELS } from '@/lib/progressiveLevels'
 
 interface ProgressiveGateProps {
   onboardingState: OnboardingState | null
-  requiredTrades: number
+  requiredTrades?: number
+  level?: number
   featureLabel: string
   children: React.ReactNode
 }
@@ -20,18 +22,31 @@ const DEFAULT_STATE: OnboardingState = {
 
 export function ProgressiveGate({
   onboardingState,
-  requiredTrades,
+  requiredTrades = 0,
+  level,
   featureLabel,
   children,
 }: ProgressiveGateProps) {
   const state = onboardingState ?? DEFAULT_STATE
   const tradesLogged = state.trades_logged
 
-  if (tradesLogged >= requiredTrades) {
+  // Determine required trades from level or use the fallback prop
+  let actualRequiredTrades = requiredTrades
+  let levelTitle: string | null = null
+
+  if (level !== undefined) {
+    const levelData = PROGRESSIVE_LEVELS.find((l) => l.level === level)
+    if (levelData) {
+      actualRequiredTrades = levelData.trades
+      levelTitle = levelData.title
+    }
+  }
+
+  if (tradesLogged >= actualRequiredTrades) {
     return <>{children}</>
   }
 
-  const remaining = requiredTrades - tradesLogged
+  const remaining = actualRequiredTrades - tradesLogged
 
   return (
     <div className="relative">
@@ -47,13 +62,18 @@ export function ProgressiveGate({
             <span className="material-symbols-outlined text-2xl text-[var(--gold)]">lock</span>
           </div>
           <h3 className="text-sm font-bold mb-1">{featureLabel}</h3>
+          {levelTitle && (
+            <p className="text-xs text-[var(--gold)] mb-1">
+              Unlocks at Level {level} — {levelTitle}
+            </p>
+          )}
           <p className="text-xs text-[var(--muted)] mb-4">
             Log {remaining} more trade{remaining !== 1 ? 's' : ''} to unlock this feature
           </p>
           <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden mb-4">
             <div
               className="h-full gold-gradient rounded-full transition-all"
-              style={{ width: `${Math.min((tradesLogged / requiredTrades) * 100, 100)}%` }}
+              style={{ width: `${Math.min((tradesLogged / actualRequiredTrades) * 100, 100)}%` }}
             />
           </div>
           <Link
@@ -75,11 +95,23 @@ export function ProgressiveGate({
  */
 export function ProgressiveGateInline({
   onboardingState,
-  requiredTrades,
+  requiredTrades = 0,
+  level,
   children,
 }: Omit<ProgressiveGateProps, 'featureLabel'>) {
   const state = onboardingState ?? DEFAULT_STATE
-  if (state.trades_logged >= requiredTrades) {
+
+  // Determine required trades from level or use the fallback prop
+  let actualRequiredTrades = requiredTrades
+
+  if (level !== undefined) {
+    const levelData = PROGRESSIVE_LEVELS.find((l) => l.level === level)
+    if (levelData) {
+      actualRequiredTrades = levelData.trades
+    }
+  }
+
+  if (state.trades_logged >= actualRequiredTrades) {
     return <>{children}</>
   }
   return null

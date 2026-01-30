@@ -68,7 +68,9 @@ src/
 │   ├── layout/               # Sidebar, Header, MobileNav, FAB
 │   ├── dashboard/            # 15 dashboard widgets
 │   ├── journal/              # Journal forms & display
+│   │   └── steps/            # SteppedEntryForm steps (TradeStep, ReflectionStep, DeepDiveStep)
 │   ├── analytics/            # Charts (equity curve, emotions, etc.)
+│   ├── onboarding/           # UnlockModal.tsx, LevelProgressBar.tsx, ProgressiveGate.tsx
 │   ├── learn/                # Content cards & viewer
 │   └── settings/             # Settings components
 │
@@ -77,12 +79,21 @@ src/
 │   ├── useContentAccess.ts   # Content access control
 │   ├── useJournalUsage.ts    # Journal quota tracking
 │   ├── useTeacherStripe.ts   # Teacher Stripe integration
-│   └── ...                   # 8 hooks total
+│   ├── useProgressiveLevel.ts # Progressive unlock level hook
+│   ├── useConsistencyScore.ts # Consistency score hook
+│   ├── useWeeklyFocus.ts     # Weekly review focus hook
+│   ├── useTradeFilters.ts    # Trade filtering hook
+│   └── ...                   # 12+ hooks total
 │
 ├── lib/
 │   ├── supabase/             # Supabase clients (browser, server, middleware)
 │   ├── constants.ts          # App constants (limits, pricing)
-│   └── streakUtils.ts        # Streak calculation logic
+│   ├── streakUtils.ts        # Streak calculation logic
+│   ├── progressiveLevels.ts  # Progressive unlock level definitions (6 tiers)
+│   ├── consistencyScore.ts   # Consistency score calculation (0-100)
+│   ├── nudgeEngine.ts        # Pre-trade nudge/warning engine
+│   ├── playbookUtils.ts      # Setup playbook utilities
+│   └── tradeImporter.ts      # CSV trade import (MT4/MT5/generic)
 │
 ├── store/
 │   └── auth.ts               # Zustand auth state store
@@ -184,6 +195,17 @@ src/
 - **Classroom subscriptions:** Teacher-set pricing
 - **Content purchases:** Individual content sales
 - **Teacher payouts:** Stripe Connect
+
+### 16. Journal Enhancement System (NEW - Jan 30, 2026)
+- **Stepped Entry Form**: 3-step guided flow replacing collapsible sections. Components in `src/components/journal/steps/`.
+- **Progressive Unlock System**: 6 levels gating features. `src/lib/progressiveLevels.ts` for definitions, `useProgressiveLevel` hook, `LevelProgressBar` + `UnlockModal` components.
+- **Consistency Score**: Process quality metric (0-100). `src/lib/consistencyScore.ts`, `ConsistencyScoreWidget`, `useConsistencyScore` hook.
+- **Post-Trade Reflection**: Inline after submit. `PostTradeReflection.tsx`.
+- **Pre-Trade Nudges**: Contextual warnings. `src/lib/nudgeEngine.ts`, `PreTradeNudges.tsx`.
+- **Setup Tagging & Playbook**: `SetupTypePicker.tsx`, `PlaybookView.tsx`, `src/lib/playbookUtils.ts`.
+- **Weekly Review**: Guided reflection. `WeeklyReview.tsx`, `useWeeklyFocus.ts`.
+- **Trade Import**: CSV import. `src/lib/tradeImporter.ts`, `TradeImport.tsx`, `ImportReflectionSwiper.tsx`, `/journal/import` page.
+- **Filtering**: `TradeFilters.tsx`, `useTradeFilters.ts`.
 
 ---
 
@@ -476,6 +498,40 @@ All tiers include SVG frosted noise texture via `::before` pseudo-element (`mix-
 
 ## Session History
 
+### Session: January 30, 2026 — Journal Enhancement System + Bug Fixes
+**Agent:** Claude Opus 4.5
+**Task:** Implement 9-enhancement journal system + fix loading/navigation bugs
+
+**Journal Enhancement Plan (9 Enhancements):**
+- **E1: Stepped Entry Form** — 3-step guided flow (Trade → Reflection → Go Deeper) replacing collapsible sections. Steps animate in with framer-motion.
+- **E2: Progressive Unlock System** — 6 levels (1/3/7/15/30/50 trades). UnlockModal, LevelProgressBar. Level definitions in `progressiveLevels.ts`.
+- **E3: Consistency Score** — 0-100 process quality score (rule adherence 40%, risk mgmt 25%, emotional discipline 20%, journaling consistency 15%). Circular gauge widget. Gated at Level 3.
+- **E4: Post-Trade Reflection** — Inline card after submit with "what would you do differently?" + R-multiple comparison.
+- **E5: Pre-Trade Nudges** — Contextual warnings (loss streaks, instrument win rates, day-of-week, emotion patterns). Gated at Level 5.
+- **E6: Setup Tagging & Playbook** — Setup type picker + Playbook tab showing win rate per setup. "Your Edge" detection after 5+ trades.
+- **E7: Weekly Review** — Guided reflection: week stats, #1 pattern, focus suggestion, last focus progress. Uses `weekly_focus` table.
+- **E8: Trade Import** — CSV import (MT4/MT5/generic) + reflection swiper at `/journal/import`.
+- **E9: Improved Filtering** — Filter journal by emotion, setup, instrument, outcome, R-multiple, date, tags, notes.
+
+**Calendar Heatmap Update:**
+- Day click now shows centered popout modal with backdrop instead of inline panel
+
+**Bug Fixes:**
+- Notifications: `createClient()` not memoized → infinite re-render loop
+- Learn page: early return without `setIsLoading(false)` when no classroom_id
+- `trades_logged` never incremented in SteppedEntryForm or QuickEntryBar
+- Auth stale window too short (5s → 5min AUTH_STALE_MS)
+- Auth loading could get stuck in finally block
+- Playbook/LevelProgressBar: used `Math.max(onboarding.trades_logged, cachedStats.totalTrades)` for accurate counts
+- Removed redundant Win/Loss Stats Card (duplicated MiniStatsBar data)
+- PreviousTradeCard limit increased from 3 to 5
+
+**New Files:** 25 (see CHANGELOG.md for full list)
+**Modified Files:** 12+
+**Build:** 0 errors
+
+---
+
 ### Session: January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX
 **Agent:** Claude Opus 4.5
 **Task:** Replace 26-week heatmap with monthly calendar + insight panel; update RecentTrades close button
@@ -685,11 +741,12 @@ Implemented the full competitive moat strategy across 4 phases using parallel su
 
 ---
 
-**Current State (as of Jan 29, 2026):**
+**Current State (as of Jan 30, 2026):**
 - Project version: 0.1.0
-- 140+ TypeScript files
-- 95+ React components
-- 26 database tables (3 new: topic_reviews, community_votes, progress_reports)
+- 165+ TypeScript files
+- 120+ React components
+- 26+ database tables (+ weekly_focus table)
+- 9-enhancement journal system (stepped form, progressive levels, consistency score, reflection, nudges, playbook, weekly review, import, filtering)
 - Interactive TradingView charts in journal with annotation tools
 - Pre-trade psychology tracking (readiness + tags) with analytics
 - Public teacher marketplace with profiles, course catalog, and reviews
@@ -698,19 +755,20 @@ Implemented the full competitive moat strategy across 4 phases using parallel su
 - All core features + trade calls, live sessions, curriculum tracks
 - Apple-inspired frosted glassmorphism with 3-tier elevation system
 - Material Symbols Outlined (no Lucide React)
-- Monthly calendar heatmap with behavioral insight panel
+- Monthly calendar heatmap with popout modal and behavioral insight panel
 
 **Recent Development:**
-1. **Calendar Heatmap Redesign + Recent Trades UX** (Jan 29) — single-month calendar grid replacing 26-week strip, behavioral insight panel, RecentTrades close button navigates to detail page
-2. **Glass Command Center Redesign** (Jan 29) — 3-tier frosted glassmorphism, SVG noise texture, icon migration to Material Symbols, 70+ file sweep
-3. **Strategic Enhancement Plan** (Jan 29) — 4-phase implementation: charts, psychology, marketplace, community, teacher analytics, progress reports
-4. **Teacher Flow Redesign** (Jan 28) — Topics + Lessons model, single-page lesson creation, dashboard rewrite
-5. Teacher Portal Reimagination (Jan 21) — trade calls, curriculum, live sessions
-6. Phase 1 retention features — daily check-in, streak protection, milestones
-7. UX improvements — route-aware chrome, join flow
-8. UI redesign — warm gold colors, 3D depth effects
-9. Stripe Connect teacher pricing implementation
-10. Premium tier features and analytics
+1. **Journal Enhancement System + Bug Fixes** (Jan 30) — 9-enhancement journal system (stepped form, progressive levels, consistency score, reflection, nudges, playbook, weekly review, import, filtering), calendar popout modal, loading/navigation bug fixes
+2. **Calendar Heatmap Redesign + Recent Trades UX** (Jan 29) — single-month calendar grid replacing 26-week strip, behavioral insight panel, RecentTrades close button navigates to detail page
+3. **Glass Command Center Redesign** (Jan 29) — 3-tier frosted glassmorphism, SVG noise texture, icon migration to Material Symbols, 70+ file sweep
+4. **Strategic Enhancement Plan** (Jan 29) — 4-phase implementation: charts, psychology, marketplace, community, teacher analytics, progress reports
+5. **Teacher Flow Redesign** (Jan 28) — Topics + Lessons model, single-page lesson creation, dashboard rewrite
+6. Teacher Portal Reimagination (Jan 21) — trade calls, curriculum, live sessions
+7. Phase 1 retention features — daily check-in, streak protection, milestones
+8. UX improvements — route-aware chrome, join flow
+9. UI redesign — warm gold colors, 3D depth effects
+10. Stripe Connect teacher pricing implementation
+11. Premium tier features and analytics
 
 ---
 
@@ -741,9 +799,14 @@ When working on this codebase:
 21. **Gold restraint (Jan 29)** - Gold only on: `btn-gold` CTAs, active nav text color, achievement badges, positive stat numbers, logo. Use `glass-elevated` for active tabs/pills instead of gold background.
 22. **Calendar Heatmap (Jan 29)** - `CalendarHeatmap.tsx` uses a single-month calendar grid (Mon–Sun, 7 columns) with `<`/`>` month navigation. Two-column layout: calendar (60%) + behavioral insight panel (40%). Insight panel generates one prioritized insight per month using emotion, streak, day-of-week, and instrument data. Stacks vertically on mobile.
 23. **Recent Trades close button (Jan 29)** - Open trades in `RecentTrades.tsx` show a close button that navigates to `/journal/[id]` (the trade detail page) instead of opening a modal. The `QuickCloseModal` is no longer used by this component.
+24. **Journal Enhancement System (Jan 30)** — 9 enhancements: E1 SteppedEntryForm (3-step), E2 Progressive Levels (6 tiers in `progressiveLevels.ts`), E3 Consistency Score (`consistencyScore.ts`), E4 PostTradeReflection, E5 PreTradeNudges (`nudgeEngine.ts`), E6 SetupTypePicker + PlaybookView, E7 WeeklyReview (`useWeeklyFocus.ts`), E8 TradeImport (`tradeImporter.ts`), E9 TradeFilters.
+25. **Progressive Level hooks (Jan 30)** — `useProgressiveLevel` uses `Math.max(onboarding.trades_logged, cachedStats.totalTrades)` for accurate trade count. Both `SteppedEntryForm` and `QuickEntryBar` increment `onboarding_state.trades_logged` after successful insert.
+26. **Calendar Heatmap popout (Jan 30)** — Day click shows centered fixed-position modal with `bg-black/40` backdrop overlay instead of inline panel. Click backdrop or X to dismiss.
+27. **Auth stale window (Jan 30)** — `AUTH_STALE_MS` is 5 minutes (not 5 seconds). Controls how often auth re-initializes on navigation.
+28. **Supabase client memoization** — Always wrap `createClient()` in `useMemo(() => createClient(), [])` in components. Unmemoized calls cause infinite re-render loops via useEffect dependency changes.
 
 **Update this document** after significant changes to keep it current.
 
 ---
 
-*Last Updated: January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX*
+*Last Updated: January 30, 2026 — Journal Enhancement System + Bug Fixes*

@@ -19,6 +19,7 @@ export type PricingType = 'free' | 'paid'
 export type LessonContentType = 'video' | 'chart' | 'pdf' | 'text'
 export type LessonStatus = 'draft' | 'published'
 export type JournalEntryStatus = 'draft' | 'published'
+export type SetupType = 'breakout' | 'pullback' | 'reversal' | 'range' | 'trend_continuation' | 'news' | 'custom'
 
 export interface OnboardingState {
   trades_logged: number
@@ -28,6 +29,8 @@ export interface OnboardingState {
   completed_at: string | null
   instruments?: string[]
   trading_rules?: string[]
+  current_level?: number
+  last_level_up_at?: string | null
 }
 export type ClassroomSubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'suspended' | 'past_due'
 export type PurchaseStatus = 'pending' | 'completed' | 'refunded' | 'failed'
@@ -180,6 +183,12 @@ export interface Database {
           exit_time: string | null
           status: JournalEntryStatus
           trade_call_id: string | null
+          setup_type: SetupType | null
+          setup_type_custom: string | null
+          execution_rating: number | null
+          reflection_notes: string | null
+          custom_tags: string[]
+          import_source: string | null
           created_at: string
           updated_at: string
         }
@@ -210,6 +219,12 @@ export interface Database {
           exit_time?: string | null
           status?: JournalEntryStatus
           trade_call_id?: string | null
+          setup_type?: SetupType | null
+          setup_type_custom?: string | null
+          execution_rating?: number | null
+          reflection_notes?: string | null
+          custom_tags?: string[]
+          import_source?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -240,8 +255,47 @@ export interface Database {
           exit_time?: string | null
           status?: JournalEntryStatus
           trade_call_id?: string | null
+          setup_type?: SetupType | null
+          setup_type_custom?: string | null
+          execution_rating?: number | null
+          reflection_notes?: string | null
+          custom_tags?: string[]
+          import_source?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      weekly_focus: {
+        Row: {
+          id: string
+          user_id: string
+          week_start: string
+          focus_text: string
+          focus_type: string
+          improvement_score: number | null
+          reviewed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          week_start: string
+          focus_text: string
+          focus_type: string
+          improvement_score?: number | null
+          reviewed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          week_start?: string
+          focus_text?: string
+          focus_type?: string
+          improvement_score?: number | null
+          reviewed?: boolean
+          created_at?: string
         }
         Relationships: []
       }
@@ -1315,6 +1369,36 @@ export interface ProgressReportData {
   streaks: { currentWin: number; currentLoss: number; bestWin: number }
   comparedToPrevious: { winRateChange: number; avgRChange: number } | null
   recommendedContent?: RecommendedContent[]
+}
+
+// Weekly Focus type
+export type WeeklyFocus = Database['public']['Tables']['weekly_focus']['Row']
+
+// Consistency Score breakdown
+export interface ConsistencyScoreBreakdown {
+  ruleAdherence: number    // 0-100, weight 40%
+  riskManagement: number   // 0-100, weight 25%
+  emotionalDiscipline: number // 0-100, weight 20%
+  journalingConsistency: number // 0-100, weight 15%
+  overall: number          // 0-100 weighted total
+}
+
+// Pre-trade nudge
+export interface PreTradeNudge {
+  id: string
+  type: 'loss_streak' | 'instrument' | 'day_of_week' | 'emotion'
+  severity: 'info' | 'warning' | 'danger'
+  title: string
+  message: string
+  icon: string
+}
+
+// Progressive unlock level
+export interface UnlockLevel {
+  level: number
+  trades: number
+  title: string
+  unlocks: string[]
 }
 
 // Extended teacher profile with public data

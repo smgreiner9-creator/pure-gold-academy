@@ -16,6 +16,14 @@ A journaling-first trading education platform for active day and swing traders. 
 - **Pre-Trade Psychology** - Readiness score (1-5) and quick-tag capture (FOMO, Revenge, Confident, etc.) before each trade
 - **Psychology Analytics** - Insights into how mental state correlates with trade outcomes
 - **Progress Reports** - Teacher-generated analytics reports with strengths, improvements, emotion breakdown, and personalized notes
+- **Stepped Entry Form** - Guided 3-step trade logging flow (Trade Details → Reflection → Go Deeper) with smooth animations
+- **Progressive Levels** - 6-level unlock system rewarding consistent journaling with celebratory modals and feature unlocks
+- **Consistency Score** - Process quality metric (0-100) measuring rule adherence, risk management, emotional discipline, and journaling frequency
+- **Pre-Trade Nudges** - Smart contextual warnings based on loss streaks, instrument performance, and emotion patterns
+- **Setup Playbook** - Tag trades by setup type (breakout, pullback, reversal, etc.) and discover your edge with per-setup analytics
+- **Weekly Review** - Guided weekly reflection ritual with stats comparison, top patterns, and focus suggestions
+- **Trade Import** - Import trade history from MT4/MT5 CSV exports with swipe-through reflection cards
+- **Journal Filters** - Filter trade history by emotion, setup, instrument, outcome, R-multiple, date range, tags, and notes
 - **Notifications** - Real-time alerts for teacher feedback, community responses, and system updates
 - **Public Strategies** - Discover and join public strategies from the marketplace listing
 
@@ -127,7 +135,8 @@ src/
 │   ├── ui/                # Reusable UI components
 │   ├── layout/            # Layout components (Sidebar, Header)
 │   ├── dashboard/         # Dashboard widgets
-│   ├── journal/           # Journal components
+│   ├── onboarding/        # UnlockModal, LevelProgressBar, ProgressiveGate
+│   ├── journal/           # Journal components + steps/ subdirectory (StepTradeDetails, StepReflection, StepGoDeeper)
 │   ├── analytics/         # Analytics charts (EquityCurve, EmotionCorrelation, EmotionFlow, PsychologyAnalysis, etc.)
 │   ├── charts/            # TradingView chart widget + annotation toolbar
 │   ├── community/         # ThreadedComment, VoteButton, PostFilters, TradeReviewPost
@@ -137,8 +146,8 @@ src/
 │   ├── teacher/           # LessonForm, TopicSelector, TopicsList, TeacherFAB, ClassAnalytics, StudentAlerts, TeacherProfileCard, TrackRecordBadge
 │   ├── trade-calls/       # Trade call card & form
 │   └── embeds/            # YouTube & TradingView embeds
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utilities and clients
+├── hooks/                 # Custom React hooks (useJournalEntries, useConsistencyScore, usePreTradeNudges, useWeeklyReview, etc.)
+├── lib/                   # Utilities and clients (consistencyScore, levelSystem, tradeImport, setupPlaybook, etc.)
 │   ├── supabase/          # Supabase client setup
 │   └── embedUtils.ts      # YouTube/TradingView URL parsing
 ├── store/                 # Zustand state stores
@@ -193,6 +202,7 @@ The application uses the following main tables:
 - `watched_instruments` - User's watched trading instruments
 - `daily_checkins` - Activity tracking and streaks
 - `classroom_rules` - Strategy-level rules
+- `weekly_focus` - Weekly focus tracking for review ritual (NEW Jan 30)
 
 See `supabase/schema.sql` and `supabase/migrations/` for the complete schema with RLS policies.
 
@@ -295,6 +305,13 @@ npm start
 ## Updates
 
 See [CHANGELOG.md](./CHANGELOG.md) for full history.
+
+- **2026-01-30** - **Journal Enhancement System + Bug Fixes** (Claude Opus 4.5)
+  - Implemented 9 journal enhancements: stepped 3-step entry form, 6-level progressive unlock system, consistency score (0-100), post-trade reflection, pre-trade awareness nudges, setup tagging with playbook analytics, weekly review ritual, MT4/MT5 trade import with reflection swiper, and journal filtering
+  - Calendar heatmap day click converted to centered popout modal with backdrop overlay
+  - Fixed notifications/learn page infinite loading, auth re-initialization on navigation (5s→5min), trades_logged not incrementing
+  - Removed redundant Win/Loss Stats Card, increased recent trades from 3 to 5
+  - 25 new files, 12+ modified files, 0 build errors
 
 - **2026-01-29** - **Calendar Heatmap Redesign + Recent Trades UX** (Claude Opus 4.5)
   - Replaced 26-week horizontal GitHub-style heatmap with single-month calendar grid (Mon–Sun, 7 columns) with `<`/`>` month navigation

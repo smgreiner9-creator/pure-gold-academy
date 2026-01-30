@@ -46,7 +46,7 @@ function avgR(entries: JournalEntry[]): number {
 }
 
 export function generateInsights(entries: JournalEntry[]): Insight[] {
-  if (entries.length < 5) return []
+  if (entries.length < 3) return []
 
   const insights: Insight[] = []
   const overallWinRate = winRate(entries)
@@ -333,7 +333,7 @@ export function generateInsights(entries: JournalEntry[]): Insight[] {
  * Prioritizes day-of-week warnings and streak alerts.
  */
 export function getTodayInsight(entries: JournalEntry[]): Insight | null {
-  if (entries.length < 5) return null
+  if (entries.length < 3) return null
 
   const today = new Date().getDay()
   const todayName = DAY_NAMES[today]

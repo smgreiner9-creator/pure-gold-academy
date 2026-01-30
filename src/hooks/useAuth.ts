@@ -11,7 +11,7 @@ let supabaseClient: ReturnType<typeof createClient> | null = null
 // Use sessionStorage to track initialization across page loads
 // This ensures fresh auth check on hard refresh while avoiding duplicate calls
 const AUTH_INIT_KEY = 'auth_init_timestamp'
-const AUTH_STALE_MS = 5000 // Consider stale after 5 seconds
+const AUTH_STALE_MS = 5 * 60 * 1000 // Consider stale after 5 minutes
 
 function getSupabaseClient() {
   if (!supabaseClient) {
@@ -143,9 +143,7 @@ export function useAuth() {
         setUser(null)
         setProfile(null)
       } finally {
-        if (!hasExistingData) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
         markInitialized()
         initializingRef.current = false
       }

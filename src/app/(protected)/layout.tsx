@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MobileNav } from '@/components/layout/MobileNav'
+import { ClassroomSelector } from '@/components/layout/ClassroomSelector'
 import { useSidebarStore } from '@/store/sidebar'
 import { useAuth } from '@/hooks/useAuth'
 import type { OnboardingState } from '@/types/database'
@@ -66,6 +67,8 @@ export default function ProtectedLayout({
       <main className={`flex-1 flex flex-col h-screen overflow-hidden md:transition-[margin-left] md:duration-200 ${
         isExpanded ? 'md:ml-[220px]' : 'md:ml-16'
       }`}>
+        {/* Classroom Selector (visible when user has 2+ classrooms) */}
+        <ClassroomSelector />
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {children}

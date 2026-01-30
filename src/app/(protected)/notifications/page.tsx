@@ -12,10 +12,13 @@ export default function NotificationsPage() {
   const { profile } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const loadNotifications = useCallback(async () => {
-    if (!profile?.id) return
+    if (!profile?.id) {
+      setIsLoading(false)
+      return
+    }
 
     try {
       const { data } = await supabase
@@ -30,7 +33,8 @@ export default function NotificationsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [profile?.id, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id])
 
   useEffect(() => {
     if (profile?.id) {

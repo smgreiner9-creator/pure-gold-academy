@@ -1,6 +1,6 @@
 'use client'
 
-import { JournalEntryForm } from '@/components/journal/JournalEntryForm'
+import { SteppedEntryForm } from '@/components/journal/SteppedEntryForm'
 import { UpgradeRequired } from '@/components/journal/UpgradeRequired'
 import { useJournalUsage } from '@/hooks/useJournalUsage'
 
@@ -25,14 +25,5 @@ export default function NewJournalEntryPage() {
     return <UpgradeRequired />
   }
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">New Journal Entry</h1>
-        <p className="text-[var(--muted)] text-sm">Document your trade with detailed analysis</p>
-      </div>
-
-      <JournalEntryForm />
-    </div>
-  )
+  return <SteppedEntryForm />
 }

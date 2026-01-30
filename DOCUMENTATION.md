@@ -86,6 +86,14 @@ src/
 10. **Community** - Discussion posts and comments
 11. **Push Notifications** - Web push for important updates
 12. **Subscriptions** - Free and premium tiers via Stripe
+13. **Stepped Entry Form** - Guided 3-step trade logging (Trade → Reflection → Go Deeper) with framer-motion animations
+14. **Progressive Unlock System** - 6-level system (1/3/7/15/30/50 trades) unlocking features progressively with celebratory modals
+15. **Consistency Score** - 0-100 process quality metric based on rule adherence, risk management, emotional discipline, and journaling consistency
+16. **Pre-Trade Nudges** - Contextual awareness warnings based on loss streaks, instrument performance, day-of-week stats, and emotion patterns
+17. **Setup Tagging & Playbook** - Tag trades by setup type (breakout, pullback, reversal, etc.) with analytics showing win rate per setup
+18. **Weekly Review** - Guided weekly reflection ritual with stats comparison, pattern highlighting, and focus suggestions
+19. **Trade Import** - CSV import for MT4/MT5 trade history with reflection swiper for adding emotions and ratings
+20. **Journal Filtering** - Filter trades by emotion, setup type, instrument, outcome, R-multiple range, date range, tags, and notes
 
 ---
 
@@ -177,6 +185,12 @@ const { user, profile, isPremium, signIn, signUp, signOut } = useAuth()
 | `screenshot_urls` | array | No | Chart screenshots (max 4) |
 | `chart_data` | jsonb | No | TradingView chart state with annotations (NEW Jan 29) |
 | `pre_trade_mindset` | jsonb | No | Readiness score (1-5) + psychology tags (NEW Jan 29) |
+| `setup_type` | enum | No | Trade setup (breakout, pullback, reversal, range, trend_continuation, news, custom) |
+| `setup_type_custom` | text | No | Custom setup name (when setup_type is 'custom') |
+| `execution_rating` | smallint | No | Self-rated execution quality (1-5) |
+| `reflection_notes` | text | No | Post-trade reflection text |
+| `custom_tags` | text[] | No | User-defined tags |
+| `import_source` | text | No | Source of imported trade (e.g. 'mt4', 'mt5') |
 
 ### Interactive Chart (NEW - Jan 29, 2026)
 
@@ -214,6 +228,69 @@ const { user, profile, isPremium, signIn, signUp, signOut } = useAuth()
 - Upload up to 4 images per entry
 - Stored in Supabase Storage bucket `journal-screenshots`
 - Supports PNG, JPG up to 5MB
+
+### Journal Enhancement System (NEW - Jan 30, 2026)
+
+#### Stepped Entry Form
+Three-step guided flow replacing the previous collapsible-section form:
+- **Step 1 "The Trade"**: Instrument, direction, entry/exit prices, stop loss, position size, outcome auto-detection
+- **Step 2 "The Reflection"**: Single-tap emotion picker, rule toggle checklist, execution rating (1-5 stars)
+- **Step 3 "Go Deeper"** (optional): Chart annotations, screenshots, notes, setup type, take profit, emotions during/after
+
+Steps appear with framer-motion animations. Step 2 auto-appears when Step 1 fields are valid.
+
+#### Progressive Unlock System
+
+| Level | Trades | Title | Unlocks |
+|-------|--------|-------|---------|
+| 1 | 1 | Journal Activated | Dashboard, first tip |
+| 2 | 3 | First Patterns | First insight, Trading DNA preview |
+| 3 | 7 | Consistency Tracker | Consistency Score, basic patterns |
+| 4 | 15 | Pattern Seeker | Weekly Review, Playbook |
+| 5 | 30 | Disciplined Trader | Pre-trade nudges, full analytics |
+| 6 | 50 | Trading Pro | Advanced patterns, historical comparisons, export |
+
+Level-up triggers `UnlockModal` showing what unlocked + next level preview. `LevelProgressBar` shows progress on journal page.
+
+#### Consistency Score
+Process quality metric (0-100) computed from last 20 trades:
+- Rule adherence (40%) — % of trades with 4+ rules checked
+- Risk management (25%) — % with stop loss set
+- Emotional discipline (20%) — % entering trades calm/confident/neutral
+- Journaling consistency (15%) — streak + frequency
+
+Displayed as circular gauge with breakdown bars. Gated behind Level 3.
+
+#### Pre-Trade Nudges
+Non-blocking contextual warnings shown at top of journal form:
+- Loss streak: "Your last 3 trades were losses. Consider sizing down."
+- Instrument: "Your GBPJPY win rate: 25% (8 trades)"
+- Day of week: "It's Friday. Your Friday win rate: 30%"
+- Emotion: "Last time you felt anxious, you lost 4 of 5 trades"
+Dismissible, top 1-2 shown. Gated behind Level 5.
+
+#### Setup Tagging & Playbook
+Setup types: breakout, pullback, reversal, range, trend continuation, news, custom.
+Playbook tab on journal page shows win rate, avg R, and trade count per setup. Highlights "Your Edge" setups (5+ trades). Gated behind Level 4.
+
+#### Weekly Review
+Guided reflection (shows Mon-Wed, Level 4+):
+1. "Your Week" — stats vs previous week
+2. "Your #1 Pattern" — top InsightEngine finding
+3. "Your Focus This Week" — system suggestion saved to `weekly_focus`
+4. "Last Week's Focus" — progress on previous focus
+
+#### Trade Import
+CSV import at `/journal/import`:
+- Supports MT4, MT5, and generic CSV formats
+- Upload → column mapping → preview → import
+- `ImportReflectionSwiper` for swiping through imported trades adding emotions, setup type, execution rating
+
+#### Journal Filtering
+Collapsible filter panel on journal history:
+- Emotion (before), setup type, instrument, outcome
+- R-multiple range, date range
+- Custom tags, notes search
 
 ---
 
@@ -914,6 +991,29 @@ Added column to `learn_content` table:
 -- Unique: one review per student per classroom
 ```
 
+### Journal Enhancement Tables (NEW - Jan 30, 2026)
+
+#### weekly_focus (NEW - Jan 30, 2026)
+```sql
+- id (uuid, PK)
+- user_id (uuid, FK -> profiles, CASCADE)
+- week_start (date)
+- focus_text (text)
+- focus_type (text)
+- improvement_score (numeric)
+- reviewed (boolean)
+- created_at (timestamp)
+-- Unique: one focus per user per week
+```
+
+Added columns to `journal_entries`:
+- `setup_type` (setup_type enum) — breakout, pullback, reversal, range, trend_continuation, news, custom
+- `setup_type_custom` (text) — custom setup name
+- `execution_rating` (smallint, 1-5)
+- `reflection_notes` (text)
+- `custom_tags` (text[])
+- `import_source` (text)
+
 ### Community Enhancement Tables (NEW - Jan 29, 2026)
 
 #### community_votes
@@ -1001,6 +1101,28 @@ Added column to `community_comments`:
 ---
 
 ## Update Log
+
+### January 30, 2026 — Journal Enhancement System + Bug Fixes
+**Agent:** Claude Opus 4.5
+
+**9 Journal Enhancements Implemented:**
+Stepped entry form (3-step guided flow), progressive unlock system (6 levels), consistency score (0-100 process metric), post-trade reflection, pre-trade awareness nudges, setup tagging with playbook analytics, weekly review ritual, MT4/MT5 trade import with reflection swiper, and journal filtering.
+
+**Calendar Heatmap:** Day click converted to centered popout modal with backdrop overlay.
+
+**Bug Fixes:**
+- Notifications page: `createClient()` memoized with `useMemo` to prevent infinite re-render loop
+- Learn page: Added `setIsLoading(false)` on early return when no classroom_id
+- `trades_logged` increment added to SteppedEntryForm and QuickEntryBar after insert
+- Auth stale window: `AUTH_STALE_MS` changed from 5 seconds to 5 minutes
+- Auth loading: `finally` block always clears `isLoading`
+- Playbook/Level gating: `tradesLogged` uses `Math.max()` of onboarding and cached stats
+- Removed redundant Win/Loss Stats Card (duplicated MiniStatsBar)
+- PreviousTradeCard limit increased from 3 to 5
+
+**New Files:** 25 | **Modified Files:** 12+
+
+---
 
 ### January 29, 2026 — Calendar Heatmap Redesign + Recent Trades UX
 **Agent:** Claude Opus 4.5

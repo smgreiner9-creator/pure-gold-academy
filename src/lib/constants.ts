@@ -7,7 +7,7 @@ export const PREMIUM_FEATURES = {
   advancedAnalytics: true,
   exportData: true,
   priorityFeedback: true,
-  allContent: true,
+  priorityFeatures: true,
 } as const
 
 // Subscription pricing (for display purposes)

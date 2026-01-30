@@ -23,9 +23,13 @@ export function PulseSection() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!profile?.id) return
+    if (!profile?.id) {
+      setIsLoading(false)
+      return
+    }
 
     const loadPulseData = async () => {
+      try {
       const pulseItems: PulseItem[] = []
 
       // Fire all queries in parallel
@@ -120,7 +124,11 @@ export function PulseSection() {
       }
 
       setItems(pulseItems.slice(0, 3))
-      setIsLoading(false)
+      } catch (err) {
+        console.error('Failed to load pulse data:', err)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadPulseData()

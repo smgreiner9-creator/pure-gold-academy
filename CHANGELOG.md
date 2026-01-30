@@ -8,6 +8,84 @@ All notable changes to Pure Gold Academy are documented in this file.
 
 ---
 
+## 2026-01-30 — Journal Enhancement System + Bug Fixes
+
+### Added
+
+**Journal Enhancement Plan — 9 Enhancements:**
+
+- **E1: Stepped Entry Form** — Replaced collapsible-section journal form with a guided 3-step flow. Step 1 "The Trade" (instrument, direction, prices, SL, position size, outcome auto-detect). Step 2 "The Reflection" (emotion picker, rule toggles, execution rating 1-5 stars). Step 3 "Go Deeper" (optional: chart annotation, screenshots, notes, setup type, take profit). Steps animate in with framer-motion.
+- **E2: Progressive Unlock System** — 6-tier system rewarding consistent logging. Level 1 (1 trade): Journal Activated. Level 2 (3): First Patterns. Level 3 (7): Consistency Tracker. Level 4 (15): Pattern Seeker. Level 5 (30): Disciplined Trader. Level 6 (50): Trading Pro. Each level-up triggers celebratory `UnlockModal`. `LevelProgressBar` widget on journal page.
+- **E3: Consistency Score** — 0-100 process quality score from last 20 trades. Rule adherence (40%), risk management (25%), emotional discipline (20%), journaling consistency (15%). Circular gauge widget with breakdown bars. Gated behind Level 3 (7 trades).
+- **E4: Post-Trade Reflection** — Inline reflection card after trade submission. "What would you do differently?" textarea + R-multiple comparison vs average. Auto-saves on blur, skippable.
+- **E5: Pre-Trade Awareness Nudges** — Contextual warnings when opening journal form. Loss streak warnings, instrument win rate alerts, day-of-week performance, emotion-based reminders. Top 1-2 nudges shown, dismissible. Gated behind Level 5 (30 trades).
+- **E6: Setup Tagging & Playbook** — Setup type picker (breakout, pullback, reversal, range, trend continuation, news, custom). New "Playbook" tab on journal page showing win rate per setup type. Highlights "Your Edge" after 5+ trades of a type. Gated behind Level 4.
+- **E7: Weekly Review Ritual** — Guided weekly reflection: "Your Week" stats vs previous, "#1 Pattern" from InsightEngine, "Your Focus This Week" suggestion saved to `weekly_focus` table, "Last Week's Focus" progress check. Shows Mon-Wed. Gated behind Level 4.
+- **E8: Trade Import** — CSV import for MT4/MT5 exports at `/journal/import`. Upload + preview UI with column mapping. `ImportReflectionSwiper` for swiping through imported trades adding emotions, setup type, and execution rating.
+- **E9: Improved Filtering** — Collapsible filter panel on journal history. Filter by emotion, setup type, instrument, outcome, R-multiple range, date range, custom tags, and notes search. Applied to `JournalList`.
+
+**Calendar Heatmap Popout Modal:**
+- Day click now shows a centered modal with dark backdrop overlay instead of inline panel below calendar
+- Fixed positioning with `bg-black/40 z-40` backdrop, click-to-dismiss
+- Scale + fade animation (0.95→1, opacity 0→1)
+- Scrollable trade list with `max-h-72 overflow-y-auto`
+
+**New files (25):**
+- `src/components/journal/SteppedEntryForm.tsx` — 3-step form orchestrator
+- `src/components/journal/steps/TradeStep.tsx` — Step 1 trade data
+- `src/components/journal/steps/ReflectionStep.tsx` — Step 2 emotions + rules
+- `src/components/journal/steps/DeepDiveStep.tsx` — Step 3 optional depth
+- `src/lib/progressiveLevels.ts` — Level definitions + thresholds
+- `src/components/onboarding/UnlockModal.tsx` — Celebratory unlock modal
+- `src/components/onboarding/LevelProgressBar.tsx` — Progress widget
+- `src/hooks/useProgressiveLevel.ts` — Level computation + level-up detection
+- `src/lib/consistencyScore.ts` — Score calculation with weights
+- `src/components/journal/ConsistencyScoreWidget.tsx` — Circular gauge + breakdown
+- `src/hooks/useConsistencyScore.ts` — Fetch entries + compute score
+- `src/components/journal/PostTradeReflection.tsx` — Inline reflection card
+- `src/lib/nudgeEngine.ts` — Nudge generation from journal data
+- `src/components/journal/PreTradeNudges.tsx` — Dismissible nudge cards
+- `src/components/journal/SetupTypePicker.tsx` — Horizontal button group
+- `src/components/journal/PlaybookView.tsx` — Playbook analytics tab
+- `src/lib/playbookUtils.ts` — Stats per setup type
+- `src/components/journal/WeeklyReview.tsx` — Guided weekly review
+- `src/hooks/useWeeklyFocus.ts` — Weekly focus CRUD
+- `src/lib/tradeImporter.ts` — CSV parsing (MT4/MT5/generic)
+- `src/components/journal/TradeImport.tsx` — Upload + preview UI
+- `src/components/journal/ImportReflectionSwiper.tsx` — Swipe-through reflection
+- `src/app/(protected)/journal/import/page.tsx` — Import page
+- `src/components/journal/TradeFilters.tsx` — Collapsible filter panel
+- `src/hooks/useTradeFilters.ts` — Filter state + apply logic
+
+### Changed
+- **Journal page (`journal/page.tsx`)** — Added `LevelProgressBar`, `WeeklyReview`, `ConsistencyScoreWidget` (gated at 7 trades), Import button, Playbook tab with `ProgressiveGate` level 4. `tradesLogged` now uses `Math.max(onboarding.trades_logged, cachedStats.totalTrades)` for accurate count.
+- **Journal new page (`journal/new/page.tsx`)** — Switched from `JournalEntryForm` to `SteppedEntryForm`
+- **QuickEntryBar** — Added emotion picker row, optional stop loss field, `trades_logged` increment after successful insert
+- **SteppedEntryForm** — Added post-trade reflection (E4), pre-trade nudges (E5), `trades_logged` increment after successful insert
+- **DeepDiveStep** — Integrated `SetupTypePicker` for setup type selection
+- **JournalList** — Integrated `TradeFilters` collapsible panel
+- **CalendarHeatmap** — Day detail converted from inline AnimatePresence panel to centered popout modal with backdrop
+- **PreviousTradeCard** — Increased limit from 3 to 5 recent trades
+- **ProgressiveGate** — Accepts `level` prop instead of `requiredTrades`
+- **InsightEngine** — Lowered insight generation threshold from 5 to 3 trades
+- **journalStats store** — Added consistency score caching with 5-min TTL
+- **useProgressiveLevel** — Now uses `Math.max(onboarding.trades_logged, cachedStats.totalTrades)` for accurate level calculation
+
+### Fixed
+- **Notifications page infinite loading** — `createClient()` was not memoized with `useMemo`, creating new Supabase client every render causing infinite `useEffect` loop
+- **Learn page infinite loading** — `loadData()` returned early when user had no `classroom_id` without calling `setIsLoading(false)`
+- **`trades_logged` never incremented** — Neither `SteppedEntryForm` nor `QuickEntryBar` updated `onboarding_state.trades_logged` after inserting trades, causing progressive gates to always show 0
+- **Auth re-initializing on every navigation** — `AUTH_STALE_MS` was 5 seconds instead of 5 minutes, triggering full `getSession` + profile fetch on every page change
+- **Auth loading state stuck** — `finally` block only cleared `isLoading` when `!hasExistingData`, leaving loading spinner stuck on errors
+- **Playbook still gated after trades logged** — `tradesLogged` only read from `onboarding_state` (which was 0). Changed to `Math.max()` of both onboarding and cached stats
+- **Level progress bar showing 0 trades** — `useProgressiveLevel` only read from `onboarding_state.trades_logged`. Added `useJournalStatsStore` fallback with `Math.max()`
+
+### Removed
+- **Win/Loss Stats Card** from journal page — redundant with `MiniStatsBar` above that shows same data plus Market Pulse
+- Unused variables: `winCount`, `lossCount`, `totalR`, `totalWithOutcome`, `winRateDisplay`
+
+---
+
 ## 2026-01-29 — Calendar Heatmap Redesign + Recent Trades UX
 
 ### Changed

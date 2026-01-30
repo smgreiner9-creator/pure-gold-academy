@@ -22,6 +22,7 @@ export default function JoinClassroomPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false)
   const supabase = useMemo(() => createClient(), [])
 
   const cancelled = searchParams.get('cancelled') === 'true'
@@ -75,18 +76,56 @@ export default function JoinClassroomPage() {
     }
   }, [inviteCode, loadClassroom])
 
+  // Check enrollment via subscription record or profile.classroom_id
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (!profile?.id || !classroom?.id) return
+
+      const { data: sub } = await supabase
+        .from('classroom_subscriptions')
+        .select('id')
+        .eq('student_id', profile.id)
+        .eq('classroom_id', classroom.id)
+        .eq('status', 'active')
+        .single()
+
+      if (sub || profile.classroom_id === classroom.id) {
+        setIsAlreadyEnrolled(true)
+      }
+    }
+    checkEnrollment()
+  }, [profile?.id, classroom?.id, profile?.classroom_id, supabase])
+
   const handleJoinFree = async () => {
     if (!profile?.id || !classroom) return
 
     setIsJoining(true)
     setError(null)
     try {
+      // Update profiles.classroom_id
       const { error } = await supabase
         .from('profiles')
         .update({ classroom_id: classroom.id })
         .eq('id', profile.id)
 
       if (error) throw error
+
+      // Also create a classroom_subscriptions record for multi-classroom support
+      const { error: subError } = await supabase
+        .from('classroom_subscriptions')
+        .upsert({
+          student_id: profile.id,
+          classroom_id: classroom.id,
+          status: 'active',
+          current_period_start: new Date().toISOString(),
+        }, {
+          onConflict: 'student_id,classroom_id'
+        })
+
+      if (subError) {
+        console.error('Error creating subscription record:', subError)
+        // Continue anyway — the profile update succeeded
+      }
 
       router.push('/journal?joined=true')
     } catch (error) {
@@ -157,7 +196,7 @@ export default function JoinClassroomPage() {
     )
   }
 
-  if (profile?.classroom_id === classroom?.id) {
+  if (isAlreadyEnrolled) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md p-6 rounded-2xl glass-surface text-center">

@@ -33,7 +33,8 @@ export function PreviousTradeCard({ refreshKey }: PreviousTradeCardProps) {
       .select('id, outcome, instrument, direction, trade_date, r_multiple')
       .eq('user_id', profile.id)
       .order('trade_date', { ascending: false })
-      .limit(3)
+      .order('created_at', { ascending: false })
+      .limit(5)
 
     setEntries(data || [])
     setIsLoading(false)
@@ -87,7 +88,7 @@ export function PreviousTradeCard({ refreshKey }: PreviousTradeCardProps) {
         {entries.map((entry) => (
           <Link
             key={entry.id}
-            href={`/journal/${entry.id}`}
+            href={entry.outcome ? `/journal/${entry.id}` : `/journal/${entry.id}/edit`}
             className="flex items-center justify-between p-2.5 rounded-xl border border-[var(--glass-surface-border)] hover:border-[var(--gold)]/30 transition-all"
           >
             <div className="flex items-center gap-2 min-w-0">

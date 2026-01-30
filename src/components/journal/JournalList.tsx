@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { SkeletonJournalEntry } from '@/components/ui/Skeleton'
 import { QuickCloseModal } from '@/components/dashboard/QuickCloseModal'
-import type { JournalEntry, TradeOutcome } from '@/types/database'
+import { useTradeFilters } from '@/hooks/useTradeFilters'
+import { TradeFilters } from '@/components/journal/TradeFilters'
+import type { JournalEntry } from '@/types/database'
 
 function exportToCSV(entries: JournalEntry[], filename: string) {
   // Define CSV headers
@@ -76,11 +78,7 @@ export function JournalList() {
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [closingTrade, setClosingTrade] = useState<JournalEntry | null>(null)
-  const [filter, setFilter] = useState({
-    outcome: '',
-    instrument: '',
-    dateRange: '30',
-  })
+  const { filters, setFilter, resetFilters, activeFilterCount, buildQuery } = useTradeFilters()
   const supabase = useMemo(() => createClient(), [])
 
   const loadEntries = useCallback(async () => {
@@ -88,26 +86,14 @@ export function JournalList() {
 
     setIsLoading(true)
     try {
-      let query = supabase
+      const baseQuery = supabase
         .from('journal_entries')
         .select('*')
         .eq('user_id', profile.id)
         .order('trade_date', { ascending: false })
+        .order('created_at', { ascending: false })
 
-      if (filter.outcome) {
-        query = query.eq('outcome', filter.outcome as TradeOutcome)
-      }
-
-      if (filter.instrument) {
-        query = query.ilike('instrument', `%${filter.instrument}%`)
-      }
-
-      if (filter.dateRange !== 'all') {
-        const daysAgo = new Date()
-        daysAgo.setDate(daysAgo.getDate() - parseInt(filter.dateRange))
-        query = query.gte('trade_date', daysAgo.toISOString().split('T')[0])
-      }
-
+      const query = buildQuery(baseQuery)
       const { data, error } = await query
 
       if (error) throw error
@@ -117,13 +103,13 @@ export function JournalList() {
     } finally {
       setIsLoading(false)
     }
-  }, [filter, profile?.id, supabase])
+  }, [profile?.id, supabase, buildQuery])
 
   useEffect(() => {
     if (profile?.id) {
       loadEntries()
     }
-  }, [profile?.id, filter, loadEntries])
+  }, [profile?.id, loadEntries])
 
   const deleteEntry = async (id: string) => {
     if (!confirm('Are you sure you want to delete this entry?')) return
@@ -173,39 +159,24 @@ export function JournalList() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="p-4 rounded-2xl glass-surface flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-3">
-          <select
-            value={filter.outcome}
-            onChange={(e) => setFilter(prev => ({ ...prev, outcome: e.target.value }))}
-            className="input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
-          >
-            <option value="">All Outcomes</option>
-            <option value="win">Wins</option>
-            <option value="loss">Losses</option>
-            <option value="breakeven">Breakeven</option>
-          </select>
-          <select
-            value={filter.dateRange}
-            onChange={(e) => setFilter(prev => ({ ...prev, dateRange: e.target.value }))}
-            className="input-field rounded-xl px-4 py-2.5 focus:outline-none focus:border-[var(--gold)] text-sm appearance-none cursor-pointer transition-colors min-w-[140px]"
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-            <option value="all">All time</option>
-          </select>
-        </div>
-
+      <div className="space-y-3">
+        <TradeFilters
+          filters={filters}
+          setFilter={setFilter}
+          resetFilters={resetFilters}
+          activeFilterCount={activeFilterCount}
+        />
         {/* Export Button */}
-        <button
-          onClick={handleExport}
-          disabled={entries.length === 0}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-glass text-sm font-medium hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span className="material-symbols-outlined text-lg">download</span>
-          Export CSV
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={handleExport}
+            disabled={entries.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-glass text-sm font-medium hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="material-symbols-outlined text-lg">download</span>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Entries List */}
@@ -228,7 +199,7 @@ export function JournalList() {
           {entries.map((entry) => (
             <Link
               key={entry.id}
-              href={`/journal/${entry.id}`}
+              href={entry.outcome ? `/journal/${entry.id}` : `/journal/${entry.id}/edit`}
               className="block p-4 rounded-xl glass-surface hover:border-[var(--gold)]/50 transition-all"
             >
               {/* Line 1: Outcome, Instrument, Direction, Date, R-Multiple or Close button */}

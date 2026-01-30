@@ -11,6 +11,9 @@ import { MindsetCapture } from './MindsetCapture'
 import dynamic from 'next/dynamic'
 import type { ChartState } from '@/lib/chartUtils'
 import type { TradeDirection, EmotionType, TradeOutcome, Json, OnboardingState } from '@/types/database'
+import { INSTRUMENT_OPTIONS } from '@/lib/instruments'
+import { calculatePnl } from '@/lib/pnlCalculator'
+import { useActiveClassroomStore } from '@/store/activeClassroom'
 
 // Lazy load chart component
 const TradingViewChart = dynamic(
@@ -18,14 +21,7 @@ const TradingViewChart = dynamic(
   { loading: () => <div className="h-[400px] rounded-xl bg-black/20 animate-pulse" /> }
 )
 
-const instruments = [
-  { value: 'XAUUSD', label: 'Gold (XAUUSD)' },
-  { value: 'EURUSD', label: 'EUR/USD' },
-  { value: 'GBPUSD', label: 'GBP/USD' },
-  { value: 'USDJPY', label: 'USD/JPY' },
-  { value: 'BTCUSD', label: 'Bitcoin' },
-  { value: 'OTHER', label: 'Other' },
-]
+const instruments = INSTRUMENT_OPTIONS
 
 const emotions = [
   { value: 'calm', label: 'Calm', icon: '😌' },
@@ -98,6 +94,7 @@ export function JournalEntryForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { profile } = useAuth()
+  const { activeClassroomId } = useActiveClassroomStore()
   const supabase = useMemo(() => createClient(), [])
 
   const tradeCallId = searchParams.get('trade_call_id') || null
@@ -166,22 +163,22 @@ export function JournalEntryForm() {
     const sl = parseFloat(form.stopLoss)
     const size = parseFloat(form.positionSize)
 
-    let rMultiple: number | null = null
-    let pnl: number | null = null
-
-    if (!isNaN(entry) && !isNaN(exit) && !isNaN(sl) && sl !== entry) {
-      const risk = Math.abs(entry - sl)
-      const reward = form.direction === 'long' ? exit - entry : entry - exit
-      rMultiple = parseFloat((reward / risk).toFixed(2))
+    if (isNaN(entry) || isNaN(exit) || isNaN(size)) {
+      return { rMultiple: null, pnl: null }
     }
 
-    if (!isNaN(entry) && !isNaN(exit) && !isNaN(size)) {
-      const priceDiff = form.direction === 'long' ? exit - entry : entry - exit
-      pnl = parseFloat((priceDiff * size * 100).toFixed(2))
-    }
+    const finalInstrument = form.instrument === 'OTHER' ? (form.customInstrument || 'OTHER') : form.instrument
+    const result = calculatePnl({
+      instrument: finalInstrument,
+      direction: form.direction,
+      entryPrice: entry,
+      exitPrice: exit,
+      positionSize: size,
+      stopLoss: !isNaN(sl) ? sl : null,
+    })
 
-    return { rMultiple, pnl }
-  }, [form.entryPrice, form.exitPrice, form.stopLoss, form.positionSize, form.direction])
+    return { rMultiple: result.rMultiple, pnl: result.pnl }
+  }, [form.entryPrice, form.exitPrice, form.stopLoss, form.positionSize, form.direction, form.instrument, form.customInstrument])
 
   const handleSubmit = async () => {
     if (!profile?.id) {
@@ -199,7 +196,7 @@ export function JournalEntryForm() {
     try {
       const entryData = {
         user_id: profile.id,
-        classroom_id: profile.classroom_id || null,
+        classroom_id: activeClassroomId || profile.classroom_id || null,
         instrument: finalInstrument,
         direction: form.direction as TradeDirection,
         entry_price: parseFloat(form.entryPrice),

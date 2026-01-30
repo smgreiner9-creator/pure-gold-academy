@@ -30,7 +30,7 @@ export function UpgradeRequired() {
             'Emotion & performance correlations',
             'Export your trade data',
             'Priority teacher feedback',
-            'All premium content',
+            'Priority access to new features',
           ].map((benefit) => (
             <li key={benefit} className="flex items-center gap-2 text-sm">
               <span className="material-symbols-outlined text-[var(--success)] text-sm">check</span>

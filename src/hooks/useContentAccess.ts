@@ -7,7 +7,7 @@ import type { LearnContent, ContentPurchase, ClassroomSubscription } from '@/typ
 
 interface ContentAccessResult {
   hasAccess: boolean
-  reason: 'free' | 'classroom_subscription' | 'purchased' | 'premium' | 'no_access'
+  reason: 'free' | 'classroom_subscription' | 'purchased' | 'no_access'
   purchase: ContentPurchase | null
 }
 
@@ -108,16 +108,7 @@ export function useContentAccess(classroomId: string | null) {
       }
     }
 
-    // Check 4: Is premium user and content is premium (but not individually priced)
-    if (isPremium && content.is_premium && !content.is_individually_priced) {
-      return {
-        hasAccess: true,
-        reason: 'premium',
-        purchase: null,
-      }
-    }
-
-    // No access
+    // No access — premium subscription does NOT grant access to classroom content
     return {
       hasAccess: false,
       reason: 'no_access',

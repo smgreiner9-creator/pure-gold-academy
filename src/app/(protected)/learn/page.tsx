@@ -50,7 +50,10 @@ export default function LearnPage() {
   const supabase = useMemo(() => createClient(), [])
 
   const loadData = useCallback(async () => {
-    if (!profile?.id || !profile.classroom_id) return
+    if (!profile?.id || !profile.classroom_id) {
+      setIsLoading(false)
+      return
+    }
 
     setIsLoading(true)
     try {

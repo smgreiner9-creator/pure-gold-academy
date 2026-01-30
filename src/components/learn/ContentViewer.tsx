@@ -8,6 +8,7 @@ import { Card, Button } from '@/components/ui'
 
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { useSingleContentAccess } from '@/hooks/useContentAccess'
 import type { LearnContent } from '@/types/database'
 
 const ALLOWED_IFRAME_HOSTS = [
@@ -22,7 +23,8 @@ interface ContentViewerProps {
 
 export function ContentViewer({ content }: ContentViewerProps) {
   const router = useRouter()
-  const { profile, isPremium } = useAuth()
+  const { profile } = useAuth()
+  const { hasAccess, isLoading: accessLoading } = useSingleContentAccess(content.id)
   const [isCompleted, setIsCompleted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const supabase = useMemo(() => createClient(), [])
@@ -87,19 +89,35 @@ export function ContentViewer({ content }: ContentViewerProps) {
     }
   }
 
-  // Check premium access
-  if (content.is_premium && !isPremium) {
+  // Check content access
+  if (accessLoading) {
     return (
       <Card className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
-          <span className="text-3xl">🔒</span>
+          <span className="material-symbols-outlined text-3xl text-[var(--gold)] animate-spin">progress_activity</span>
         </div>
-        <h2 className="text-2xl font-bold mb-2">Premium Content</h2>
-        <p className="text-[var(--muted)] mb-6">
-          Upgrade to Premium to access this content
+        <p className="text-[var(--muted)]">Checking access...</p>
+      </Card>
+    )
+  }
+
+  if (!hasAccess) {
+    return (
+      <Card className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
+          <span className="material-symbols-outlined text-3xl text-[var(--gold)]">lock</span>
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Locked Content</h2>
+        <p className="text-[var(--muted)] mb-4">
+          Subscribe to this classroom for full access to all lessons and content.
         </p>
-        <Button onClick={() => router.push('/settings/subscription')}>
-          Upgrade Now
+        {content.is_individually_priced && content.price && content.price > 0 && (
+          <p className="text-sm text-[var(--muted)] mb-4">
+            Price: <span className="font-bold text-[var(--gold)]">${content.price}</span> — Individual lesson purchases coming soon.
+          </p>
+        )}
+        <Button onClick={() => router.push('/settings')}>
+          View Classrooms
         </Button>
       </Card>
     )
